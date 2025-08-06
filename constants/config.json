@@ -1,0 +1,45 @@
+{
+    "PushButton":{
+        "possible_states": [
+             { "label": "PRESSIN", "value": "PRESSIN" },
+             { "label": "PRESSOUT", "value": "PRESSOUT" },
+             { "label": "CHECK_STATUS", "value": "CHECK_STATUS" }
+        ]
+    },
+    "OnOffButton":{
+        "possible_states": [
+             { "label": "ON", "value": "ON" },
+             { "label": "OFF", "value": "OFF" },
+             { "label": "CHECK_STATUS", "value": "CHECK_STATUS" }
+        ]
+    },
+
+    "OnOffSwitch":{
+        "possible_states": [
+             { "label": "ON", "value": "ON" },
+             { "label": "OFF", "value": "OFF" },
+             { "label": "CHECK_STATUS", "value": "CHECK_STATUS" }
+        ]
+    },
+    "slider":{
+        "possible_states": [
+             { "label": "DATA", "value": "DATA" },
+             { "label": "CHECK_STATUS", "value": "CHECK_STATUS" }
+        ]
+    },
+    "LOGICAL_OPERATORS": [
+        { "label": "AND", "value": "AND" },
+        { "label": "OR", "value": "OR" }
+    ],
+    "CONDITIONS" : [
+        { "label": "Less than", "value": "LessThan" },
+        { "label": "Less than equals to", "value": "LessEqualsTO" },
+        { "label": "Greater than", "value": "GreaterThan" },
+        { "label": "Greater than equals to", "value": "GreaterThanEqualsTO" },
+        { "label": "Equals", "value": "Equals" },
+        { "label": "Contains", "value": "Contains" },
+        { "label": "Does not contain", "value": "DoesNotContains" },
+        { "label": "Between", "value": "Between" }
+    ]
+    
+}

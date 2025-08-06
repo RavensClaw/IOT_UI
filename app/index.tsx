@@ -1,0 +1,77 @@
+import { Redirect, useFocusEffect, useRouter } from "expo-router";
+import { SafeAreaView, Text, View } from "react-native";
+import amplify_outputs from './amplify_outputs.json'
+import { Amplify } from 'aws-amplify';
+import { Platform } from "react-native";
+import { cognitoUserPoolsTokenProvider, getCurrentUser } from "@aws-amplify/auth/cognito";
+import { CookieStorage, defaultStorage } from "aws-amplify/utils";
+import { useCallback, useState } from "react";
+import { StackScreenHeader } from "@/components/StackScreenHeader";
+import { ActivityIndicator, MD2Colors } from "react-native-paper";
+import { syncOffline } from "@/service/servicehook";
+import { onlineManager } from '@tanstack/react-query'
+
+const isWeb = Platform.OS === 'web';
+
+Amplify.configure(amplify_outputs);
+
+if (isWeb) {
+  cognitoUserPoolsTokenProvider.setKeyValueStorage(new CookieStorage({
+    expires: 1
+  }));
+} else {
+  cognitoUserPoolsTokenProvider.setKeyValueStorage(defaultStorage);
+}
+
+
+export default function Index() {
+
+  const [loading, setLoading] = useState(true);
+  const [isLoggedIn, setLoggedIn] = useState(false);
+  const [appIsReady, setAppIsReady] = useState(false);
+
+
+  useFocusEffect(
+    useCallback(() => {
+      setLoading(true);
+      getCurrentUser().then((user) => {
+        if (user) {
+          console.log('User is logged in:', user);
+          setLoggedIn(true);
+        } else {
+          setLoggedIn(false);
+        }
+      }).catch(() => {
+        setLoggedIn(false);
+      }).finally(() => {
+        setLoading(false);
+      })
+    }, []))//[] here means called only once as nothing changes
+
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: MD2Colors.grey100 }} onLayout={async () => {
+      console.log("SAFEAREA");
+      try {
+        const isOnline = onlineManager.isOnline();
+        if (isOnline) {
+        //  await syncOffline();
+        }
+      } catch (e) {
+        console.warn(e);
+      } finally {
+        // Tell the application to render
+        setAppIsReady(true);
+      }
+    }}>
+      <StackScreenHeader showBackButton={false} showHeader={false}></StackScreenHeader>
+      {appIsReady ? isLoggedIn ? <Redirect href='/screens/dashboards' /> : <Redirect href='/screens/login' />
+        : <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', margin: 'auto' }}>
+          <ActivityIndicator animating={true} size="large" color={MD2Colors.blue800} />
+          <Text style={{ marginTop: 20, fontSize: 16, color: MD2Colors.blue800 }}>Syncing...</Text>
+        </View>}
+
+    </SafeAreaView>
+
+  );
+}
+

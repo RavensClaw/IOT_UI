@@ -1,29 +1,43 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
+import queryClient from '@/service/queryclient';
+import { onlineManager, QueryClientProvider } from '@tanstack/react-query';
+import { Stack } from 'expo-router';
+import { useEffect } from 'react';
+import { PaperProvider } from 'react-native-paper';
+import NetInfo from '@react-native-community/netinfo'
+import { syncOffline } from '@/service/servicehook';
 
-import { useColorScheme } from '@/hooks/useColorScheme';
+
+// Prevent the splash screen from auto-hiding before asset loading is complete.
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-  });
+  useEffect(() => {
+    console.log("RootLayout mounted");
+    onlineManager.setEventListener((setOnline) => {
+      const unsubscribe = NetInfo.addEventListener((state) => {
+        setOnline(!!state.isInternetReachable);
+        if (state.isInternetReachable) {
+          syncOffline().catch((error) => {
+            console.error('Error syncing offline data:', error);
+          });
+        }
+      });
+      return unsubscribe;
 
-  if (!loaded) {
-    // Async font loading only occurs in development.
-    return null;
-  }
+    })
+  }, [])
+
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    
+      <PaperProvider>
+    <QueryClientProvider client={queryClient}>
+
+        <Stack initialRouteName='index'>
+          <Stack.Screen name="+not-found" />
+        </Stack>
+    </QueryClientProvider>
+
+      </PaperProvider>
   );
 }
