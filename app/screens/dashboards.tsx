@@ -1,11 +1,11 @@
 import { useFocusEffect, useRouter } from "expo-router";
-import { Dimensions, SafeAreaView, View, Text, FlatList, TouchableOpacity } from "react-native";
-import { ActivityIndicator, Button, Chip, Dialog, Divider, FAB, Icon, IconButton, List, MD2Colors, Modal, Portal, TextInput } from "react-native-paper";
-import { lazy, ReactNode, useCallback, useEffect, useState } from "react";
+import { SafeAreaView, View, Text } from "react-native";
+import { ActivityIndicator, Chip, Dialog, Divider, FAB, Icon, IconButton, List, MD2Colors, Modal, Portal, TextInput } from "react-native-paper";
+import { useCallback, useEffect, useState } from "react";
 import { StackScreenHeader } from "@/components/StackScreenHeader";
 import DashboardModel from "@/models/DashboardModel";
 import ObjectID from "bson-objectid";
-import { cognitoUserPoolsTokenProvider, getCurrentUser } from "aws-amplify/auth/cognito";
+import { getCurrentUser } from "aws-amplify/auth/cognito";
 import { Constants } from "@/constants/constants";
 import {
     mutationCreateDashboard, mutationCreateDashboardsAccessByUserId,
@@ -16,9 +16,6 @@ import {
     queryGetDashBoardsAccessByUserId,
     queryGetMultipleDashboardsByDashboardIds
 } from "@/service/servicehook";
-import { QueryKey } from "@tanstack/react-query";
-
-
 
 const Dashboards = () => {
 
@@ -73,6 +70,7 @@ const Dashboards = () => {
     useFocusEffect(
         useCallback(() => {
             //AsyncStorage.clear();
+            console.log("................................... I AM IN HERE ...................................")
             setCallQueryGetMultipleDashboardsByDashboardIds(INIT_QUERY_KEY);
             setCallQueryGetDashBoardsAccessByUserId(INIT_QUERY_KEY);
 
@@ -81,41 +79,7 @@ const Dashboards = () => {
                 const userId: any = user.userId;
                 setUserId(userId);
                 setCallQueryGetDashBoardsAccessByUserId(Constants.serviceKeys.queryGetDashboardsAccessByUserId + userId);
-                /*AsyncStorage.getItem(userId).then(async (data) => {
-                    if (data) {
-                        console.log(data)
-                        const dashboardsIdsListFromStorage = JSON.parse(data);
-                        if (dashboardsIdsListFromStorage && dashboardsIdsListFromStorage.length > 0) {
-                            setDashboardIdsList(dashboardsIdsListFromStorage);
-                            setNonModifiableDashboardIdsList(dashboardsIdsListFromStorage);
-                            let dashboardsFromStorage: any = {};
-                            const allPromise: any = [];
-                            dashboardsIdsListFromStorage.map((dashboardId: any) => {
-                                const dashboardFromStorage = AsyncStorage.getItem(dashboardId);
-                                allPromise.push(dashboardFromStorage);
-                            });
-
-                            const response = await Promise.all(allPromise);
-                            if (response && response.length > 0) {
-                                response.map((data) => {
-                                    console.log(data)
-                                    if (data) {
-                                        const dashboardItem = JSON.parse(data);
-                                        dashboardsFromStorage[dashboardItem.dashboardId] = dashboardItem;
-                                    }
-
-                                })
-                            }
-                            setDashboards(dashboardsFromStorage);
-                            setNonModifiableDashboards(dashboardsFromStorage);
-                            setLoading(false);
-                        } else {
-                            setLoading(false);
-                        }
-                    } else {
-                        setLoading(false);
-                    }
-                });*/
+                console.log("User ID: " + userId);
             })
 
         }, [])
@@ -124,9 +88,6 @@ const Dashboards = () => {
     useEffect(() => {
         if (dashboardsAccessByUserId && dashboardsAccessByUserId.data) {
             let data: any = dashboardsAccessByUserId.data
-            console.log("############################## dashboardsAccessByUserId ##############################");
-            console.log(dashboardsAccessByUserId);
-
             if (data.dashboardIds &&
                 data.dashboardIds.length > 0) {
                 let modifiedDashboards = [];
@@ -152,6 +113,7 @@ const Dashboards = () => {
                 setNonModifiableDashboardAccess(dashboardsAccessByUserId.data);
                 setDashboardsAccessIds(data.dashboardIds);
                 setCallQueryGetDashBoardsAccessByUserId(INIT_QUERY_KEY);
+                setLoading(false);
             } else if (dashboardsAccessByUserId && !dashboardsAccessByUserId.data) {
                 console.log("No dashboards access found for userId: " + userId);
                 setLoading(false);

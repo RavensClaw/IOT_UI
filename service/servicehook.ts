@@ -55,7 +55,7 @@ export const mutationCreateDashboardsAccessByUserId = (
             if (error.toString().indexOf("network error") > -1) {
                 // Some logic to handle network error    
             }
-            await AsyncStorage.setItem(variables.userId, JSON.stringify({
+            await AsyncStorage.setItem("IOT" + variables.userId, JSON.stringify({
                 [Constants.CREATE_DASHBOARDS_ACCESS]: variables
             }));
             queryClient.setQueryData([Constants.serviceKeys.queryGetDashboardsAccessByUserId + variables.userId] as QueryKey, (old: any) => {
@@ -97,15 +97,15 @@ export const mutationUpdateDashboardsAccessByUserId = (
                 // Some logic to handle network error
             }
 
-            const getExistingDashboardsAccess = await AsyncStorage.getItem(variables.userId);
+            const getExistingDashboardsAccess = await AsyncStorage.getItem("IOT" + variables.userId);
             if (getExistingDashboardsAccess) {
                 const existingDashboardsAccess = JSON.parse(getExistingDashboardsAccess);
                 if (existingDashboardsAccess && existingDashboardsAccess.CREATE_DASHBOARDS_ACCESS) {
-                    await AsyncStorage.setItem(variables.userId, JSON.stringify({
+                    await AsyncStorage.setItem("IOT" + variables.userId, JSON.stringify({
                         [Constants.CREATE_DASHBOARDS_ACCESS]: variables
                     }));
                 } else {
-                    await AsyncStorage.setItem(variables.userId, JSON.stringify({
+                    await AsyncStorage.setItem("IOT" + variables.userId, JSON.stringify({
                         [Constants.UPDATE_DASHBOARDS_ACCESS]: variables
                     }));
                 }
@@ -146,7 +146,7 @@ export const mutationDeleteDashboardsAccessByUserId = (
 
             }
 
-            await AsyncStorage.setItem(variables.userId, JSON.stringify({
+            await AsyncStorage.setItem("IOT" + variables.userId, JSON.stringify({
                 [Constants.DELETE_DASHBOARDS_ACCESS]: variables
             }));
         },
@@ -240,7 +240,7 @@ export const mutationCreateDashboard = (
                 // Some logic to handle network error
             }
 
-            await AsyncStorage.setItem(variables.dashboardId, JSON.stringify({
+            await AsyncStorage.setItem("IOT" + variables.dashboardId, JSON.stringify({
                 [Constants.CREATE_DASHBOARD]: variables
             }));
             queryClient.setQueryData([Constants.serviceKeys.queryGetDashBoardByDashBoardId + variables.dashboardId] as QueryKey, (old: any) => {
@@ -311,15 +311,15 @@ export const mutationUpdateDashboard = (
                 // Some logic to handle network error
             }
 
-            const getExistingDashboard = await AsyncStorage.getItem(variables.dashboardId);
+            const getExistingDashboard = await AsyncStorage.getItem("IOT" + variables.dashboardId);
             if (getExistingDashboard) {
                 const existingDashboard = JSON.parse(getExistingDashboard);
                 if (existingDashboard && existingDashboard.CREATE_DASHBOARD) {
-                    await AsyncStorage.setItem(variables.dashboardId, JSON.stringify({
+                    await AsyncStorage.setItem("IOT" + variables.dashboardId, JSON.stringify({
                         [Constants.CREATE_DASHBOARD]: variables
                     }));
                 } else {
-                    await AsyncStorage.setItem(variables.dashboardId, JSON.stringify({
+                    await AsyncStorage.setItem("IOT" + variables.dashboardId, JSON.stringify({
                         [Constants.UPDATE_DASHBOARD]: variables
                     }));
                 }
@@ -380,7 +380,7 @@ export const mutationDeleteDashboardByDashboardId = (
                 //Some logic to handle network error
             }
 
-            await AsyncStorage.setItem(variables.dashboardId, JSON.stringify({
+            await AsyncStorage.setItem("IOT" + variables.dashboardId, JSON.stringify({
                 [Constants.DELETE_DASHBOARD]: variables
             }));
 
@@ -425,59 +425,59 @@ export const syncOffline = async () => {
     let parsedKeys: string[] = [];
     AsyncStorage.getAllKeys().then(async (keys) => {
         keys.forEach(async (key) => {
-            console.log(`Key: ${key}`);
-            try {
-                const jsonString = await AsyncStorage.getItem(key);
+            if (key.startsWith("IOT")) {
+                console.log(`Key: ${key}`);
+                try {
+                    const jsonString = await AsyncStorage.getItem(key);
+                    const jsonData = jsonString ? JSON.parse(jsonString) : null;
+                    parsedKeys.push(key);
+                    if (jsonData) {
+                        console.log(`Processed data for key ${key}:`, jsonData);
+                        Object.keys(jsonData).forEach(async (subKey) => {
+                            console.log(`SubKey: ${subKey}, Value: ${jsonData[subKey]}`);
+                            if (subKey === Constants.DELETE_DASHBOARDS_ACCESS) {
+                                const deleteDashboardAccessInput = jsonData[subKey];
+                                allCompleted.push(
+                                    client.models.DashboardsAccess.delete(deleteDashboardAccessInput)
+                                );
+                            } else if (subKey === Constants.CREATE_DASHBOARDS_ACCESS) {
+                                const createDashboardAccessInput = jsonData[subKey];
+                                allCompleted.push(
+                                    client.models.DashboardsAccess.create(createDashboardAccessInput)
+                                );
+                            } else if (subKey === Constants.UPDATE_DASHBOARDS_ACCESS) {
+                                const updateDashboardAccessInput = jsonData[subKey];
+                                allCompleted.push(
+                                    client.models.DashboardsAccess.update(updateDashboardAccessInput)
+                                );
+                            } else if (subKey === Constants.DELETE_DASHBOARD) {
+                                const deleteDashboardInput = jsonData[subKey];
+                                allCompleted.push(
+                                    client.models.Dashboard.delete(deleteDashboardInput)
+                                );
+                            } else if (subKey === Constants.CREATE_DASHBOARD) {
+                                const createDashboardInput = jsonData[subKey];
+                                allCompleted.push(
+                                    client.models.Dashboard.create(createDashboardInput)
+                                );
+                            } else if (subKey === Constants.UPDATE_DASHBOARD) {
+                                const updateDashboardInput = jsonData[subKey];
+                                allCompleted.push(
+                                    client.models.Dashboard.update(updateDashboardInput)
+                                );
+                            }
+                            else {
+                                console.log(`Unknown subKey: ${subKey}`);
+                            }
+                        });
 
-                const jsonData = jsonString ? JSON.parse(jsonString) : null;
-                parsedKeys.push(key);
-                if (jsonData) {
-                    console.log(`Processed data for key ${key}:`, jsonData);
-                    Object.keys(jsonData).forEach(async (subKey) => {
-                        console.log(`SubKey: ${subKey}, Value: ${jsonData[subKey]}`);
-                        if (subKey === Constants.DELETE_DASHBOARDS_ACCESS) {
-                            const deleteDashboardAccessInput = jsonData[subKey];
-                            allCompleted.push(
-                                client.models.DashboardsAccess.delete(deleteDashboardAccessInput)
-                            );
-                        } else if (subKey === Constants.CREATE_DASHBOARDS_ACCESS) {
-                            const createDashboardAccessInput = jsonData[subKey];
-                            allCompleted.push(
-                                client.models.DashboardsAccess.create(createDashboardAccessInput)
-                            );
-                        } else if (subKey === Constants.UPDATE_DASHBOARDS_ACCESS) {
-                            const updateDashboardAccessInput = jsonData[subKey];
-                            allCompleted.push(
-                                client.models.DashboardsAccess.update(updateDashboardAccessInput)
-                            );
-                        } else if (subKey === Constants.DELETE_DASHBOARD) {
-                            const deleteDashboardInput = jsonData[subKey];
-                            allCompleted.push(
-                                client.models.Dashboard.delete(deleteDashboardInput)
-                            );
-                        } else if (subKey === Constants.CREATE_DASHBOARD) {
-                            const createDashboardInput = jsonData[subKey];
-                            allCompleted.push(
-                                client.models.Dashboard.create(createDashboardInput)
-                            );
-                        } else if (subKey === Constants.UPDATE_DASHBOARD) {
-                            const updateDashboardInput = jsonData[subKey];
-                            allCompleted.push(
-                                client.models.Dashboard.update(updateDashboardInput)
-                            );
-                        }
-                        else {
-                            console.log(`Unknown subKey: ${subKey}`);
-                        }
-                    });
-
-                } else {
-                    console.log(`No data found for key ${key}`);
+                    } else {
+                        console.log(`No data found for key ${key}`);
+                    }
+                } catch (error) {
+                    console.error(`Error processing key ${key}:`, error);
                 }
-            } catch (error) {
-                console.error(`Error processing key ${key}:`, error);
             }
-
         });
         const allSettled = await Promise.allSettled(allCompleted);
         allSettled.forEach((result, index) => {
