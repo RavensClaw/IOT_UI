@@ -122,18 +122,19 @@ const Dashboards = () => {
     );
 
     useEffect(() => {
-        if (dashboardsAccessByUserId && dashboardsAccessByUserId.data   ) {
-        console.log("############################## dashboardsAccessByUserId ##############################");
-        console.log(dashboardsAccessByUserId);
-        
-            if (dashboardsAccessByUserId.data.dashboardIds &&
-                dashboardsAccessByUserId.data.dashboardIds.length > 0) {
+        if (dashboardsAccessByUserId && dashboardsAccessByUserId.data) {
+            let data: any = dashboardsAccessByUserId.data
+            console.log("############################## dashboardsAccessByUserId ##############################");
+            console.log(dashboardsAccessByUserId);
+
+            if (data.dashboardIds &&
+                data.dashboardIds.length > 0) {
                 let modifiedDashboards = [];
                 if (dashboards && dashboards.length > 0) {
                     modifiedDashboards = [...dashboards];
                 }
 
-                dashboardsAccessByUserId.data.dashboardIds.forEach((dashboardId: any) => {
+                data.dashboardIds.forEach((dashboardId: any) => {
                     if (dashboardId == null) return;
                     modifiedDashboards.push(
                         {
@@ -149,7 +150,7 @@ const Dashboards = () => {
 
                 setDashboardsAccess(dashboardsAccessByUserId.data);
                 setNonModifiableDashboardAccess(dashboardsAccessByUserId.data);
-                setDashboardsAccessIds(dashboardsAccessByUserId.data.dashboardIds);
+                setDashboardsAccessIds(data.dashboardIds);
                 setCallQueryGetDashBoardsAccessByUserId(INIT_QUERY_KEY);
             } else if (dashboardsAccessByUserId && !dashboardsAccessByUserId.data) {
                 console.log("No dashboards access found for userId: " + userId);
@@ -172,7 +173,7 @@ const Dashboards = () => {
         }
     }, [accessibleDashboards]);
 
-    
+
 
     useEffect(() => {
         if (dashboardsAccessIds &&
@@ -366,18 +367,18 @@ const Dashboards = () => {
                         marginTop: 200,
 
                     }}><Text style={{
-                                margin: 'auto',
-                                marginTop:120,
-                                fontSize:16
-                            }}>Add Dashboard</Text></View>}
+                        margin: 'auto',
+                        marginTop: 120,
+                        fontSize: 16
+                    }}>Add Dashboard</Text></View>}
 
                     <View style={{ alignSelf: "center", marginTop: 10, width: "100%" }}>
-                        <View style={{ width: "100%",}}>
-                            {dashboards  && dashboards?.map((dashboard: any) => {
-                                return <View key={dashboard.dashboardId}>
+                        <View style={{ width: "100%", }}>
+                            {dashboards && dashboards?.map((dashboard: any) => {
+                                return <View key={dashboard.dashboardId} style={{ margin: 10, marginBottom:5, marginTop:5 }}>
 
                                     <View style={{
-                                        width: "95%", minHeight: 140, backgroundColor: MD2Colors.white, margin: 10,
+                                        width: "100%", minHeight: 140, backgroundColor: MD2Colors.white,
                                         shadowColor: "#000",
                                         shadowOffset: {
                                             width: 0,
@@ -431,7 +432,7 @@ const Dashboards = () => {
                                                 }}
                                                     textStyle={{ color: MD2Colors.grey800, fontSize: 12, fontWeight: 600 }}
                                                     onPress={() => {
-                                                        console.log(":::::::::::::::::::::: "+dashboard.dashboardId);
+                                                        console.log(":::::::::::::::::::::: " + dashboard.dashboardId);
                                                         router.push({
                                                             pathname: `/screens/selecteddashboard`, params: {
                                                                 "dashboardId": dashboard.dashboardId
@@ -446,7 +447,7 @@ const Dashboards = () => {
                                                     textStyle={{ color: MD2Colors.grey800, fontSize: 12, fontWeight: 600 }}
                                                     icon={() => <Icon source='plus' size={18} color={MD2Colors.grey800} />}
                                                     onPress={() => {
-                                                        console.log(":::::::::::::::::::::: "+dashboard.dashboardId);
+                                                        console.log(":::::::::::::::::::::: " + dashboard.dashboardId);
                                                         router.push({
                                                             pathname: `/screens/selecteddashboard`, params: {
                                                                 "dashboardId": dashboard.dashboardId
@@ -525,15 +526,15 @@ const Dashboards = () => {
                                                                         ...toModifyDashboard,
                                                                         label: editedDashboardLabel
                                                                     }
-                                                                    if(toModifyDashboard.widgets){
-                                                                        try{
+                                                                    if (toModifyDashboard.widgets) {
+                                                                        try {
                                                                             toModifyDashboard.widgets = JSON.parse(toModifyDashboard.widgets);
-                                                                        }catch(e){
+                                                                        } catch (e) {
                                                                             console.log(e);
                                                                         }
-                                                                        
+
                                                                     }
-                                                                    
+
                                                                     updateDashboard.mutate(
                                                                         toModifyDashboard
                                                                     );
@@ -566,18 +567,18 @@ const Dashboards = () => {
                         </View>
                     </View>
                 </View>}
-<FAB
-    icon={() => <Icon source='plus' size={25} color={MD2Colors.white} />}
-    style={{
-        position: 'absolute',
-    margin: 16,
-    right: 0,
-    bottom: 0,
-        backgroundColor:MD2Colors.indigoA200
-}}
-    onPress={() =>  setVisible(true)}
-  />
- 
+            <FAB
+                icon={() => <Icon source='plus' size={25} color={MD2Colors.white} />}
+                style={{
+                    position: 'absolute',
+                    margin: 16,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: MD2Colors.indigoA200
+                }}
+                onPress={() => setVisible(true)}
+            />
+
         </SafeAreaView>
     );
 };

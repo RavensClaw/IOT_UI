@@ -422,60 +422,66 @@ export const syncOffline = async () => {
         authMode: "userPool",
     });
     const allCompleted: Promise<any>[] = [];
+    let parsedKeys: string[] = [];
     AsyncStorage.getAllKeys().then(async (keys) => {
         keys.forEach(async (key) => {
             console.log(`Key: ${key}`);
-            const jsonString = await AsyncStorage.getItem(key);
-            const jsonData = jsonString ? JSON.parse(jsonString) : null;
+            try {
+                const jsonString = await AsyncStorage.getItem(key);
 
-            if (jsonData) {
-                console.log(`Processed data for key ${key}:`, jsonData);
-                Object.keys(jsonData).forEach(async (subKey) => {
-                    console.log(`SubKey: ${subKey}, Value: ${jsonData[subKey]}`);
-                    if (subKey === Constants.DELETE_DASHBOARDS_ACCESS) {
-                        const deleteDashboardAccessInput = jsonData[subKey];
-                        allCompleted.push(
-                            client.models.DashboardsAccess.delete(deleteDashboardAccessInput)
-                        );
-                    } else if (subKey === Constants.CREATE_DASHBOARDS_ACCESS) {
-                        const createDashboardAccessInput = jsonData[subKey];
-                        allCompleted.push(
-                            client.models.DashboardsAccess.create(createDashboardAccessInput)
-                        );
-                    } else if (subKey === Constants.UPDATE_DASHBOARDS_ACCESS) {
-                        const updateDashboardAccessInput = jsonData[subKey];
-                        allCompleted.push(
-                            client.models.DashboardsAccess.update(updateDashboardAccessInput)
-                        );
-                    } else if (subKey === Constants.DELETE_DASHBOARD) {
-                        const deleteDashboardInput = jsonData[subKey];
-                        allCompleted.push(
-                            client.models.Dashboard.delete(deleteDashboardInput)
-                        );
-                    } else if (subKey === Constants.CREATE_DASHBOARD) {
-                        const createDashboardInput = jsonData[subKey];
-                        allCompleted.push(
-                            client.models.Dashboard.create(createDashboardInput)
-                        );
-                    } else if (subKey === Constants.UPDATE_DASHBOARD) {
-                        const updateDashboardInput = jsonData[subKey];
-                        allCompleted.push(
-                            client.models.Dashboard.update(updateDashboardInput)
-                        );
-                    }
-                    else {
-                        console.log(`Unknown subKey: ${subKey}`);
-                    }
-                });
+                const jsonData = jsonString ? JSON.parse(jsonString) : null;
+                parsedKeys.push(key);
+                if (jsonData) {
+                    console.log(`Processed data for key ${key}:`, jsonData);
+                    Object.keys(jsonData).forEach(async (subKey) => {
+                        console.log(`SubKey: ${subKey}, Value: ${jsonData[subKey]}`);
+                        if (subKey === Constants.DELETE_DASHBOARDS_ACCESS) {
+                            const deleteDashboardAccessInput = jsonData[subKey];
+                            allCompleted.push(
+                                client.models.DashboardsAccess.delete(deleteDashboardAccessInput)
+                            );
+                        } else if (subKey === Constants.CREATE_DASHBOARDS_ACCESS) {
+                            const createDashboardAccessInput = jsonData[subKey];
+                            allCompleted.push(
+                                client.models.DashboardsAccess.create(createDashboardAccessInput)
+                            );
+                        } else if (subKey === Constants.UPDATE_DASHBOARDS_ACCESS) {
+                            const updateDashboardAccessInput = jsonData[subKey];
+                            allCompleted.push(
+                                client.models.DashboardsAccess.update(updateDashboardAccessInput)
+                            );
+                        } else if (subKey === Constants.DELETE_DASHBOARD) {
+                            const deleteDashboardInput = jsonData[subKey];
+                            allCompleted.push(
+                                client.models.Dashboard.delete(deleteDashboardInput)
+                            );
+                        } else if (subKey === Constants.CREATE_DASHBOARD) {
+                            const createDashboardInput = jsonData[subKey];
+                            allCompleted.push(
+                                client.models.Dashboard.create(createDashboardInput)
+                            );
+                        } else if (subKey === Constants.UPDATE_DASHBOARD) {
+                            const updateDashboardInput = jsonData[subKey];
+                            allCompleted.push(
+                                client.models.Dashboard.update(updateDashboardInput)
+                            );
+                        }
+                        else {
+                            console.log(`Unknown subKey: ${subKey}`);
+                        }
+                    });
 
-            } else {
-                console.log(`No data found for key ${key}`);
+                } else {
+                    console.log(`No data found for key ${key}`);
+                }
+            } catch (error) {
+                console.error(`Error processing key ${key}:`, error);
             }
 
         });
         const allSettled = await Promise.allSettled(allCompleted);
         allSettled.forEach((result, index) => {
-            const key = keys[index];
+            const key = parsedKeys[index];
             if (result.status === 'fulfilled') {
                 AsyncStorage.removeItem(key);
             } else {

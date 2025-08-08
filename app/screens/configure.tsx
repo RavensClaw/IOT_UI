@@ -8,7 +8,6 @@ import config from '../../constants/config.json'
 import WidgetModel from "@/models/WidgetModel";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import ParamsModel from "@/models/ParamsModel";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import HeadersList from "@/components/HeadersList";
 import QueryParamsList from "@/components/QueryParamsList";
 import OutputConditionsMappingList from "@/components/OutputConditionsMappingList";

@@ -1,4 +1,5 @@
-import { signInWithRedirect } from 'aws-amplify/auth/cognito';
+import { signInWithRedirect } from "aws-amplify/auth";
+
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';

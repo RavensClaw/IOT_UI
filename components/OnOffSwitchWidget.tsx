@@ -1,7 +1,6 @@
 import { makeApiCall } from '@/libs/apicall';
 import WidgetModel from '@/models/WidgetModel';
 import { styles } from '@/assets/styles/styles';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import {

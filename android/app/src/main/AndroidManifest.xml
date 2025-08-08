@@ -24,7 +24,9 @@
         <action android:name="android.intent.action.VIEW"/>
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
-        <data android:scheme="iotui" android:path="/screens/dashboards"/>
+        <data android:scheme="iotui"/>
+        <data android:scheme="exp+iotui"/>
+        <data android:scheme="iot" android:path="/screens/dashboards"/>  
       </intent-filter>
     </activity>
   </application>

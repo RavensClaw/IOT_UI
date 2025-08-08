@@ -29,6 +29,17 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "b6905170-b6ff-46e1-a21e-3923678448a5"
+      }
     }
   }
 }
