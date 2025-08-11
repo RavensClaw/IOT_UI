@@ -57,7 +57,7 @@ const Dashboards = () => {
     const INIT_QUERY_KEY: any = Constants.serviceKeys.INIT_QUERY_KEY;
     const [callQueryGetDashBoardsAccessByUserId, setCallQueryGetDashBoardsAccessByUserId] = useState(INIT_QUERY_KEY);
     const [callQueryGetMultipleDashboardsByDashboardIds, setCallQueryGetMultipleDashboardsByDashboardIds] = useState(INIT_QUERY_KEY);
-    const dashboardsAccessByUserId:any = queryGetDashBoardsAccessByUserId(callQueryGetDashBoardsAccessByUserId, userId);
+    const dashboardsAccessByUserId: any = queryGetDashBoardsAccessByUserId(callQueryGetDashBoardsAccessByUserId, userId);
 
     const { createDashboardsAccessByUserId } = mutationCreateDashboardsAccess(setDashboardsAccessErrors, setCreateDashboardAccessDone);
     const { updateDashboardsAccessByUserId } = mutationUpdateDashboardsAccess(setDashboardsAccessErrors, setUpdateDashboardAccessDone);
@@ -117,13 +117,12 @@ const Dashboards = () => {
                 setNonModifiableDashboardAccess(dashboardsAccessByUserId.data);
                 setDashboardsAccessIds(data.dashboardIds);
                 setCallQueryGetDashBoardsAccessByUserId(INIT_QUERY_KEY);
-                setLoading(false);
             }
-        } else {
-                console.log("No dashboards access found for userId: " + userId);
-                setLoading(false);
-            }
-        
+        } else if (!!dashboardsAccessByUserId?.data) {
+            console.log("No dashboards access found for userId: " + userId);
+            setLoading(false);
+        }
+
     }, [dashboardsAccessByUserId]);
 
     useEffect(() => {
@@ -133,7 +132,7 @@ const Dashboards = () => {
     }, [dashboardsAccessIds]);
 
     useEffect(() => {
-        if (callQueryGetMultipleDashboardsByDashboardIds !== INIT_QUERY_KEY.toString() && accessibleDashboards && accessibleDashboards.length > 0) {
+        if (callQueryGetMultipleDashboardsByDashboardIds !== INIT_QUERY_KEY.toString()) {
             setDashboards(accessibleDashboards);
             setCallQueryGetMultipleDashboardsByDashboardIds(INIT_QUERY_KEY);
             setLoading(false);
@@ -156,12 +155,12 @@ const Dashboards = () => {
 
     useEffect(() => {
         if (createDashboardDone) {
-        console.log("********************************************");
-        console.log("Create Dashboard Done: " + createDashboardDone);
-        console.log("CallQueryGetDashBoardsAccessByUserId: " + callQueryGetDashBoardsAccessByUserId);
-        console.log("callQueryGetMultipleDashboardsByDashboardIds: " + callQueryGetMultipleDashboardsByDashboardIds);
-        setCallQueryGetDashBoardsAccessByUserId(Constants.serviceKeys.queryGetDashboardsAccessByUserId + userId);
-        setCreateDashboardDone(false);
+            console.log("********************************************");
+            console.log("Create Dashboard Done: " + createDashboardDone);
+            console.log("CallQueryGetDashBoardsAccessByUserId: " + callQueryGetDashBoardsAccessByUserId);
+            console.log("callQueryGetMultipleDashboardsByDashboardIds: " + callQueryGetMultipleDashboardsByDashboardIds);
+            setCallQueryGetDashBoardsAccessByUserId(Constants.serviceKeys.queryGetDashboardsAccessByUserId + userId);
+            setCreateDashboardDone(false);
             setVisible(false);
             //setLoading(false);
         }
@@ -359,15 +358,16 @@ const Dashboards = () => {
                         margin: 'auto',
                         marginTop: 200,
 
-                    }}><Text style={{
-                        margin: 'auto',
-                        marginTop: 120,
-                        fontSize: 16
-                    }}>Add Dashboard</Text></View>}
+                    }}>
+                        <Chip textStyle={{ color: MD2Colors.white, fontSize: 12 }} style={{
+                            backgroundColor: MD2Colors.indigoA200
+                        }} onPress={() => {
+                            setVisible(true);
+                        }}>Add Dashboard</Chip></View>}
 
                     <View style={{ alignSelf: "center", marginTop: 10, width: "100%" }}>
                         <View style={{ width: "100%", }}>
-                            {dashboards && dashboards?.length > 0  ? dashboards?.map((dashboard: any) => {
+                            {dashboards && dashboards?.length > 0 && dashboards?.map((dashboard: any) => {
                                 return <View key={dashboard.dashboardId} style={{ margin: 10, marginBottom: 5, marginTop: 5 }}>
 
                                     <View style={{
@@ -556,11 +556,11 @@ const Dashboards = () => {
 
                                 </View>
 
-                            }):<Text style={{ textAlign: 'center', marginTop: 100, fontSize:12}}>No Dashboards Found</Text>}
+                            })}
                         </View>
                     </View>
                 </View>}
-            <FAB
+            {dashboards && dashboards?.length > 0 && <FAB
                 icon={() => <Icon source='plus' size={25} color={MD2Colors.white} />}
                 style={{
                     position: 'absolute',
@@ -570,7 +570,7 @@ const Dashboards = () => {
                     backgroundColor: MD2Colors.indigoA200
                 }}
                 onPress={() => setVisible(true)}
-            />
+            />}
 
         </SafeAreaView>
     );
