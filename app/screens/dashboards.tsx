@@ -8,11 +8,10 @@ import ObjectID from "bson-objectid";
 import { getCurrentUser } from "aws-amplify/auth/cognito";
 import { Constants } from "@/constants/constants";
 import {
-    mutationCreateDashboard, mutationCreateDashboardsAccessByUserId,
+    mutationCreateDashboard, mutationCreateDashboardsAccess,
     mutationDeleteDashboardByDashboardId,
-    mutationDeleteDashboardsAccessByUserId,
     mutationUpdateDashboard,
-    mutationUpdateDashboardsAccessByUserId,
+    mutationUpdateDashboardsAccess,
     queryGetDashBoardsAccessByUserId,
     queryGetMultipleDashboardsByDashboardIds
 } from "@/service/servicehook";
@@ -33,6 +32,7 @@ const Dashboards = () => {
     const [dashboardsAccessErrors, setDashboardsAccessErrors] = useState(INIT);
     const [dashboardsAccessLoading, setDashboardsAccessLoading] = useState(true);
 
+    const [newDashboard, setNewDashboard] = useState(initDashboards);
     const [dashboards, setDashboards] = useState(initDashboards);
     const [nonModifiableDashboards, setNonModifiableDashboards] = useState(initDashboards);
 
@@ -41,9 +41,11 @@ const Dashboards = () => {
 
     const [createDashboardError, setCreateDashboardError] = useState(INIT);
     const [createDashboardDone, setCreateDashboardDone] = useState(false);
+    const [createDashboardAccessDone, setCreateDashboardAccessDone] = useState(false);
 
     const [updateDashboardError, setUpdateDashboardError] = useState(INIT);
     const [updateDashboardDone, setUpdateDashboardDone] = useState(false);
+    const [updateDashboardAccessDone, setUpdateDashboardAccessDone] = useState(false);
 
     const [deleteDashboardError, setDeleteDashboardError] = useState(INIT);
     const [deleteDashboardDone, setDeleteDashboardDone] = useState(false);
@@ -55,11 +57,10 @@ const Dashboards = () => {
     const INIT_QUERY_KEY: any = Constants.serviceKeys.INIT_QUERY_KEY;
     const [callQueryGetDashBoardsAccessByUserId, setCallQueryGetDashBoardsAccessByUserId] = useState(INIT_QUERY_KEY);
     const [callQueryGetMultipleDashboardsByDashboardIds, setCallQueryGetMultipleDashboardsByDashboardIds] = useState(INIT_QUERY_KEY);
-    const dashboardsAccessByUserId = queryGetDashBoardsAccessByUserId(callQueryGetDashBoardsAccessByUserId, userId);
+    const dashboardsAccessByUserId:any = queryGetDashBoardsAccessByUserId(callQueryGetDashBoardsAccessByUserId, userId);
 
-    const { createDashboardsAccessByUserId } = mutationCreateDashboardsAccessByUserId(setDashboardsAccessErrors, setCreateDashboardDone);
-    const { updateDashboardsAccessByUserId } = mutationUpdateDashboardsAccessByUserId(setDashboardsAccessErrors, setUpdateDashboardDone);
-    const { deleteDashboardsAccessByUserId } = mutationDeleteDashboardsAccessByUserId(setDashboardsAccessErrors, setDeleteDashboardDone);
+    const { createDashboardsAccessByUserId } = mutationCreateDashboardsAccess(setDashboardsAccessErrors, setCreateDashboardAccessDone);
+    const { updateDashboardsAccessByUserId } = mutationUpdateDashboardsAccess(setDashboardsAccessErrors, setUpdateDashboardAccessDone);
     const { accessibleDashboards } = queryGetMultipleDashboardsByDashboardIds(callQueryGetMultipleDashboardsByDashboardIds, dashboardsAccessIds);
     const { createDashboard } = mutationCreateDashboard(setCreateDashboardError, setCreateDashboardDone, userId);
     const { updateDashboard } = mutationUpdateDashboard(setUpdateDashboardError, setUpdateDashboardDone, userId);
@@ -86,7 +87,10 @@ const Dashboards = () => {
     );
 
     useEffect(() => {
-        if (dashboardsAccessByUserId && dashboardsAccessByUserId.data) {
+        console.log("$$$$$$$$$$$$$$$$$$$$$$$$$$")
+        console.log(dashboardsAccessByUserId)
+        if (dashboardsAccessByUserId && dashboardsAccessByUserId?.data) {
+            console.log("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
             let data: any = dashboardsAccessByUserId.data
             if (data.dashboardIds &&
                 data.dashboardIds.length > 0) {
@@ -114,11 +118,12 @@ const Dashboards = () => {
                 setDashboardsAccessIds(data.dashboardIds);
                 setCallQueryGetDashBoardsAccessByUserId(INIT_QUERY_KEY);
                 setLoading(false);
-            } else if (dashboardsAccessByUserId && !dashboardsAccessByUserId.data) {
+            }
+        } else {
                 console.log("No dashboards access found for userId: " + userId);
                 setLoading(false);
             }
-        }
+        
     }, [dashboardsAccessByUserId]);
 
     useEffect(() => {
@@ -138,21 +143,65 @@ const Dashboards = () => {
 
 
     useEffect(() => {
-        if (dashboardsAccessIds &&
-            dashboardsAccessIds.length > 0 &&
-            !createDashboardDone
-        ) {
-            setCallQueryGetMultipleDashboardsByDashboardIds(Constants.serviceKeys.queryGetMultipleDashboardsByDashboardIds + userId);
-            setCreateDashboardDone(false);
+        if (createDashboardAccessDone) {
+            console.log("Creating Dashboard Access: " + newDashboard.dashboardId);
+            setCallQueryGetMultipleDashboardsByDashboardIds(INIT_QUERY_KEY);
+            createDashboard.mutate(newDashboard);
+            console.log("DONE CREATE DASHBOARD ACCESS: " + newDashboard.dashboardId);
+            setNewDashboard(INIT);
+            setCreateDashboardAccessDone(false);
+        }
+    }, [createDashboardAccessDone]);
+
+
+    useEffect(() => {
+        if (createDashboardDone) {
+        console.log("********************************************");
+        console.log("Create Dashboard Done: " + createDashboardDone);
+        console.log("CallQueryGetDashBoardsAccessByUserId: " + callQueryGetDashBoardsAccessByUserId);
+        console.log("callQueryGetMultipleDashboardsByDashboardIds: " + callQueryGetMultipleDashboardsByDashboardIds);
+        setCallQueryGetDashBoardsAccessByUserId(Constants.serviceKeys.queryGetDashboardsAccessByUserId + userId);
+        setCreateDashboardDone(false);
+            setVisible(false);
+            //setLoading(false);
         }
     }, [createDashboardDone]);
 
+
     useEffect(() => {
-        if (dashboardsAccessIds &&
-            dashboardsAccessIds.length > 0 &&
-            !updateDashboardDone
-        ) {
-            setCallQueryGetMultipleDashboardsByDashboardIds(Constants.serviceKeys.queryGetMultipleDashboardsByDashboardIds + userId);
+        console.log('....................................................');
+        if (updateDashboardAccessDone) {
+            console.log(':::::::::::::::::::::::::::::::::::::::::::::::');
+
+            if (newDashboard && Object.keys(newDashboard).length > 0) {
+                console.log("INSIDE IF CONDITION");
+                console.log("Update Dashboard Access: " + newDashboard.dashboardId);
+                createDashboard.mutate(newDashboard);
+                console.log("DONE UPDATE DASHBOARD ACCESS: " + newDashboard.dashboardId);
+                setNewDashboard(INIT);
+                setCreateDashboardAccessDone(false);
+            } else {
+                console.log("INSIDE ELSE CONDITION");
+                let modifiedDashboards: any[] = []
+                dashboards?.map((dashboard: DashboardModel) => {
+                    if (dashboard.dashboardId === deleteDashboard.dashboardId) {
+                        console.log("Deleting Dashboard: " + dashboard.dashboardId);
+                    } else {
+                        modifiedDashboards.push(dashboard);
+                    }
+                });
+                setDashboards(modifiedDashboards);
+                setDeleteDashboard(null);
+                setShowConfirmDelete(false);
+            }
+            setCallQueryGetDashBoardsAccessByUserId(Constants.serviceKeys.queryGetDashboardsAccessByUserId + userId);
+            setUpdateDashboardAccessDone(false);
+        }
+    }, [updateDashboardAccessDone]);
+
+    useEffect(() => {
+        if (updateDashboardDone) {
+            setCallQueryGetDashBoardsAccessByUserId(Constants.serviceKeys.queryGetDashboardsAccessByUserId + userId);
             setUpdateDashboardDone(false);
         }
     }, [updateDashboardDone]);
@@ -160,9 +209,13 @@ const Dashboards = () => {
     useEffect(() => {
         if (dashboardsAccessIds &&
             dashboardsAccessIds.length > 0 &&
-            !deleteDashboardDone
+            deleteDashboardDone
         ) {
-            setCallQueryGetMultipleDashboardsByDashboardIds(Constants.serviceKeys.queryGetMultipleDashboardsByDashboardIds + userId);
+            updateDashboardsAccessByUserId.mutate({
+                dashboardIds: dashboardsAccess.dashboardIds.filter((id: string) => id !== deleteDashboard.dashboardId),
+                userId: userId,
+            });
+
             setDeleteDashboardDone(false);
         }
     }, [deleteDashboardDone]);
@@ -196,24 +249,10 @@ const Dashboards = () => {
                                     <Chip mode='outlined'
                                         textStyle={{ fontSize: 12 }}
                                         style={{ marginLeft: 10 }} onPress={async () => {
+                                            setLoading(true);
                                             deleteDashboardByDashboardId.mutate({
                                                 dashboardId: deleteDashboard.dashboardId,
                                             });
-                                            updateDashboardsAccessByUserId.mutate({
-                                                dashboardIds: dashboardsAccess.dashboardIds.filter((id: string) => id !== deleteDashboard.dashboardId),
-                                                userId: userId,
-                                            });
-                                            let modifiedDashboards: any[] = []
-                                            dashboards?.map((dashboard: DashboardModel) => {
-                                                if (dashboard.dashboardId === deleteDashboard.dashboardId) {
-                                                    console.log("Deleting Dashboard: " + dashboard.dashboardId);
-                                                } else {
-                                                    modifiedDashboards.push(dashboard);
-                                                }
-                                            });
-                                            setDashboards(modifiedDashboards);
-                                            setDeleteDashboard(null);
-                                            setShowConfirmDelete(false);
                                         }}>Yes</Chip>
                                 </View>
                             </View>
@@ -282,6 +321,7 @@ const Dashboards = () => {
                                     }}
                                     icon={() => <Icon source='plus' size={18} color={MD2Colors.white} />}
                                     onPress={async () => {
+                                        setLoading(true);
                                         if (dashboardLabel && dashboardLabel?.trim() !== '') {
                                             const dashboardId: string = new ObjectID().toHexString();
 
@@ -291,6 +331,7 @@ const Dashboards = () => {
                                                 description: null,
                                                 lastModifiedBy: userId
                                             }
+                                            setNewDashboard(newDashboard);
 
                                             if (dashboardsAccess && dashboardsAccess.dashboardIds && dashboardsAccess.dashboardIds.length > 0) {
                                                 updateDashboardsAccessByUserId.mutate({
@@ -303,16 +344,6 @@ const Dashboards = () => {
                                                     userId: userId,
                                                 });
                                             }
-                                            createDashboard.mutate(newDashboard);
-                                            //setCallQueryGetDashBoardsAccessByUserId(Constants.serviceKeys.queryGetDashboardsAccessByUserId + userId);
-                                            setDashboards({
-                                                ...dashboards,
-                                                [dashboardId]: newDashboard
-                                            });
-
-                                            setVisible(false);
-                                            setLoading(false);
-
                                         } else {
                                             setAddDashboardHasError(true);
                                             setAddDashboardErrorMessage('Please enter dashboard name.');
@@ -336,8 +367,8 @@ const Dashboards = () => {
 
                     <View style={{ alignSelf: "center", marginTop: 10, width: "100%" }}>
                         <View style={{ width: "100%", }}>
-                            {dashboards && dashboards?.map((dashboard: any) => {
-                                return <View key={dashboard.dashboardId} style={{ margin: 10, marginBottom:5, marginTop:5 }}>
+                            {dashboards && dashboards?.length > 0  ? dashboards?.map((dashboard: any) => {
+                                return <View key={dashboard.dashboardId} style={{ margin: 10, marginBottom: 5, marginTop: 5 }}>
 
                                     <View style={{
                                         width: "100%", minHeight: 140, backgroundColor: MD2Colors.white,
@@ -525,7 +556,7 @@ const Dashboards = () => {
 
                                 </View>
 
-                            })}
+                            }):<Text style={{ textAlign: 'center', marginTop: 100, fontSize:12}}>No Dashboards Found</Text>}
                         </View>
                     </View>
                 </View>}

@@ -22,15 +22,16 @@ export const queryGetDashBoardsAccessByUserId = (key: QueryKey, userId: string) 
             if (errors) {
                 throw new Error(JSON.stringify(errors));
             }
+            console.log("<<<<<<<<<<<<<<<<<<< DASHBOARDS ACCESS BY USER ID: >>>>>>>>>>>>>>>>>> ", dashboardsAccess);
             return dashboardsAccess;
-        }
+        },
     })
     return dashboardsAccessByUserId;
 };
 
-export const mutationCreateDashboardsAccessByUserId = (
+export const mutationCreateDashboardsAccess = (
     setError: React.Dispatch<React.SetStateAction<any>>,
-    setLoading: React.Dispatch<React.SetStateAction<boolean>>
+    setCreateDashboardAccessDone: React.Dispatch<React.SetStateAction<boolean>>
 ) => {
     const queryClient = useQueryClient();
     const client = generateClient<Schema>({
@@ -46,7 +47,7 @@ export const mutationCreateDashboardsAccessByUserId = (
             return createDashboardsAccessResponse;
         },
         onSettled: async (data, variables, context) => {
-            setLoading(true);
+            setCreateDashboardAccessDone(true);
         },
         onSuccess: async (data, variables, context) => {
             queryClient.removeQueries();
@@ -63,15 +64,14 @@ export const mutationCreateDashboardsAccessByUserId = (
                     variables
                 }
             });
-            setLoading(false);
         }
     });
     return { createDashboardsAccessByUserId };
 };
 
-export const mutationUpdateDashboardsAccessByUserId = (
+export const mutationUpdateDashboardsAccess = (
     setError: React.Dispatch<React.SetStateAction<any>>,
-    setLoading: React.Dispatch<React.SetStateAction<boolean>>
+    setUpdateDashboardAccessDone: React.Dispatch<React.SetStateAction<boolean>>
 ) => {
     const queryClient = useQueryClient();
     const client = generateClient<Schema>({
@@ -90,7 +90,7 @@ export const mutationUpdateDashboardsAccessByUserId = (
             queryClient.removeQueries();
         },
         onSettled: async (data, variables, context) => {
-            setLoading(true);
+            setUpdateDashboardAccessDone(true);
         },
         onError: async (error, variables, context) => {
             if (error.toString().indexOf("network error") > -1) {
@@ -116,7 +116,6 @@ export const mutationUpdateDashboardsAccessByUserId = (
                     variables
                 }
             });
-            setLoading(false);
         }
     })
     return { updateDashboardsAccessByUserId };
@@ -124,7 +123,7 @@ export const mutationUpdateDashboardsAccessByUserId = (
 
 export const mutationDeleteDashboardsAccessByUserId = (
     setError: React.Dispatch<React.SetStateAction<any>>,
-    setLoading: React.Dispatch<React.SetStateAction<boolean>>
+    setDeleteDashboardAccessDone: React.Dispatch<React.SetStateAction<boolean>>
 ) => {
     const queryClient = useQueryClient();
 
@@ -134,6 +133,7 @@ export const mutationDeleteDashboardsAccessByUserId = (
     const deleteDashboardsAccessByUserId = useMutation({
         networkMode: "always",
         mutationFn: async ({ userId }: { userId: string }) => {
+            setDeleteDashboardAccessDone(false);
             const { data: deleteDashboardsAccessByUserId, errors: deleteDashboardsAccessErrors } = await client.models.DashboardsAccess.delete({
                 userId: userId,
             });
@@ -154,7 +154,7 @@ export const mutationDeleteDashboardsAccessByUserId = (
             queryClient.removeQueries();
         },
         onSettled: async (data, variables, context) => {
-            setLoading(true);
+            setDeleteDashboardAccessDone(true);
         },
     })
     return { deleteDashboardsAccessByUserId };
@@ -205,7 +205,7 @@ export const queryGetMultipleDashboardsByDashboardIds = (key: QueryKey, dashboar
 
 export const mutationCreateDashboard = (
     setError: React.Dispatch<React.SetStateAction<any>>,
-    setLoading: React.Dispatch<React.SetStateAction<boolean>>,
+    setCreateDashboardDone: React.Dispatch<React.SetStateAction<boolean>>,
     userId: string
 ) => {
     const queryClient = useQueryClient();
@@ -215,7 +215,7 @@ export const mutationCreateDashboard = (
     const createDashboard = useMutation({
         networkMode: "always",
         mutationFn: async (input: any) => {
-            setLoading(true);
+            setCreateDashboardDone(false);
             const { data: createDashboardResponse, errors: createDashboardErrors } = await client.models.Dashboard.create(input);
             if (createDashboardErrors) {
                 throw new Error(JSON.stringify(createDashboardErrors));
@@ -255,7 +255,7 @@ export const mutationCreateDashboard = (
             });
         },
         onSettled: async (data, variables, context) => {
-            setLoading(false);
+            setCreateDashboardDone(true);
         },
     })
     return { createDashboard };
@@ -263,7 +263,7 @@ export const mutationCreateDashboard = (
 
 export const mutationUpdateDashboard = (
     setError: React.Dispatch<React.SetStateAction<any>>,
-    setLoading: React.Dispatch<React.SetStateAction<boolean>>,
+    setUpdateDashboardDone: React.Dispatch<React.SetStateAction<boolean>>,
     userId: string
 ) => {
     const queryClient = useQueryClient();
@@ -274,7 +274,7 @@ export const mutationUpdateDashboard = (
         networkMode: "always",
         mutationFn: async (input: any) => {
             userId = userId;
-            setLoading(true);
+            setUpdateDashboardDone(false);
             if (input.widgets) {
                 input = {
                     ...input,
@@ -347,7 +347,7 @@ export const mutationUpdateDashboard = (
             });
         },
         onSettled: async (data, variables, context) => {
-            setLoading(false);
+            setUpdateDashboardDone(true);
         },
 
     })
@@ -356,7 +356,7 @@ export const mutationUpdateDashboard = (
 
 export const mutationDeleteDashboardByDashboardId = (
     setError: React.Dispatch<React.SetStateAction<any>>,
-    setLoading: React.Dispatch<React.SetStateAction<boolean>>,
+    setDeleteDashboardDone: React.Dispatch<React.SetStateAction<boolean>>,
     userId: string
 ) => {
     const queryClient = useQueryClient();
@@ -367,7 +367,7 @@ export const mutationDeleteDashboardByDashboardId = (
     const deleteDashboardByDashboardId = useMutation({
         networkMode: "always",
         mutationFn: async ({ dashboardId }: { dashboardId: string }) => {
-            setLoading(true);
+            setDeleteDashboardDone(false);
             const { data: deleteDashboardResponse, errors: deleteDashboardErrors } = await client.models.Dashboard.delete({
                 dashboardId: dashboardId,
             });
@@ -411,7 +411,7 @@ export const mutationDeleteDashboardByDashboardId = (
             });
         },
         onSettled: async (data, variables, context) => {
-            setLoading(false);
+            setDeleteDashboardDone(true);
         },
     })
     return { deleteDashboardByDashboardId };

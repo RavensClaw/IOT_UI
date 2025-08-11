@@ -17,9 +17,9 @@ export default function RootLayout() {
       const unsubscribe = NetInfo.addEventListener((state) => {
         setOnline(!!state.isInternetReachable);
         if (state.isInternetReachable) {
-          syncOffline().catch((error) => {
+       /*   syncOffline().catch((error) => {
             console.error('Error syncing offline data:', error);
-          });
+          });*/
         }
       });
       return unsubscribe;
