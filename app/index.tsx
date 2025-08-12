@@ -30,6 +30,7 @@ export default function Index() {
   const [isLoggedIn, setLoggedIn] = useState(false);
   const [appIsReady, setAppIsReady] = useState(false);
 
+  const isOnline = onlineManager.isOnline();
 
   useFocusEffect(
     useCallback(() => {
@@ -38,6 +39,17 @@ export default function Index() {
         if (user) {
           console.log('User is logged in:', user);
           setLoggedIn(true);
+
+
+          if (isOnline) {
+            syncOffline().catch((error) => {
+              console.error('Error syncing offline data:', error);
+            }).finally(() => {
+              console.log("Sync completed");
+              setAppIsReady(true);
+            });
+          }
+
         } else {
           setLoggedIn(false);
         }
@@ -49,20 +61,7 @@ export default function Index() {
     }, []))//[] here means called only once as nothing changes
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: MD2Colors.grey100 }} onLayout={async () => {
-      console.log("SAFEAREA");
-      try {
-        const isOnline = onlineManager.isOnline();
-        if (isOnline) {
-        //  await syncOffline();
-        }
-      } catch (e) {
-        console.warn(e);
-      } finally {
-        // Tell the application to render
-        setAppIsReady(true);
-      }
-    }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: MD2Colors.grey100 }}>
       <StackScreenHeader showBackButton={false} showHeader={false}></StackScreenHeader>
       {appIsReady ? isLoggedIn ? <Redirect href='/screens/dashboards' /> : <Redirect href='/screens/login' />
         : <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', margin: 'auto' }}>

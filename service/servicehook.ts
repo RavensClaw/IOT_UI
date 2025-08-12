@@ -22,7 +22,6 @@ export const queryGetDashBoardsAccessByUserId = (key: QueryKey, userId: string) 
             if (errors) {
                 throw new Error(JSON.stringify(errors));
             }
-            console.log("<<<<<<<<<<<<<<<<<<< DASHBOARDS ACCESS BY USER ID: >>>>>>>>>>>>>>>>>> ", dashboardsAccess);
             return dashboardsAccess;
         },
     })
@@ -426,12 +425,11 @@ export const syncOffline = async () => {
     AsyncStorage.getAllKeys().then(async (keys) => {
         keys.forEach(async (key) => {
             if (key.startsWith("IOT")) {
-                console.log(`Key: ${key}`);
                 try {
                     const jsonString = await AsyncStorage.getItem(key);
                     const jsonData = jsonString ? JSON.parse(jsonString) : null;
-                    parsedKeys.push(key);
                     if (jsonData) {
+                        parsedKeys.push(key);
                         console.log(`Processed data for key ${key}:`, jsonData);
                         Object.keys(jsonData).forEach(async (subKey) => {
                             console.log(`SubKey: ${subKey}, Value: ${jsonData[subKey]}`);
@@ -479,19 +477,19 @@ export const syncOffline = async () => {
                 }
             }
         });
-        const allSettled = await Promise.allSettled(allCompleted);
-        allSettled.forEach((result, index) => {
+        await Promise.allSettled(allCompleted)
+            allCompleted.forEach((item, index) => {
             const key = parsedKeys[index];
-            if (result.status === 'fulfilled') {
-                AsyncStorage.removeItem(key);
-            } else {
-                console.error(`Operation ${index} failed:`, result.reason);
-            }
+            console.log(`Removing key: ${key}`);
+            Promise.resolve(item).then((result) => {
+                if(result.data){
+                    AsyncStorage.removeItem(key);
+                }else if(result.errors)  {
+                    console.error(`Operation for key: ${key} failed:`, result.errors);
+                }
+            });
         });
-
     }).catch((error) => {
         console.error('Error retrieving keys from AsyncStorage:', error);
     });
-
-
 }

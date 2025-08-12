@@ -71,7 +71,6 @@ const Dashboards = () => {
     useFocusEffect(
         useCallback(() => {
             //AsyncStorage.clear();
-            console.log("................................... I AM IN HERE ...................................")
             setCallQueryGetMultipleDashboardsByDashboardIds(INIT_QUERY_KEY);
             setCallQueryGetDashBoardsAccessByUserId(INIT_QUERY_KEY);
 
@@ -87,10 +86,7 @@ const Dashboards = () => {
     );
 
     useEffect(() => {
-        console.log("$$$$$$$$$$$$$$$$$$$$$$$$$$")
-        console.log(dashboardsAccessByUserId)
         if (dashboardsAccessByUserId && dashboardsAccessByUserId?.data) {
-            console.log("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
             let data: any = dashboardsAccessByUserId.data
             if (data.dashboardIds &&
                 data.dashboardIds.length > 0) {
@@ -267,11 +263,10 @@ const Dashboards = () => {
                             borderRadius: 5,
                             padding: 5,
                             maxHeight: "90%",
-                            width: "90%"
                         }}>
                             <View style={{ alignItems: "center", flexDirection: "row", marginBottom: 20, margin: "auto", width: "100%" }}>
                                 <View style={{ alignSelf: 'flex-start', }}>
-                                    <Text style={{ color: MD2Colors.white, borderRadius: 5, fontSize: 14, fontWeight: "600", backgroundColor: MD2Colors.grey700, padding: 8 }}>Add Dashboard</Text>
+                                    <Text style={{ color: MD2Colors.grey800, borderRadius: 5, fontSize: 12, padding: 8, fontWeight: "600" }}>Add Dashboard</Text>
                                 </View>
                                 <IconButton
                                     size={12}
