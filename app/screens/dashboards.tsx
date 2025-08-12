@@ -71,8 +71,12 @@ const Dashboards = () => {
     useFocusEffect(
         useCallback(() => {
             //AsyncStorage.clear();
-            setCallQueryGetMultipleDashboardsByDashboardIds(INIT_QUERY_KEY);
             setCallQueryGetDashBoardsAccessByUserId(INIT_QUERY_KEY);
+            setCallQueryGetMultipleDashboardsByDashboardIds(INIT_QUERY_KEY);
+
+            setDashboardsAccess(null);
+            setNonModifiableDashboardAccess(null);
+            setDashboardsAccessIds([]);
 
             setLoading(true);
             getCurrentUser().then((user) => {
@@ -86,6 +90,7 @@ const Dashboards = () => {
     );
 
     useEffect(() => {
+        if(callQueryGetDashBoardsAccessByUserId !== INIT_QUERY_KEY.toString()) {
         if (dashboardsAccessByUserId && dashboardsAccessByUserId?.data) {
             let data: any = dashboardsAccessByUserId.data
             if (data.dashboardIds &&
@@ -112,12 +117,12 @@ const Dashboards = () => {
                 setDashboardsAccess(dashboardsAccessByUserId.data);
                 setNonModifiableDashboardAccess(dashboardsAccessByUserId.data);
                 setDashboardsAccessIds(data.dashboardIds);
-                setCallQueryGetDashBoardsAccessByUserId(INIT_QUERY_KEY);
+        //        setCallQueryGetDashBoardsAccessByUserId(INIT_QUERY_KEY);
             }
-        } else if (!!dashboardsAccessByUserId?.data) {
+        } else {
             console.log("No dashboards access found for userId: " + userId);
-            setLoading(false);
-        }
+           // setLoading(false);
+        }}
 
     }, [dashboardsAccessByUserId]);
 
@@ -151,6 +156,7 @@ const Dashboards = () => {
 
     useEffect(() => {
         if (createDashboardDone) {
+            setDashboardLabel('');
             console.log("********************************************");
             console.log("Create Dashboard Done: " + createDashboardDone);
             console.log("CallQueryGetDashBoardsAccessByUserId: " + callQueryGetDashBoardsAccessByUserId);
@@ -349,7 +355,7 @@ const Dashboards = () => {
                     </Portal>
 
 
-                    {!loading && !dashboards || dashboards?.length === 0 && <View style={{
+                    {!loading && (!dashboards || dashboards?.length === 0) && <View style={{
                         margin: 'auto',
                         marginTop: 200,
 
@@ -414,7 +420,7 @@ const Dashboards = () => {
                                         </View>
 
                                         <View style={{ margin: "auto", marginTop: 40, flexDirection: "row", }}>
-                                            {dashboard.widgets && Object.keys(dashboard.widgets).length > 0 ?
+                                            {dashboard.widgets && Object.keys(JSON.parse(dashboard.widgets)).length > 0 ?
                                                 <Chip mode="outlined" style={{
                                                     borderColor: MD2Colors.lightGreen500,
                                                 }}

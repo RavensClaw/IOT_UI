@@ -128,14 +128,14 @@ const SelectedDashBoard: React.FC<Props> = () => {
         //  console.log("############################## dashboardsAccessByUserId ##############################");
         //console.log(dashboardsAccessByUserId);
         if (dashboardsAccessByUserId && dashboardsAccessByUserId.data) {
-            if (dashboardsAccessByUserId.data.dashboardIds &&
-                dashboardsAccessByUserId.data.dashboardIds.length > 0) {
+            const data: any = dashboardsAccessByUserId.data;
+            if (data.dashboardIds && data.dashboardIds.length > 0) {
                 let modifiedDashboards = [];
                 if (dashboards && dashboards.length > 0) {
                     modifiedDashboards = [...dashboards];
                 }
 
-                dashboardsAccessByUserId.data.dashboardIds.forEach((dashboardId) => {
+                data?.dashboardIds.forEach((dashboardId: any) => {
                     if (dashboardId == null) return;
                     modifiedDashboards.push(
                         {
@@ -149,8 +149,8 @@ const SelectedDashBoard: React.FC<Props> = () => {
 
                 });
 
-                setDashboardsAccess(dashboardsAccessByUserId.data);
-                setDashboardsAccessIds(dashboardsAccessByUserId.data.dashboardIds);
+                setDashboardsAccess(data);
+                setDashboardsAccessIds(data.dashboardIds);
                 setCallQueryGetDashBoardsAccessByUserId(INIT_QUERY_KEY);
             } else if (dashboardsAccessByUserId && !dashboardsAccessByUserId.data) {
                 console.log("No dashboards access found for userId: " + userId);
@@ -176,14 +176,15 @@ const SelectedDashBoard: React.FC<Props> = () => {
         //  console.log("############################## dashboardsAccessByUserId ##############################");
         //console.log(dashboardsAccessByUserId);
         if (dashboardsAccessByUserId && dashboardsAccessByUserId.data) {
-            if (dashboardsAccessByUserId.data.dashboardIds &&
-                dashboardsAccessByUserId.data.dashboardIds.length > 0) {
+            const data: any = dashboardsAccessByUserId.data;
+            if (data.dashboardIds &&
+                data.dashboardIds.length > 0) {
                 let modifiedDashboards = [];
                 if (dashboards && dashboards.length > 0) {
                     modifiedDashboards = [...dashboards];
                 }
 
-                dashboardsAccessByUserId.data.dashboardIds.forEach((dashboardId) => {
+                data?.dashboardIds.forEach((dashboardId: any) => {
                     if (dashboardId == null) return;
                     modifiedDashboards.push(
                         {
@@ -196,8 +197,8 @@ const SelectedDashBoard: React.FC<Props> = () => {
                     );
 
                 });
-                setDashboardsAccess(dashboardsAccessByUserId.data);
-                setDashboardsAccessIds(dashboardsAccessByUserId.data.dashboardIds);
+                setDashboardsAccess(data);
+                setDashboardsAccessIds(data.dashboardIds);
                 setCallQueryGetDashBoardsAccessByUserId(INIT_QUERY_KEY);
             } else if (dashboardsAccessByUserId && !dashboardsAccessByUserId.data) {
                 console.log("No dashboards access found for userId: " + userId);
@@ -219,13 +220,13 @@ const SelectedDashBoard: React.FC<Props> = () => {
     }, [accessibleDashboards]);
 
     useEffect(() => {
-        if(selectedDashboard!==undefined){
-        setLoading(false);
+        if (selectedDashboard !== undefined) {
+            setLoading(false);
         }
-    }, [selectedDashboard]);    
+    }, [selectedDashboard]);
 
     useEffect(() => {
-        if (!updateDashboardDone
+        if (updateDashboardDone
         ) {
             setCallQueryGetDashBoardByDashBoardId(Constants.serviceKeys.queryGetDashBoardByDashBoardId + dashboardId);
             setVisible(false);
@@ -244,7 +245,7 @@ const SelectedDashBoard: React.FC<Props> = () => {
                 <View style={{ width: "100%" }}>
                     <View style={{ flexDirection: "row" }}>
                         {dashboards && dashboards.length > 0 && <Dropdown
-                            style={[styles.dropdown, { width: "90%", margin:"auto", marginTop:25 }]}
+                            style={[styles.dropdown, { width: "90%", margin: "auto", marginTop: 25 }]}
                             placeholderStyle={styles.placeholderStyle}
                             selectedTextStyle={styles.selectedTextStyle}
                             iconStyle={styles.iconStyle}
@@ -261,13 +262,12 @@ const SelectedDashBoard: React.FC<Props> = () => {
                         />}
                     </View>
 
- {!loading && (!selectedDashboard || !selectedDashboard.widgets || Object.keys(selectedDashboard.widgets)?.length <= 0) && <View style={{margin:"auto", alignSelf:"center", marginTop:150}}>
-                        <Text
-                            style={{
-                                margin: 'auto',
-                                marginTop:120,
-                                fontSize:16
-                            }}>Add Widgets</Text>
+                    {!loading && (!selectedDashboard || !selectedDashboard.widgets || Object.keys(selectedDashboard.widgets)?.length <= 0) && <View style={{ margin: "auto", alignSelf: "center", marginTop: 150 }}>
+                        <Chip textStyle={{ color: MD2Colors.white, fontSize: 12 }} style={{
+                            backgroundColor: MD2Colors.redA200
+                        }} onPress={() => {
+                            setVisible(true);
+                        }}>Add Widgets</Chip>
                     </View>}
 
                     <Portal>
@@ -300,7 +300,7 @@ const SelectedDashBoard: React.FC<Props> = () => {
                                         setVisible(false);
                                     }}></IconButton>
                             </View>
-                           
+
                             <Divider />
 
                             <FlatList
@@ -322,7 +322,7 @@ const SelectedDashBoard: React.FC<Props> = () => {
                                                 }}
                                                 icon={() => <Icon source='plus' size={18} color={MD2Colors.white} />}
                                                 onPress={async () => {
-
+                                                    console.log("Adding widget: ");
                                                     if (dashboardId) {
                                                         let toModifyDashboard = selectedDashboard;
 
@@ -361,7 +361,7 @@ const SelectedDashBoard: React.FC<Props> = () => {
                         </Modal>
                     </Portal>
 
-                    
+
                     <View style={{ alignSelf: "center", marginTop: 10, width: "100%" }}>
 
                         <View style={{ width: "100%" }}>
@@ -390,17 +390,17 @@ const SelectedDashBoard: React.FC<Props> = () => {
                         </View>
                     </View>
                 </View>}
- <FAB
-    icon={() => <Icon source='plus' size={25} color={MD2Colors.white} />}
-    style={{
-        position: 'absolute',
-    margin: 16,
-    right: 0,
-    bottom: 0,
-        backgroundColor:MD2Colors.redA200
-}}
-    onPress={() =>  setVisible(true)}
-  />
+            {selectedDashboard && selectedDashboard.widgets && Object.keys(selectedDashboard.widgets)?.length > 0 && <FAB
+                icon={() => <Icon source='plus' size={25} color={MD2Colors.white} />}
+                style={{
+                    position: 'absolute',
+                    margin: 16,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: MD2Colors.redA200
+                }}
+                onPress={() => setVisible(true)}
+            />}
         </SafeAreaView>
     );
 };
