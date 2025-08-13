@@ -393,12 +393,12 @@ const SelectedDashBoard: React.FC<Props> = () => {
             {selectedDashboard && selectedDashboard.widgets && Object.keys(selectedDashboard.widgets)?.length > 0 && <FAB
                
                icon={() => <Icon source='plus' size={25} color={MD2Colors.white} />}
-                size={'small'}
+                size={'medium'}
                 style={{
                     position: 'absolute',
                     margin: 16,
                     right: 0,
-                    bottom: 30,
+                    bottom: 80,
                     backgroundColor: MD2Colors.redA200
                 }}
                 onPress={() => setVisible(true)}
