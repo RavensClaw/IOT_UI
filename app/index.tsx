@@ -39,21 +39,17 @@ export default function Index() {
         if (user) {
           console.log('User is logged in:', user);
           setLoggedIn(true);
-
-
           if (isOnline) {
             syncOffline().catch((error) => {
-              console.error('Error syncing offline data:', error);
             }).finally(() => {
-              console.log("Sync completed");
               setAppIsReady(true);
             });
           }
-
         } else {
           setLoggedIn(false);
         }
       }).catch(() => {
+        setAppIsReady(true);
         setLoggedIn(false);
       }).finally(() => {
         setLoading(false);
@@ -63,12 +59,14 @@ export default function Index() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: MD2Colors.grey100 }}>
       <StackScreenHeader showBackButton={false} showHeader={false}></StackScreenHeader>
-      {appIsReady ? isLoggedIn ? <Redirect href='/screens/dashboards' /> : <Redirect href='/screens/login' />
-        : <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', margin: 'auto' }}>
-          <ActivityIndicator animating={true} size="large" color={MD2Colors.blue800} />
-          <Text style={{ marginTop: 20, fontSize: 16, color: MD2Colors.blue800 }}>Syncing...</Text>
+      {loading ? <ActivityIndicator animating={loading} size="large" color={MD2Colors.blue800} style={{ margin: 'auto', marginTop:350 }} /> :
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', alignSelf: 'center', width: '100%',minHeight:100 }}>
+          {appIsReady ? isLoggedIn ? <Redirect href='/screens/dashboards' /> : <Redirect href='/screens/login' />
+            : <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', margin: 'auto' }}>
+              <ActivityIndicator animating={true} size="large" color={MD2Colors.blue800} />
+              <Text style={{ marginTop: 20, fontSize: 16, color: MD2Colors.blue800 }}>Syncing...</Text>
+            </View>}
         </View>}
-
     </SafeAreaView>
 
   );
