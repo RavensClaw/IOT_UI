@@ -1,6 +1,6 @@
 import { useFocusEffect, useRouter } from "expo-router";
 import { SafeAreaView, View, Text } from "react-native";
-import { ActivityIndicator, Chip, Dialog, Divider, FAB, Icon, IconButton, List, MD2Colors, Modal, Portal, TextInput } from "react-native-paper";
+import { ActivityIndicator, Chip, Dialog, Divider, FAB, Icon, IconButton, BottomNavigation, MD2Colors, Modal, Portal, TextInput } from "react-native-paper";
 import { useCallback, useEffect, useState } from "react";
 import { StackScreenHeader } from "@/components/StackScreenHeader";
 import DashboardModel from "@/models/DashboardModel";
@@ -117,7 +117,7 @@ const Dashboards = () => {
                 setDashboardsAccess(dashboardsAccessByUserId.data);
                 setNonModifiableDashboardAccess(dashboardsAccessByUserId.data);
                 setDashboardsAccessIds(data.dashboardIds);
-        //        setCallQueryGetDashBoardsAccessByUserId(INIT_QUERY_KEY);
+                setCallQueryGetDashBoardsAccessByUserId(INIT_QUERY_KEY);
             }
         } else {
             console.log("No dashboards access found for userId: " + userId);
@@ -204,6 +204,7 @@ const Dashboards = () => {
         if (updateDashboardDone) {
             setCallQueryGetDashBoardsAccessByUserId(Constants.serviceKeys.queryGetDashboardsAccessByUserId + userId);
             setUpdateDashboardDone(false);
+            setLoading(false);
         }
     }, [updateDashboardDone]);
 
@@ -563,11 +564,12 @@ const Dashboards = () => {
                 </View>}
             {dashboards && dashboards?.length > 0 && <FAB
                 icon={() => <Icon source='plus' size={25} color={MD2Colors.white} />}
+                size={'small'}
                 style={{
                     position: 'absolute',
                     margin: 16,
                     right: 0,
-                    bottom: 0,
+                    bottom: 30,
                     backgroundColor: MD2Colors.indigoA200
                 }}
                 onPress={() => setVisible(true)}
