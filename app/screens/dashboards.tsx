@@ -71,6 +71,7 @@ const Dashboards = () => {
     useFocusEffect(
         useCallback(() => {
             //AsyncStorage.clear();
+            setUserId(INIT_USERNAME);
             setCallQueryGetDashBoardsAccessByUserId(INIT_QUERY_KEY);
             setCallQueryGetMultipleDashboardsByDashboardIds(INIT_QUERY_KEY);
 
@@ -82,12 +83,16 @@ const Dashboards = () => {
             getCurrentUser().then((user) => {
                 const userId: any = user.userId;
                 setUserId(userId);
-                setCallQueryGetDashBoardsAccessByUserId(Constants.serviceKeys.queryGetDashboardsAccessByUserId + userId);
-                console.log("User ID: " + userId);
             })
 
         }, [])
     );
+
+    useEffect(() => {
+        if(userId && userId !== INIT_USERNAME) {
+            setCallQueryGetDashBoardsAccessByUserId(Constants.serviceKeys.queryGetDashboardsAccessByUserId + userId);
+        }
+    },[userId])
 
     useEffect(() => {
         if(callQueryGetDashBoardsAccessByUserId !== INIT_QUERY_KEY.toString()) {
