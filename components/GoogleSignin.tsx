@@ -1,18 +1,26 @@
-import { signInWithRedirect } from "aws-amplify/auth";
-
+import { fetchAuthSession, signInWithRedirect } from "aws-amplify/auth";
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
-const GoogleSignInButton = () => {
-  return (
-    <TouchableOpacity style={styles.button} onPress={() => {
-      signInWithRedirect({ provider: "Google" }).then(() => {
+interface GoogleSignInButtonProps {
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>;
+}
 
-      }).catch((error) => {
+const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({ setLoading }) => {
+  return (
+    <TouchableOpacity style={styles.button} onPress={async () => {
+      try {
+        setLoading(true); 
+        await signInWithRedirect({ provider: "Google" });
+        await fetchAuthSession();
+
+      } catch (error: any) {
         console.error(error);
         console.error("Google Sign-In Error: ", error);
-      });
+      } finally {
+        //setLoading(false);
+      }
     }}>
       {/* Google Icon SVG */}
       <View style={styles.iconContainer}>

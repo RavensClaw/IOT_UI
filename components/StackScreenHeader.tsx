@@ -66,10 +66,10 @@ export const StackScreenHeader: React.FC<Props> = ({ title, showHeader = true, s
                     <Menu.Item leadingIcon={"home"} onPress={() => {
                       closeMenu();
                       router.push('/screens/dashboards');
-                    }} title="Dashboard" />
+                    }} title="Home" />
                     <Divider />
-                    <Menu.Item onPress={() => { }} title="Item 2" />
-                    <Divider />
+                    {/*<Menu.Item onPress={() => { }} title="Item 2" />
+                    <Divider />*/}
                     <Menu.Item leadingIcon={"logout"} onPress={() => {
                         closeMenu();
                         router.push('/screens/logout');

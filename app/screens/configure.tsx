@@ -109,7 +109,7 @@ const Configure = () => {
                 setPossibleInputStates(config[widget.widgetType].possible_states);
                 let outputStates: any = [];
                 config[widget.widgetType]?.possible_states?.map((state) => {
-                    if (state.value && state.value.trim() !== 'CHECK_STATUS') {
+                    if (state?.value && state.value?.trim() !== 'CHECK_STATUS') {
                         outputStates.push(state);
                     }
                 });
@@ -234,14 +234,14 @@ let paramsConstruction = '';
         }
     }, [responseOutput]);
 
-        useEffect(() => {
-            if (!updateDashboardDone
-            ) {
-                setCallQueryGetDashBoardByDashBoardId(Constants.serviceKeys.queryGetDashBoardByDashBoardId + dashboardId);
-                setLoadingPage(false);
-                setUpdateDashboardDone(false);
-            }
-        }, [updateDashboardDone]);
+    useEffect(() => {
+        if (!updateDashboardDone
+        ) {
+            setCallQueryGetDashBoardByDashBoardId(Constants.serviceKeys.queryGetDashBoardByDashBoardId + dashboardId);
+            setLoadingPage(false);
+            setUpdateDashboardDone(false);
+        }
+    }, [updateDashboardDone]);
 
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: MD2Colors.white, width: "100%" }}>
@@ -286,7 +286,7 @@ let paramsConstruction = '';
                                     icon={() => <Icon source='information-outline' size={20} color={MD2Colors.red400} />}>{apiErrorMessage}</Chip>}
                                 {widget && widget.inputStates && widget.inputStates[inputStateName] && <View style={{ flexDirection: "row" }}>
                                     <Dropdown
-                                        style={styles.dropdown}
+                                        style={[styles.dropdown, { backgroundColor: !edit ? MD2Colors.grey200 : MD2Colors.white }]}
                                         placeholderStyle={styles.placeholderStyle}
                                         selectedTextStyle={styles.selectedTextStyle}
                                         iconStyle={styles.iconStyle}
@@ -420,11 +420,11 @@ let paramsConstruction = '';
                                         }}>
                                         Send
                                     </Button>
-                                    <IconButton mode="outlined" style={{ margin: "auto" }} iconColor={MD2Colors.yellow700} size={15}
+                                    {!edit && <IconButton mode="outlined" style={{ margin: "auto" }} iconColor={MD2Colors.yellow700} size={15}
                                         icon={"circle-edit-outline"}
                                         onPress={() => {
                                             setEdit(true);
-                                        }}></IconButton>
+                                        }}></IconButton>}
                                 </View>}
                                 {widget && widget.inputStates && widget.inputStates[inputStateName] && <View style={{ height: 50 }}>
                                     <TextInput
@@ -625,7 +625,7 @@ let paramsConstruction = '';
                                     <Text style={{ fontSize: 12, fontWeight: 700, marginRight: "auto", marginTop: 15, margin: 5 }}>Output Conditions</Text>
                                     {inputStateName === 'CHECK_STATUS' && <Dropdown
                                         disable={!edit}
-                                        style={[styles.dropdown, { width: 200 }]}
+                                        style={[styles.dropdown, { width: 200, backgroundColor: !edit ? MD2Colors.grey200 : MD2Colors.white }]}
                                         placeholderStyle={styles.placeholderStyle}
                                         selectedTextStyle={styles.selectedTextStyle}
                                         iconStyle={styles.iconStyle}

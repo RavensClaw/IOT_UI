@@ -1,11 +1,11 @@
 import { useFocusEffect, useRouter } from "expo-router";
 import { SafeAreaView, View, Text } from "react-native";
 import { ActivityIndicator, Chip, Dialog, Divider, FAB, Icon, IconButton, BottomNavigation, MD2Colors, Modal, Portal, TextInput } from "react-native-paper";
-import { useCallback, useEffect, useState } from "react";
+import { use, useCallback, useEffect, useState } from "react";
 import { StackScreenHeader } from "@/components/StackScreenHeader";
 import DashboardModel from "@/models/DashboardModel";
 import ObjectID from "bson-objectid";
-import { getCurrentUser } from "aws-amplify/auth/cognito";
+import { getCurrentUser, fetchAuthSession } from "aws-amplify/auth";
 import { Constants } from "@/constants/constants";
 import {
     mutationCreateDashboard, mutationCreateDashboardsAccess,
@@ -15,6 +15,7 @@ import {
     queryGetDashBoardsAccessByUserId,
     queryGetMultipleDashboardsByDashboardIds
 } from "@/service/servicehook";
+import useCurrentUser from "../hooks/useCurrentUser";
 
 const Dashboards = () => {
 
@@ -68,66 +69,79 @@ const Dashboards = () => {
 
 
     const router = useRouter();
-    useFocusEffect(
-        useCallback(() => {
-            //AsyncStorage.clear();
-            setUserId(INIT_USERNAME);
-            setCallQueryGetDashBoardsAccessByUserId(INIT_QUERY_KEY);
-            setCallQueryGetMultipleDashboardsByDashboardIds(INIT_QUERY_KEY);
+    const { user, userLoading, error } = useCurrentUser();
 
-            setDashboardsAccess(null);
-            setNonModifiableDashboardAccess(null);
-            setDashboardsAccessIds([]);
+    const fetchUser = async () => {
+        try {
+            await fetchAuthSession();
+            const currentUser = await getCurrentUser();
+            setUserId(currentUser.userId);
+        } catch (error) {
+            console.log('No signed-in user:', error);
+        }
+    }
 
-            setLoading(true);
-            getCurrentUser().then((user) => {
-                const userId: any = user.userId;
-                setUserId(userId);
-            })
 
-        }, [])
-    );
+
+    useFocusEffect(useCallback(() => {
+        //AsyncStorage.clear();
+        setUserId(INIT_USERNAME);
+        setCallQueryGetDashBoardsAccessByUserId(INIT_QUERY_KEY);
+        setCallQueryGetMultipleDashboardsByDashboardIds(INIT_QUERY_KEY);
+        setDashboardsAccess(null);
+        setNonModifiableDashboardAccess(null);
+        setDashboardsAccessIds([]);
+        setLoading(true);
+        fetchUser();
+    }, []));
 
     useEffect(() => {
-        if(userId && userId !== INIT_USERNAME) {
+        if (!userLoading) {
+            fetchUser()
+        }
+    }, [userLoading]);
+
+    useEffect(() => {
+        if (userId && userId !== INIT_USERNAME) {
             setCallQueryGetDashBoardsAccessByUserId(Constants.serviceKeys.queryGetDashboardsAccessByUserId + userId);
         }
-    },[userId])
+    }, [userId])
 
     useEffect(() => {
-        if(callQueryGetDashBoardsAccessByUserId !== INIT_QUERY_KEY.toString()) {
-        if (dashboardsAccessByUserId && dashboardsAccessByUserId?.data) {
-            let data: any = dashboardsAccessByUserId.data
-            if (data.dashboardIds &&
-                data.dashboardIds.length > 0) {
-                let modifiedDashboards = [];
-                if (dashboards && dashboards.length > 0) {
-                    modifiedDashboards = [...dashboards];
+        if (callQueryGetDashBoardsAccessByUserId !== INIT_QUERY_KEY.toString()) {
+            if (dashboardsAccessByUserId && dashboardsAccessByUserId?.data) {
+                let data: any = dashboardsAccessByUserId.data
+                if (data.dashboardIds &&
+                    data.dashboardIds.length > 0) {
+                    let modifiedDashboards = [];
+                    if (dashboards && dashboards.length > 0) {
+                        modifiedDashboards = [...dashboards];
+                    }
+
+                    data.dashboardIds.forEach((dashboardId: any) => {
+                        if (dashboardId == null) return;
+                        modifiedDashboards.push(
+                            {
+                                dashboardId: dashboardId,
+                                label: `Dashboard ${dashboardId}`,
+                                userId: userId,
+                                readOnly: false,
+                                widgets: {}
+                            }
+                        );
+
+                    });
+
+                    setDashboardsAccess(dashboardsAccessByUserId.data);
+                    setNonModifiableDashboardAccess(dashboardsAccessByUserId.data);
+                    setDashboardsAccessIds(data.dashboardIds);
+                    setCallQueryGetDashBoardsAccessByUserId(INIT_QUERY_KEY);
                 }
-
-                data.dashboardIds.forEach((dashboardId: any) => {
-                    if (dashboardId == null) return;
-                    modifiedDashboards.push(
-                        {
-                            dashboardId: dashboardId,
-                            label: `Dashboard ${dashboardId}`,
-                            userId: userId,
-                            readOnly: false,
-                            widgets: {}
-                        }
-                    );
-
-                });
-
-                setDashboardsAccess(dashboardsAccessByUserId.data);
-                setNonModifiableDashboardAccess(dashboardsAccessByUserId.data);
-                setDashboardsAccessIds(data.dashboardIds);
-                setCallQueryGetDashBoardsAccessByUserId(INIT_QUERY_KEY);
+            } else {
+                console.log("No dashboards access found for userId: " + userId);
+                // setLoading(false);
             }
-        } else {
-            console.log("No dashboards access found for userId: " + userId);
-           // setLoading(false);
-        }}
+        }
 
     }, [dashboardsAccessByUserId]);
 
@@ -175,7 +189,6 @@ const Dashboards = () => {
 
 
     useEffect(() => {
-        console.log('....................................................');
         if (updateDashboardAccessDone) {
             console.log(':::::::::::::::::::::::::::::::::::::::::::::::');
 
@@ -234,7 +247,7 @@ const Dashboards = () => {
 
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: MD2Colors.grey200 }}>
-            <StackScreenHeader title={"Dashboards"} showBackButton={false}></StackScreenHeader>
+            <StackScreenHeader title={"IoT Connect"} showBackButton={false}></StackScreenHeader>
             {loading ? <ActivityIndicator style={{ margin: 'auto' }} size={"large"}></ActivityIndicator> :
 
                 <View style={{ width: "100%" }}>
@@ -573,8 +586,8 @@ const Dashboards = () => {
                 style={{
                     position: 'absolute',
                     margin: 16,
-                    right: 0,
-                    bottom: 80,
+                    right: 10,
+                    bottom: 70,
                     backgroundColor: MD2Colors.indigoA200
                 }}
                 onPress={() => setVisible(true)}

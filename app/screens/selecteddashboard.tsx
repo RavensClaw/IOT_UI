@@ -57,7 +57,7 @@ const SelectedDashBoard: React.FC<Props> = () => {
 
 
     const router = useRouter();
-    const INIT: any = {};
+    const INIT: any = undefined;
     const [selectedDashboard, setSelectedDashboard] = useState(INIT);
     const [nonModifiableDashboard, setNonModifiableDashboard] = useState(INIT);
     const [dashboardError, setDashboardError] = useState(INIT);
@@ -216,6 +216,7 @@ const SelectedDashBoard: React.FC<Props> = () => {
         if (callQueryGetMultipleDashboardsByDashboardIds !== INIT_QUERY_KEY.toString() && accessibleDashboards && accessibleDashboards.length > 0) {
             setDashboards(accessibleDashboards);
             setCallQueryGetMultipleDashboardsByDashboardIds(INIT_QUERY_KEY);
+            
         }
     }, [accessibleDashboards]);
 
@@ -239,7 +240,7 @@ const SelectedDashBoard: React.FC<Props> = () => {
 
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: MD2Colors.grey200 }}>
-            <StackScreenHeader title={"SelectedDashBoard"} showBackButton={false}></StackScreenHeader>
+            <StackScreenHeader title={"Selected Dashboard"} showBackButton={false}></StackScreenHeader>
             {loading ? <ActivityIndicator style={{ margin: 'auto' }} size={"large"}></ActivityIndicator> :
 
                 <View style={{ width: "100%" }}>
@@ -283,7 +284,7 @@ const SelectedDashBoard: React.FC<Props> = () => {
 
                             <View style={{ alignItems: "center", flexDirection: "row", marginBottom: 20, margin: "auto", width: "95%" }}>
                                 <View style={{ alignSelf: 'flex-start', marginLeft: 10 }}>
-                                    <Text style={{ color: MD2Colors.white, borderRadius: 5, fontSize: 14, fontWeight: "600", backgroundColor: MD2Colors.grey700, padding: 8 }}>Add Widget</Text>
+                                    <Text style={{ color: MD2Colors.grey800, borderRadius: 5, fontSize: 14, padding: 8, fontWeight: "600" }}>Add Widget</Text>
                                 </View>
 
 
@@ -397,8 +398,8 @@ const SelectedDashBoard: React.FC<Props> = () => {
                 style={{
                     position: 'absolute',
                     margin: 16,
-                    right: 0,
-                    bottom: 80,
+                    right: 10,
+                    bottom: 70,
                     backgroundColor: MD2Colors.redA200
                 }}
                 onPress={() => setVisible(true)}

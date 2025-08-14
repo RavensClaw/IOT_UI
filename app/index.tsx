@@ -5,7 +5,7 @@ import { Amplify } from 'aws-amplify';
 import { Platform } from "react-native";
 import { cognitoUserPoolsTokenProvider, getCurrentUser } from "@aws-amplify/auth/cognito";
 import { CookieStorage, defaultStorage } from "aws-amplify/utils";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { StackScreenHeader } from "@/components/StackScreenHeader";
 import { ActivityIndicator, MD2Colors } from "react-native-paper";
 import { syncOffline } from "@/service/servicehook";
@@ -14,7 +14,6 @@ import { onlineManager } from '@tanstack/react-query'
 const isWeb = Platform.OS === 'web';
 
 Amplify.configure(amplify_outputs);
-
 if (isWeb) {
   cognitoUserPoolsTokenProvider.setKeyValueStorage(new CookieStorage({
     expires: 1
@@ -32,8 +31,7 @@ export default function Index() {
 
   const isOnline = onlineManager.isOnline();
 
-  useFocusEffect(
-    useCallback(() => {
+  useEffect(() => {
       setLoading(true);
       getCurrentUser().then((user) => {
         if (user) {
@@ -54,7 +52,7 @@ export default function Index() {
       }).finally(() => {
         setLoading(false);
       })
-    }, []))//[] here means called only once as nothing changes
+    }, [])//[] here means called only once as nothing changes
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: MD2Colors.grey100 }}>

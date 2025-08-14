@@ -13,7 +13,7 @@ export const queryGetDashBoardsAccessByUserId = (key: QueryKey, userId: string) 
         queryKey: [key],
         enabled: (
             (key.toString().indexOf(Constants.serviceKeys.queryGetDashboardsAccessByUserId) > -1) &&
-            userId.trim() !== ''),
+            userId?.trim() !== ''),
         networkMode: "always",
         queryFn: async () => {
             const { data: dashboardsAccess, errors: errors } = await client.models.DashboardsAccess.get({
@@ -167,7 +167,7 @@ export const queryGetDashBoardByDashBoardId = (key: QueryKey, dashboardId: strin
         queryKey: [key],
         enabled: (
             (key.toString().indexOf(Constants.serviceKeys.queryGetDashBoardByDashBoardId) > -1) &&
-            dashboardId.trim() !== ''),
+            dashboardId?.trim() !== ''),
         networkMode: "always",
         queryFn: async () => {
             const { data: dashboard, errors: errors } = await client.models.Dashboard.get({

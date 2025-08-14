@@ -40,7 +40,7 @@ const OutputConditionMappingItem: React.FC<Props> = ({
         <View style={index !== 0 ? { flexDirection: "row" } : { flexDirection: "row", marginLeft: "auto" }}>
             {index !== 0 && <Dropdown
                 disable={!edit}
-                style={[styles.dropdown, { margin: "auto" }]}
+                style={[styles.dropdown, { margin: "auto", backgroundColor: !edit ? MD2Colors.grey100 : MD2Colors.white }]}
                 placeholderStyle={styles.placeholderStyle}
                 selectedTextStyle={styles.selectedTextStyle}
                 iconStyle={styles.iconStyle}
@@ -136,7 +136,7 @@ const OutputConditionMappingItem: React.FC<Props> = ({
         </View>
         <Dropdown
             disable={!edit}
-            style={styles.dropdown}
+            style={[styles.dropdown, { minWidth: 160, backgroundColor: !edit ? MD2Colors.grey100 : MD2Colors.white }]}
             placeholderStyle={styles.placeholderStyle}
             selectedTextStyle={styles.selectedTextStyle}
             iconStyle={styles.iconStyle}
@@ -175,7 +175,7 @@ const OutputConditionMappingItem: React.FC<Props> = ({
 
         <Dropdown
             disable={!edit}
-            style={[styles.dropdown, { minWidth: 160, }]}
+            style={[styles.dropdown, { minWidth: 160, backgroundColor: !edit ? MD2Colors.grey100 : MD2Colors.white }]}
             placeholderStyle={styles.placeholderStyle}
             selectedTextStyle={styles.selectedTextStyle}
             iconStyle={styles.iconStyle}
@@ -215,7 +215,7 @@ const OutputConditionMappingItem: React.FC<Props> = ({
             readOnly={!edit}
             label="Value"
             value={outputConditionItem.value1}
-            style={{ fontSize: 12, width: "90%", margin: "auto" }}
+            style={{ fontSize: 12, width: "90%", margin: "auto", backgroundColor: !edit ? MD2Colors.grey100 : MD2Colors.white }}
             mode="outlined"
             onChangeText={text => {
                 let modifiedWidget = { ...widget };
@@ -248,7 +248,7 @@ const OutputConditionMappingItem: React.FC<Props> = ({
                 readOnly={!edit}
                 label="Value"
                 value={outputConditionItem.value2}
-                style={{ fontSize: 12, width: "90%", margin: "auto" }}
+                style={{ fontSize: 12, width: "90%", margin: "auto",backgroundColor: !edit ? MD2Colors.grey100 : MD2Colors.white }}
                 mode="outlined"
                 onChangeText={text => {
                     let modifiedWidget = { ...widget };

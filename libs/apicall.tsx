@@ -19,7 +19,7 @@ export const makeApiCall = (
         outputState1 = state.stateName;
     }
     let apiURL: string = state.apiUrl;
-    if (apiURL && apiURL.trim() !== '') {
+    if (apiURL && apiURL?.trim() !== '') {
 
         const method = state.method;
         const headers = state.headers;
