@@ -12,18 +12,17 @@ import { ActivityIndicator, Button, Chip, Dialog, Icon, IconButton, MD2Colors, P
 export type Props = {
     widget: WidgetModel;
     dashboard: any;
-    
+
     updateDashboard: any;
-updateDashboardDone: boolean;
+    updateDashboardDone: boolean;
 };
 
 
 const PushButtonWidget: React.FC<Props> = ({
     widget,
     dashboard,
-
     updateDashboard,
-updateDashboardDone }) => {
+    updateDashboardDone }) => {
 
     // State to track if the card is being dragged
     const init: string = '';
@@ -32,6 +31,7 @@ updateDashboardDone }) => {
     const [outputState, setOutputState] = useState(init);
     const [edit, setEdit] = useState(false);
     const [loadingRequest, setLoadingRequest] = useState(true);
+    const [actionRequest, setActionRequest] = useState(true);
     const [widgetCopy, setWidget] = useState(widget);
     const [hasError, setHasError] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
@@ -46,22 +46,24 @@ updateDashboardDone }) => {
                 state,
                 setInputState,
                 setOutputState,
-                setLoadingRequest,
+                setActionRequest,
                 setHasError,
                 setErrorMessage,
                 "PRESSIN",
                 "PRESSOUT");
         } else {
             setLoadingRequest(false);
+            setActionRequest(false);
         }
     }, []));
 
-    
-        useEffect(() => {
-                if(updateDashboardDone){
-                    setEdit(false);
-                }
-            }, [updateDashboardDone])
+
+    useEffect(() => {
+        if (updateDashboardDone) {
+            setEdit(false);
+            setLoadingRequest(false);
+        }
+    }, [updateDashboardDone])
 
     return (<View style={[styles.container, { borderColor: MD2Colors.purple300 }]}>
         <Portal>
@@ -142,69 +144,71 @@ updateDashboardDone }) => {
                     textStyle={styles.errorMessageText}
                     icon={() => <Icon source='information-outline' size={20} color={MD2Colors.red400} />}>{errorMessage}</Chip>}
 
-                <View style={{ flexDirection: "row" }}>
-                    <View style={{ margin: 'auto' }}>
-                        <Button mode='elevated'
-                            style={{
-                                borderRadius: 5,
-                                backgroundColor: inputState === 'PRESSIN' ? MD2Colors.green400 : inputState === 'PRESSOUT' ? MD2Colors.red300 : MD2Colors.grey300
-                            }}
 
-                            textColor={MD2Colors.white}
-                            onPressIn={() => {
-                                setLoadingRequest(true);
-                                setHasError(false);
-                                if (widget.inputStates && widget.inputStates['PRESSIN'] && widget.inputStates['PRESSIN'].apiUrl) {
-                                    const statePRESSIN = widget.inputStates['PRESSIN'];
-                                    makeApiCall(
-                                        statePRESSIN,
-                                        setInputState,
-                                        setOutputState,
-                                        setLoadingRequest,
-                                        setHasError,
-                                        setErrorMessage,
-                                        "",
-                                        "");
-                                } else {
-                                    setLoadingRequest(false);
-                                    setOutputState('ERROR');
-                                    setHasError(true);
-                                    setErrorMessage('Please configure PRESSIN state');
-                                }
+                {actionRequest ? <ActivityIndicator style={{ marginTop: 50 }}></ActivityIndicator> :
+                    <View style={{ flexDirection: "row" }}>
+                        <View style={{ margin: 'auto' }}>
+                            <Button mode='elevated'
+                                style={{
+                                    borderRadius: 5,
+                                    backgroundColor: inputState === 'PRESSIN' ? MD2Colors.green400 : inputState === 'PRESSOUT' ? MD2Colors.red300 : MD2Colors.grey300
+                                }}
 
-                            }}
-                            onPressOut={() => {
-                                setLoadingRequest(true);
-                                setHasError(false);
-                                if (widget.inputStates && widget.inputStates['PRESSOUT'] && widget.inputStates['PRESSOUT'].apiUrl) {
-                                    const statePRESSOUT = widget.inputStates['PRESSOUT'];
-                                    makeApiCall(
-                                        statePRESSOUT,
-                                        setInputState,
-                                        setOutputState,
-                                        setLoadingRequest,
-                                        setHasError,
-                                        setErrorMessage,
-                                        "",
-                                        "");
-                                } else {
-                                    setLoadingRequest(false);
-                                    setOutputState('ERROR');
-                                    setHasError(true);
-                                    setErrorMessage('Please configure PRESSOUT state');
-                                }
-                            }}
-                            disabled={dashboard ? false : true}>{inputState ? inputState : "PRESS IN/PRESS OUT"}</Button>
-                    </View>
-                    <View style={styles.onOffIconContainer}>
-                        <Text style={styles.onOffText}>{outputState}</Text>
-                        <View style={styles.onOffIcon}>
-                            <Icon source="circle" size={24} color={
-                                outputState === 'PRESSIN' ? MD2Colors.green400 : outputState === 'PRESSOUT' ? MD2Colors.red400 : outputState === 'ERROR' ? MD2Colors.orange400 : MD2Colors.grey400
-                            } />
+                                textColor={MD2Colors.white}
+                                onPressIn={() => {
+                                    setActionRequest(true);
+                                    setHasError(false);
+                                    if (widget.inputStates && widget.inputStates['PRESSIN'] && widget.inputStates['PRESSIN'].apiUrl) {
+                                        const statePRESSIN = widget.inputStates['PRESSIN'];
+                                        makeApiCall(
+                                            statePRESSIN,
+                                            setInputState,
+                                            setOutputState,
+                                            setActionRequest,
+                                            setHasError,
+                                            setErrorMessage,
+                                            "",
+                                            "");
+                                    } else {
+                                        setActionRequest(false);
+                                        setOutputState('ERROR');
+                                        setHasError(true);
+                                        setErrorMessage('Please configure PRESSIN state');
+                                    }
+
+                                }}
+                                onPressOut={() => {
+                                    setActionRequest(true);
+                                    setHasError(false);
+                                    if (widget.inputStates && widget.inputStates['PRESSOUT'] && widget.inputStates['PRESSOUT'].apiUrl) {
+                                        const statePRESSOUT = widget.inputStates['PRESSOUT'];
+                                        makeApiCall(
+                                            statePRESSOUT,
+                                            setInputState,
+                                            setOutputState,
+                                            setActionRequest,
+                                            setHasError,
+                                            setErrorMessage,
+                                            "",
+                                            "");
+                                    } else {
+                                        setActionRequest(false);
+                                        setOutputState('ERROR');
+                                        setHasError(true);
+                                        setErrorMessage('Please configure PRESSOUT state');
+                                    }
+                                }}
+                                disabled={dashboard ? false : true}>{inputState ? inputState : "PRESS IN/PRESS OUT"}</Button>
                         </View>
-                    </View>
-                </View>
+                        <View style={styles.onOffIconContainer}>
+                            <Text style={styles.onOffText}>{outputState}</Text>
+                            <View style={styles.onOffIcon}>
+                                <Icon source="circle" size={24} color={
+                                    outputState === 'PRESSIN' ? MD2Colors.green400 : outputState === 'PRESSOUT' ? MD2Colors.red400 : outputState === 'ERROR' ? MD2Colors.orange400 : MD2Colors.grey400
+                                } />
+                            </View>
+                        </View>
+                    </View>}
                 {edit && <View style={styles.saveCancelContainer}>
                     <Chip icon={() => <Icon source="cancel" size={14} color={MD2Colors.red400} />} mode="outlined"
                         style={{
@@ -225,6 +229,7 @@ updateDashboardDone }) => {
                         textStyle={{ fontSize: 12 }}
                         onPress={async () => {
                             if (dashboard) {
+                                setLoadingRequest(true);
                                 const modifiedDashboardObject: any = {
                                     ...dashboard,
                                     widgets: {

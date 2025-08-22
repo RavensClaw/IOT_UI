@@ -696,7 +696,7 @@ let paramsConstruction = '';
                             widget.inputStates[inputStateName].outputStates &&
                             widget.inputStates[inputStateName].outputStates[outputStateName] &&
                             widget.inputStates[inputStateName].outputStates[outputStateName].conditions &&
-                            widget.inputStates[inputStateName].outputStates[outputStateName].conditions.length > 0 && <ScrollView>
+                            widget.inputStates[inputStateName].outputStates[outputStateName].conditions.length > 0 && <ScrollView style={{maxHeight:300}}>
                                 <View style={{ width: "100%", alignSelf: "center" }}>
                                     <OutputConditionsMappingList
                                         edit={edit}

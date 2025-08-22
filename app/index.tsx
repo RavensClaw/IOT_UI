@@ -10,6 +10,7 @@ import { StackScreenHeader } from "@/components/StackScreenHeader";
 import { ActivityIndicator, MD2Colors } from "react-native-paper";
 import { syncOffline } from "@/service/servicehook";
 import { onlineManager } from '@tanstack/react-query'
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const isWeb = Platform.OS === 'web';
 
@@ -33,11 +34,15 @@ export default function Index() {
 
   useEffect(() => {
       setLoading(true);
+      /*AsyncStorage.clear().catch((error) => {
+        console.error("Error clearing AsyncStorage:", error);
+      });*/
       getCurrentUser().then((user) => {
         if (user) {
           console.log('User is logged in:', user);
           setLoggedIn(true);
           if (isOnline) {
+            //setAppIsReady(true);
             syncOffline().catch((error) => {
             }).finally(() => {
               setAppIsReady(true);

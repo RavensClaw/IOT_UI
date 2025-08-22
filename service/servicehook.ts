@@ -14,8 +14,8 @@ export const queryGetDashBoardsAccessByUserId = (key: QueryKey, userId: string) 
         enabled: (
             (key.toString().indexOf(Constants.serviceKeys.queryGetDashboardsAccessByUserId) > -1) &&
             userId?.trim() !== ''),
-        networkMode: "always",
-        queryFn: async () => {
+            networkMode:'always',
+            queryFn: async () => {
             const { data: dashboardsAccess, errors: errors } = await client.models.DashboardsAccess.get({
                 userId: userId
             });
@@ -79,7 +79,11 @@ export const mutationUpdateDashboardsAccess = (
     const updateDashboardsAccessByUserId = useMutation({
         networkMode: "always",
         mutationFn: async (input: any) => {
+            console.log("INSIDE UPDATE DASHBOARDS ACCESS");
+
             const { data: updateDashboardsAccessResponse, errors: updateDashboardsAccessErrors } = await client.models.DashboardsAccess.update(input);
+            console.log("Update Dashboards Access Response: ", updateDashboardsAccessResponse);
+            console.log("Update Dashboards Access Errors: ", updateDashboardsAccessErrors);
             if (updateDashboardsAccessErrors) {
                 throw new Error(JSON.stringify(updateDashboardsAccessErrors));
             }
@@ -95,6 +99,7 @@ export const mutationUpdateDashboardsAccess = (
             if (error.toString().indexOf("network error") > -1) {
                 // Some logic to handle network error
             }
+            console.log("ERROR INSIDE CREATE/UPDATE DASHBOARD ACCESS");
 
             const getExistingDashboardsAccess = await AsyncStorage.getItem("IOT" + variables.userId);
             if (getExistingDashboardsAccess) {
@@ -109,11 +114,22 @@ export const mutationUpdateDashboardsAccess = (
                     }));
                 }
             }
+
+            
+            
             queryClient.setQueryData([Constants.serviceKeys.queryGetDashboardsAccessByUserId + variables.userId] as QueryKey, (old: any) => {
+            
+                console.log("::::::::::::::::::::::::::::::::::::::::");
+                console.log({
+                ...old,
+                dashboardIds: variables.dashboardIds
+            });
+            console.log("[][][][][][][][][][][][][][][][][][][][][][][]");
                 return {
-                    ...old,
-                    variables
-                }
+                ...old,
+                dashboardIds: variables.dashboardIds
+            }
+                
             });
         }
     })
@@ -215,7 +231,10 @@ export const mutationCreateDashboard = (
         networkMode: "always",
         mutationFn: async (input: any) => {
             setCreateDashboardDone(false);
+            console.log("INSIDE CREATE DASHBOARD");
             const { data: createDashboardResponse, errors: createDashboardErrors } = await client.models.Dashboard.create(input);
+            console.log("Create Dashboard Response: ", createDashboardResponse);
+            console.log("Create Dashboard Errors: ", createDashboardErrors);    
             if (createDashboardErrors) {
                 throw new Error(JSON.stringify(createDashboardErrors));
 
@@ -238,7 +257,7 @@ export const mutationCreateDashboard = (
             if (error.toString().indexOf("network error") > -1) {
                 // Some logic to handle network error
             }
-
+console.log("ERROR INSIDE CREATE DASHBOARD");
             await AsyncStorage.setItem("IOT" + variables.dashboardId, JSON.stringify({
                 [Constants.CREATE_DASHBOARD]: variables
             }));
@@ -255,6 +274,7 @@ export const mutationCreateDashboard = (
         },
         onSettled: async (data, variables, context) => {
             setCreateDashboardDone(true);
+            console.log("Create Dashboard Mutation Settled");
         },
     })
     return { createDashboard };
@@ -422,8 +442,9 @@ export const syncOffline = async () => {
     });
     const allCompleted: Promise<any>[] = [];
     let parsedKeys: string[] = [];
-    AsyncStorage.getAllKeys().then(async (keys) => {
-        keys.forEach(async (key) => {
+    
+AsyncStorage.getAllKeys().then(async (keys) => {
+    for (const key of keys) {
             if (key.startsWith("IOT")) {
                 try {
                     const jsonString = await AsyncStorage.getItem(key);
@@ -440,6 +461,7 @@ export const syncOffline = async () => {
                                 );
                             } else if (subKey === Constants.CREATE_DASHBOARDS_ACCESS) {
                                 const createDashboardAccessInput = jsonData[subKey];
+                                console.log("Creating Dashboard Access: ", createDashboardAccessInput);
                                 allCompleted.push(
                                     client.models.DashboardsAccess.create(createDashboardAccessInput)
                                 );
@@ -455,6 +477,7 @@ export const syncOffline = async () => {
                                 );
                             } else if (subKey === Constants.CREATE_DASHBOARD) {
                                 const createDashboardInput = jsonData[subKey];
+                                console.log("HERE");
                                 allCompleted.push(
                                     client.models.Dashboard.create(createDashboardInput)
                                 );
@@ -476,9 +499,10 @@ export const syncOffline = async () => {
                     console.error(`Error processing key ${key}:`, error);
                 }
             }
-        });
+        }
         await Promise.allSettled(allCompleted)
-            allCompleted.forEach((item, index) => {
+
+        allCompleted.forEach((item, index) => {
             const key = parsedKeys[index];
             console.log(`Removing key: ${key}`);
             Promise.resolve(item).then((result) => {

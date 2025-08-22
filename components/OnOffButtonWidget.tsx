@@ -19,8 +19,8 @@ export type Props = {
 const OnOffButtonWidget: React.FC<Props> = ({
     widget,
     dashboard,
-updateDashboard,
-updateDashboardDone }) => {
+    updateDashboard,
+    updateDashboardDone }) => {
 
     // State to track if the card is being dragged
     const init: string = '';
@@ -29,6 +29,7 @@ updateDashboardDone }) => {
     const [outputState, setOutputState] = useState(init);
     const [edit, setEdit] = useState(false);
     const [loadingRequest, setLoadingRequest] = useState(true);
+    const [actionRequest, setActionRequest] = useState(true);
     const [widgetCopy, setWidget] = useState(widget);
     const [hasError, setHasError] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
@@ -43,97 +44,101 @@ updateDashboardDone }) => {
                 state,
                 setInputState,
                 setOutputState,
-                setLoadingRequest,
+                setActionRequest,
                 setHasError,
                 setErrorMessage,
                 "ON",
                 "OFF");
         } else {
             setLoadingRequest(false);
+            setActionRequest(false);
         }
     }, []));
 
     useEffect(() => {
-        if(updateDashboardDone){
+        if (updateDashboardDone) {
             setEdit(false);
+            setLoadingRequest(false);
         }
     }, [updateDashboardDone])
 
-    return (<View style={[styles.container,{borderColor: MD2Colors.lightGreenA700}]}>
-            <Portal>
-                <Dialog
-                    visible={showConfirmDelete} onDismiss={() => { setShowConfirmDelete(false) }}
-                    style={styles.deleteDialogue}>
-                    <View style={{}}>
-                        <View style={styles.deleteMessageContainer}>
-                            <Text style={styles.size12Font}>Are you sure you want to delete the widget {widget.label}?</Text>
-                        </View>
-                        <View style={{ flexDirection: "row", alignSelf: "center" }}>
-                            <Chip
-                                textStyle={styles.size12Font}
-                                style={{ backgroundColor: MD2Colors.red200 }} onPress={() => {
-                                    setShowConfirmDelete(false);
-                                }}>No</Chip>
-                            <Chip mode='outlined'
-                                textStyle={styles.size12Font}
-                                style={{ marginLeft: 10 }} onPress={async () => {
+    return (<View style={[styles.container, { borderColor: MD2Colors.lightGreenA700 }]}>
+        <Portal>
+            <Dialog
+                visible={showConfirmDelete} onDismiss={() => { setShowConfirmDelete(false) }}
+                style={styles.deleteDialogue}>
+                <View style={{}}>
+                    <View style={styles.deleteMessageContainer}>
+                        <Text style={styles.size12Font}>Are you sure you want to delete the widget {widget.label}?</Text>
+                    </View>
+                    <View style={{ flexDirection: "row", alignSelf: "center" }}>
+                        <Chip
+                            textStyle={styles.size12Font}
+                            style={{ backgroundColor: MD2Colors.red200 }} onPress={() => {
+                                setShowConfirmDelete(false);
+                            }}>No</Chip>
+                        <Chip mode='outlined'
+                            textStyle={styles.size12Font}
+                            style={{ marginLeft: 10 }} onPress={async () => {
 
-                                    if (dashboard && dashboard.widgets) {
+                                if (dashboard && dashboard.widgets) {
 
-                                        let modifiedWidgets = { ...dashboard.widgets }
-                                        delete modifiedWidgets[widgetCopy.widgetId];
-                                        const modifiedDashboardObjectAfterDeletingWidget: any = {
-                                            ...dashboard,
-                                            widgets: modifiedWidgets
-                                        };
-                                        updateDashboard.mutate(modifiedDashboardObjectAfterDeletingWidget);
+                                    let modifiedWidgets = { ...dashboard.widgets }
+                                    delete modifiedWidgets[widgetCopy.widgetId];
+                                    const modifiedDashboardObjectAfterDeletingWidget: any = {
+                                        ...dashboard,
+                                        widgets: modifiedWidgets
+                                    };
+                                    updateDashboard.mutate(modifiedDashboardObjectAfterDeletingWidget);
+                                }
+
+                            }}>Yes</Chip>
+                    </View>
+                </View>
+            </Dialog>
+        </Portal>
+
+        {loadingRequest ? <ActivityIndicator style={{ marginTop: 50 }}></ActivityIndicator> :
+            <View>
+                <View style={{ flexDirection: "row", borderBottomWidth: 1, marginBottom: 5, borderColor: MD2Colors.grey300 }}>
+                    <View style={{ marginLeft: 20 }}>
+                        {edit ?
+                            <TextInput
+                                label="Label"
+                                mode='outlined'
+                                value={widgetCopy.label}
+                                style={styles.widgetNameTextInput}
+                                onChangeText={(text) => {
+                                    if (text) {
+                                        let modifiedWidget = { ...widgetCopy }
+                                        modifiedWidget.label = text;
+                                        setWidget(modifiedWidget);
                                     }
-
-                                }}>Yes</Chip>
-                        </View>
+                                }}
+                            /> : <Text style={styles.widgetTitle}>{widgetCopy.label ? widgetCopy.label : 'Add Label'}</Text>}
                     </View>
-                </Dialog>
-            </Portal>
 
-            {loadingRequest ? <ActivityIndicator style={{ marginTop: 50 }}></ActivityIndicator> :
-                <View>
-                    <View style={{ flexDirection: "row", borderBottomWidth: 1, marginBottom: 5, borderColor: MD2Colors.grey300 }}>
-                        <View style={{ marginLeft: 20 }}>
-                            {edit ?
-                                <TextInput
-                                    label="Label"
-                                    mode='outlined'
-                                    value={widgetCopy.label}
-                                    style={styles.widgetNameTextInput}
-                                    onChangeText={(text) => {
-                                        if (text) {
-                                            let modifiedWidget = { ...widgetCopy }
-                                            modifiedWidget.label = text;
-                                            setWidget(modifiedWidget);
-                                        }
-                                    }}
-                                /> : <Text style={styles.widgetTitle}>{widgetCopy.label ? widgetCopy.label : 'Add Label'}</Text>}
-                        </View>
-
-                        <View style={styles.widgetHeaderButtons}>
-                            {edit && <IconButton mode='outlined' style={styles.widgetConfigureIcon} size={16} icon={() => <Icon source='cog-outline' size={16} color={MD2Colors.grey900} />}
-                                onPress={() => {
-                                    router.push(`/screens/configure?widgetId=${widgetCopy.widgetId}&userId=${widgetCopy.userId}&dashboardId=${dashboard.dashboardId}`)
-                                }}></IconButton>}
-                            {edit && <IconButton mode='outlined' style={styles.widgetDeleteIcon} size={16} icon={() => <Icon source='delete' size={16} color={MD2Colors.grey900} />}
-                                onPress={() => {
-                                    setShowConfirmDelete(true);
-                                }}></IconButton>}
-                            {!edit && !widgetCopy.readOnly && <IconButton mode='outlined' style={styles.widgetEditIcon} size={16} icon={() => <Icon source='application-edit' size={16} color={MD2Colors.grey900} />}
-                                onPress={() => {
-                                    setEdit(true);
-                                }}></IconButton>}
-                        </View>
+                    <View style={styles.widgetHeaderButtons}>
+                        {edit && <IconButton mode='outlined' style={styles.widgetConfigureIcon} size={16} icon={() => <Icon source='cog-outline' size={16} color={MD2Colors.grey900} />}
+                            onPress={() => {
+                                router.push(`/screens/configure?widgetId=${widgetCopy.widgetId}&userId=${widgetCopy.userId}&dashboardId=${dashboard.dashboardId}`)
+                            }}></IconButton>}
+                        {edit && <IconButton mode='outlined' style={styles.widgetDeleteIcon} size={16} icon={() => <Icon source='delete' size={16} color={MD2Colors.grey900} />}
+                            onPress={() => {
+                                setShowConfirmDelete(true);
+                            }}></IconButton>}
+                        {!edit && !widgetCopy.readOnly && <IconButton mode='outlined' style={styles.widgetEditIcon} size={16} icon={() => <Icon source='application-edit' size={16} color={MD2Colors.grey900} />}
+                            onPress={() => {
+                                setEdit(true);
+                            }}></IconButton>}
                     </View>
-                    {hasError && <Chip mode="outlined"
-                        style={styles.errorMessageContainer}
-                        textStyle={styles.errorMessageText}
-                        icon={() => <Icon source='information-outline' size={20} color={MD2Colors.red400} />}>{errorMessage}</Chip>}
+                </View>
+                {hasError && <Chip mode="outlined"
+                    style={styles.errorMessageContainer}
+                    textStyle={styles.errorMessageText}
+                    icon={() => <Icon source='information-outline' size={20} color={MD2Colors.red400} />}>{errorMessage}</Chip>}
+
+                {actionRequest ? <ActivityIndicator style={{ marginTop: 50 }}></ActivityIndicator> :
 
                     <View style={{ flexDirection: "row" }}>
                         <View style={{ margin: 'auto' }}>
@@ -144,7 +149,7 @@ updateDashboardDone }) => {
                                 }}
                                 textColor={MD2Colors.white}
                                 onPress={() => {
-                                    setLoadingRequest(true);
+                                    setActionRequest(true);
                                     setHasError(false);
                                     if (inputState === 'ON') {
                                         if (widget.inputStates && widget.inputStates['OFF'] && widget.inputStates['OFF'].apiUrl) {
@@ -153,13 +158,13 @@ updateDashboardDone }) => {
                                                 stateOFF,
                                                 setInputState,
                                                 setOutputState,
-                                                setLoadingRequest,
+                                                setActionRequest,
                                                 setHasError,
                                                 setErrorMessage,
                                                 "",
                                                 "");
                                         } else {
-                                            setLoadingRequest(false);
+                                            setActionRequest(false);
                                             setOutputState('ERROR');
                                             setHasError(true);
                                             setErrorMessage('Please configure OFF state');
@@ -171,20 +176,20 @@ updateDashboardDone }) => {
                                                 stateON,
                                                 setInputState,
                                                 setOutputState,
-                                                setLoadingRequest,
+                                                setActionRequest,
                                                 setHasError,
                                                 setErrorMessage,
                                                 "",
                                                 "");
                                         } else {
-                                            setLoadingRequest(false);
+                                            setActionRequest(false);
                                             setHasError(true);
                                             setErrorMessage('Please configure ON state');
                                         }
 
                                     }
                                 }}
-                                disabled={dashboard?false:true}>{inputState ? inputState : "ON/OFF"}</Button>
+                                disabled={dashboard ? false : true}>{inputState ? inputState : "ON/OFF"}</Button>
                         </View>
                         <View style={styles.onOffIconContainer}>
                             <Text style={styles.onOffText}>{outputState}</Text>
@@ -194,44 +199,45 @@ updateDashboardDone }) => {
                                 } />
                             </View>
                         </View>
-                    </View>
-                    {edit && <View style={styles.saveCancelContainer}>
-                        <Chip icon={() => <Icon source="cancel" size={14} color={MD2Colors.red400} />} mode="outlined"
-                            style={{
-                                marginLeft: 5,
-                            }}
-                            textStyle={{ fontSize: 12 }}
-                            onPress={() => {
-                                setEdit(false)
-                            }}>
-                            Cancel
-                        </Chip>
-                        <Chip icon={() => <Icon source="content-save" size={14} color={MD2Colors.grey800} />} mode="flat"
-                            disabled={!edit}
-                            style={{
-                                marginLeft: 5,
-                                backgroundColor: MD2Colors.amber500
-                            }}
-                            textStyle={{ fontSize: 12 }}
-                            onPress={async () => {
-                                if (dashboard) {
-                                    const modifiedDashboardObject: any = {
-                                        ...dashboard,
-                                        widgets: {
-                                            ...dashboard.widgets,
-                                            [widgetCopy.widgetId]: widgetCopy
-                                        }
-                                    };
-                                    console.log("MODIFIED DASHBOARD OBJECT", modifiedDashboardObject);
-                                    updateDashboard.mutate(modifiedDashboardObject);
-                                }
-                                console.log("PRESSED")
-                            }}>
-                            Save
-                        </Chip>
                     </View>}
+                {edit && <View style={styles.saveCancelContainer}>
+                    <Chip icon={() => <Icon source="cancel" size={14} color={MD2Colors.red400} />} mode="outlined"
+                        style={{
+                            marginLeft: 5,
+                        }}
+                        textStyle={{ fontSize: 12 }}
+                        onPress={() => {
+                            setEdit(false)
+                        }}>
+                        Cancel
+                    </Chip>
+                    <Chip icon={() => <Icon source="content-save" size={14} color={MD2Colors.grey800} />} mode="flat"
+                        disabled={!edit}
+                        style={{
+                            marginLeft: 5,
+                            backgroundColor: MD2Colors.amber500
+                        }}
+                        textStyle={{ fontSize: 12 }}
+                        onPress={async () => {
+                            if (dashboard) {
+                                setLoadingRequest(true);
+                                const modifiedDashboardObject: any = {
+                                    ...dashboard,
+                                    widgets: {
+                                        ...dashboard.widgets,
+                                        [widgetCopy.widgetId]: widgetCopy
+                                    }
+                                };
+                                console.log("MODIFIED DASHBOARD OBJECT", modifiedDashboardObject);
+                                updateDashboard.mutate(modifiedDashboardObject);
+                            }
+                            console.log("PRESSED")
+                        }}>
+                        Save
+                    </Chip>
                 </View>}
-        </View>
+            </View>}
+    </View>
     );
 };
 

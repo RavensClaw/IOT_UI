@@ -73,7 +73,6 @@ const Dashboards = () => {
 
     const fetchUser = async () => {
         try {
-            await fetchAuthSession();
             const currentUser = await getCurrentUser();
             setUserId(currentUser.userId);
         } catch (error) {
@@ -84,11 +83,13 @@ const Dashboards = () => {
 
 
     useFocusEffect(useCallback(() => {
+
         //AsyncStorage.clear();
         setUserId(INIT_USERNAME);
         setCallQueryGetDashBoardsAccessByUserId(INIT_QUERY_KEY);
         setCallQueryGetMultipleDashboardsByDashboardIds(INIT_QUERY_KEY);
         setDashboardsAccess(null);
+        setDashboards(undefined);
         setNonModifiableDashboardAccess(null);
         setDashboardsAccessIds([]);
         setLoading(true);
@@ -108,8 +109,12 @@ const Dashboards = () => {
     }, [userId])
 
     useEffect(() => {
+        console.log("I AM HERE");
         if (callQueryGetDashBoardsAccessByUserId !== INIT_QUERY_KEY.toString()) {
+            console.log("I AM ALSO HERE");
             if (dashboardsAccessByUserId && dashboardsAccessByUserId?.data) {
+                console.log("AND HERE");
+                console.log(dashboardsAccessByUserId?.data)
                 let data: any = dashboardsAccessByUserId.data
                 if (data.dashboardIds &&
                     data.dashboardIds.length > 0) {
@@ -136,10 +141,15 @@ const Dashboards = () => {
                     setNonModifiableDashboardAccess(dashboardsAccessByUserId.data);
                     setDashboardsAccessIds(data.dashboardIds);
                     setCallQueryGetDashBoardsAccessByUserId(INIT_QUERY_KEY);
+                }else{
+
+                console.log("No dashboards found for userId: " + userId);
+                setLoading(false);    
                 }
             } else {
                 console.log("No dashboards access found for userId: " + userId);
-                // setLoading(false);
+                 setLoading(false);    
+               
             }
         }
 
@@ -147,19 +157,27 @@ const Dashboards = () => {
 
     useEffect(() => {
         if (dashboardsAccessIds && dashboardsAccessIds.length > 0) {
+            console.log("IN HERE 2")
             setCallQueryGetMultipleDashboardsByDashboardIds(Constants.serviceKeys.queryGetMultipleDashboardsByDashboardIds + userId);
         }
     }, [dashboardsAccessIds]);
 
     useEffect(() => {
         if (callQueryGetMultipleDashboardsByDashboardIds !== INIT_QUERY_KEY.toString()) {
+            console.log("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
+            console.log(accessibleDashboards)
             setDashboards(accessibleDashboards);
             setCallQueryGetMultipleDashboardsByDashboardIds(INIT_QUERY_KEY);
-            setLoading(false);
         }
     }, [accessibleDashboards]);
 
 
+    useEffect(() => {
+        if (dashboards) {
+            console.log("Dashboards: " + dashboards);
+            setLoading(false);
+        }
+    }, [dashboards]);
 
     useEffect(() => {
         if (createDashboardAccessDone) {
@@ -348,7 +366,7 @@ const Dashboards = () => {
                                                 dashboardId: dashboardId,
                                                 label: dashboardLabel,
                                                 description: null,
-                                                lastModifiedBy: userId
+                                                lastModifiedBy: userId,
                                             }
                                             setNewDashboard(newDashboard);
 

@@ -12,15 +12,15 @@ export type Props = {
     widget: WidgetModel;
     dashboard: any;
     updateDashboard: any;
-updateDashboardDone: boolean;
+    updateDashboardDone: boolean;
 };
 
 
 const OnOffSwitchWidget: React.FC<Props> = ({
     widget,
     dashboard,
-updateDashboard,
-updateDashboardDone }) => {
+    updateDashboard,
+    updateDashboardDone }) => {
 
     // State to track if the card is being dragged
     const init: string = '';
@@ -29,6 +29,7 @@ updateDashboardDone }) => {
     const [outputState, setOutputState] = useState(init);
     const [edit, setEdit] = useState(false);
     const [loadingRequest, setLoadingRequest] = useState(true);
+    const [actionRequest, setActionRequest] = useState(true);
     const [widgetCopy, setWidget] = useState(widget);
     const [hasError, setHasError] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
@@ -43,23 +44,25 @@ updateDashboardDone }) => {
                 state,
                 setInputState,
                 setOutputState,
-                setLoadingRequest,
+                setActionRequest,
                 setHasError,
                 setErrorMessage,
                 "ON",
                 "OFF");
         } else {
             setLoadingRequest(false);
+            setActionRequest(false);
         }
     }, []));
 
 
     useEffect(() => {
-            if(updateDashboardDone){
-                setEdit(false);
-            }
-        }, [updateDashboardDone])
-    
+        if (updateDashboardDone) {
+            setEdit(false);
+            setLoadingRequest(false);
+        }
+    }, [updateDashboardDone])
+
 
     return (<View style={[styles.container, {
         borderColor: MD2Colors.yellow700,
@@ -142,59 +145,61 @@ updateDashboardDone }) => {
                     textStyle={styles.errorMessageText}
                     icon={() => <Icon source='information-outline' size={20} color={MD2Colors.red400} />}>{errorMessage}</Chip>}
 
-                <View style={{ flexDirection: "row" }}>
-                    <View style={{ margin: 'auto' }}>
-                        <Switch value={inputState === 'ON'} color={MD2Colors.green400} onValueChange={() => {
-                            setLoadingRequest(true);
-                            setHasError(false);
-                            if (inputState === 'ON') {
-                                if (widget.inputStates && widget.inputStates['OFF'] && widget.inputStates['OFF'].apiUrl) {
-                                    const stateOFF = widget.inputStates['OFF'];
-                                    makeApiCall(
-                                        stateOFF,
-                                        setInputState,
-                                        setOutputState,
-                                        setLoadingRequest,
-                                        setHasError,
-                                        setErrorMessage,
-                                        "",
-                                        "");
-                                } else {
-                                    setLoadingRequest(false);
-                                    setOutputState('ERROR');
-                                    setHasError(true);
-                                    setErrorMessage('Please configure OFF state');
-                                }
-                            } else {
-                                if (widget.inputStates && widget.inputStates['ON'] && widget.inputStates['ON'].apiUrl) {
-                                    const stateON = widget.inputStates['ON'];
-                                    makeApiCall(
-                                        stateON,
-                                        setInputState,
-                                        setOutputState,
-                                        setLoadingRequest,
-                                        setHasError,
-                                        setErrorMessage,
-                                        "",
-                                        "");
-                                } else {
-                                    setLoadingRequest(false);
-                                    setHasError(true);
-                                    setErrorMessage('Please configure ON state');
-                                }
+                {actionRequest ? <ActivityIndicator style={{ marginTop: 50 }}></ActivityIndicator> :
 
-                            }
-                        }} disabled={dashboard ? false : true}></Switch>
-                    </View>
-                    <View style={styles.onOffIconContainer}>
-                        <Text style={styles.onOffText}>{outputState}</Text>
-                        <View style={styles.onOffIcon}>
-                            <Icon source="circle" size={24} color={
-                                outputState === 'ON' ? MD2Colors.green400 : outputState === 'OFF' ? MD2Colors.red400 : outputState === 'ERROR' ? MD2Colors.orange400 : MD2Colors.grey400
-                            } />
+                    <View style={{ flexDirection: "row" }}>
+                        <View style={{ margin: 'auto' }}>
+                            <Switch value={inputState === 'ON'} color={MD2Colors.green400} onValueChange={() => {
+                                setActionRequest(true);
+                                setHasError(false);
+                                if (inputState === 'ON') {
+                                    if (widget.inputStates && widget.inputStates['OFF'] && widget.inputStates['OFF'].apiUrl) {
+                                        const stateOFF = widget.inputStates['OFF'];
+                                        makeApiCall(
+                                            stateOFF,
+                                            setInputState,
+                                            setOutputState,
+                                            setActionRequest,
+                                            setHasError,
+                                            setErrorMessage,
+                                            "",
+                                            "");
+                                    } else {
+                                        setActionRequest(false);
+                                        setOutputState('ERROR');
+                                        setHasError(true);
+                                        setErrorMessage('Please configure OFF state');
+                                    }
+                                } else {
+                                    if (widget.inputStates && widget.inputStates['ON'] && widget.inputStates['ON'].apiUrl) {
+                                        const stateON = widget.inputStates['ON'];
+                                        makeApiCall(
+                                            stateON,
+                                            setInputState,
+                                            setOutputState,
+                                            setActionRequest,
+                                            setHasError,
+                                            setErrorMessage,
+                                            "",
+                                            "");
+                                    } else {
+                                        setActionRequest(false);
+                                        setHasError(true);
+                                        setErrorMessage('Please configure ON state');
+                                    }
+
+                                }
+                            }} disabled={dashboard ? false : true}></Switch>
                         </View>
-                    </View>
-                </View>
+                        <View style={styles.onOffIconContainer}>
+                            <Text style={styles.onOffText}>{outputState}</Text>
+                            <View style={styles.onOffIcon}>
+                                <Icon source="circle" size={24} color={
+                                    outputState === 'ON' ? MD2Colors.green400 : outputState === 'OFF' ? MD2Colors.red400 : outputState === 'ERROR' ? MD2Colors.orange400 : MD2Colors.grey400
+                                } />
+                            </View>
+                        </View>
+                    </View>}
                 {edit && <View style={styles.saveCancelContainer}>
                     <Chip icon={() => <Icon source="cancel" size={14} color={MD2Colors.red400} />} mode="outlined"
                         style={{
@@ -202,7 +207,7 @@ updateDashboardDone }) => {
                         }}
                         textStyle={{ fontSize: 12 }}
                         onPress={() => {
-                            setEdit(false)
+                            setEdit(false);
                         }}>
                         Cancel
                     </Chip>
@@ -215,6 +220,7 @@ updateDashboardDone }) => {
                         textStyle={{ fontSize: 12 }}
                         onPress={async () => {
                             if (dashboard) {
+                                setLoadingRequest(true);
                                 const modifiedDashboardObject: any = {
                                     ...dashboard,
                                     widgets: {
