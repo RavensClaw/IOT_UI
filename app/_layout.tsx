@@ -6,12 +6,14 @@ import { useEffect } from 'react';
 import { PaperProvider } from 'react-native-paper';
 import NetInfo from '@react-native-community/netinfo'
 import { syncOffline } from '@/service/servicehook';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 
 export default function RootLayout() {
   useEffect(() => {
+   // AsyncStorage.clear()
     onlineManager.setEventListener((setOnline) => {
       const unsubscribe = NetInfo.addEventListener((state) => {
         setOnline(!!state.isInternetReachable);

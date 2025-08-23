@@ -103,17 +103,14 @@ const Dashboards = () => {
     }, [userLoading]);
 
     useEffect(() => {
-        if (userId && userId !== INIT_USERNAME) {
+        if (userId && userId?.trim() !== INIT_USERNAME) {
             setCallQueryGetDashBoardsAccessByUserId(Constants.serviceKeys.queryGetDashboardsAccessByUserId + userId);
         }
     }, [userId])
 
     useEffect(() => {
-        console.log("I AM HERE");
         if (callQueryGetDashBoardsAccessByUserId !== INIT_QUERY_KEY.toString()) {
-            console.log("I AM ALSO HERE");
             if (dashboardsAccessByUserId && dashboardsAccessByUserId?.data) {
-                console.log("AND HERE");
                 console.log(dashboardsAccessByUserId?.data)
                 let data: any = dashboardsAccessByUserId.data
                 if (data.dashboardIds &&
@@ -156,6 +153,9 @@ const Dashboards = () => {
     }, [dashboardsAccessByUserId]);
 
     useEffect(() => {
+        console.log(":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
+        console.log(dashboardsAccessIds)
+        console.log(":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
         if (dashboardsAccessIds && dashboardsAccessIds.length > 0) {
             console.log("IN HERE 2")
             setCallQueryGetMultipleDashboardsByDashboardIds(Constants.serviceKeys.queryGetMultipleDashboardsByDashboardIds + userId);
@@ -164,27 +164,23 @@ const Dashboards = () => {
 
     useEffect(() => {
         if (callQueryGetMultipleDashboardsByDashboardIds !== INIT_QUERY_KEY.toString()) {
-            console.log("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
-            console.log(accessibleDashboards)
             setDashboards(accessibleDashboards);
-            setCallQueryGetMultipleDashboardsByDashboardIds(INIT_QUERY_KEY);
+            //setCallQueryGetMultipleDashboardsByDashboardIds(INIT_QUERY_KEY);
         }
     }, [accessibleDashboards]);
 
 
     useEffect(() => {
         if (dashboards) {
-            console.log("Dashboards: " + dashboards);
             setLoading(false);
         }
     }, [dashboards]);
 
     useEffect(() => {
         if (createDashboardAccessDone) {
-            console.log("Creating Dashboard Access: " + newDashboard.dashboardId);
+            setCallQueryGetDashBoardsAccessByUserId(INIT_QUERY_KEY);
             setCallQueryGetMultipleDashboardsByDashboardIds(INIT_QUERY_KEY);
             createDashboard.mutate(newDashboard);
-            console.log("DONE CREATE DASHBOARD ACCESS: " + newDashboard.dashboardId);
             setNewDashboard(INIT);
             setCreateDashboardAccessDone(false);
         }
@@ -194,10 +190,6 @@ const Dashboards = () => {
     useEffect(() => {
         if (createDashboardDone) {
             setDashboardLabel('');
-            console.log("********************************************");
-            console.log("Create Dashboard Done: " + createDashboardDone);
-            console.log("CallQueryGetDashBoardsAccessByUserId: " + callQueryGetDashBoardsAccessByUserId);
-            console.log("callQueryGetMultipleDashboardsByDashboardIds: " + callQueryGetMultipleDashboardsByDashboardIds);
             setCallQueryGetDashBoardsAccessByUserId(Constants.serviceKeys.queryGetDashboardsAccessByUserId + userId);
             setCreateDashboardDone(false);
             setVisible(false);
@@ -208,6 +200,9 @@ const Dashboards = () => {
 
     useEffect(() => {
         if (updateDashboardAccessDone) {
+            setCallQueryGetDashBoardsAccessByUserId(INIT_QUERY_KEY);
+            setCallQueryGetMultipleDashboardsByDashboardIds(INIT_QUERY_KEY);
+
             console.log(':::::::::::::::::::::::::::::::::::::::::::::::');
 
             if (newDashboard && Object.keys(newDashboard).length > 0) {
@@ -231,7 +226,6 @@ const Dashboards = () => {
                 setDeleteDashboard(null);
                 setShowConfirmDelete(false);
             }
-            setCallQueryGetDashBoardsAccessByUserId(Constants.serviceKeys.queryGetDashboardsAccessByUserId + userId);
             setUpdateDashboardAccessDone(false);
         }
     }, [updateDashboardAccessDone]);
@@ -249,6 +243,8 @@ const Dashboards = () => {
             dashboardsAccessIds.length > 0 &&
             deleteDashboardDone
         ) {
+            setCallQueryGetDashBoardsAccessByUserId(INIT_QUERY_KEY);
+            setCallQueryGetMultipleDashboardsByDashboardIds(INIT_QUERY_KEY);
             updateDashboardsAccessByUserId.mutate({
                 dashboardIds: dashboardsAccess.dashboardIds.filter((id: string) => id !== deleteDashboard.dashboardId),
                 userId: userId,
@@ -358,6 +354,7 @@ const Dashboards = () => {
                                     }}
                                     icon={() => <Icon source='plus' size={18} color={MD2Colors.white} />}
                                     onPress={async () => {
+                                        setVisible(false);
                                         setLoading(true);
                                         if (dashboardLabel && dashboardLabel?.trim() !== '') {
                                             const dashboardId: string = new ObjectID().toHexString();
@@ -370,7 +367,7 @@ const Dashboards = () => {
                                             }
                                             setNewDashboard(newDashboard);
 
-                                            if (dashboardsAccess && dashboardsAccess.dashboardIds && dashboardsAccess.dashboardIds.length > 0) {
+                                            if (dashboardsAccess && Object.keys(dashboardsAccess).length > 0) {
                                                 updateDashboardsAccessByUserId.mutate({
                                                     dashboardIds: [...dashboardsAccess.dashboardIds, dashboardId],
                                                     userId: userId,
