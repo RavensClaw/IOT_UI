@@ -71,7 +71,7 @@ const SelectedDashBoard: React.FC<Props> = () => {
 
     const INIT_QUERY_KEY: any = Constants.serviceKeys.INIT_QUERY_KEY;
     const [callQueryGetDashBoardByDashBoardId, setCallQueryGetDashBoardByDashBoardId] = useState(INIT_QUERY_KEY);
-    const dashboard = queryGetDashBoardByDashBoardId(callQueryGetDashBoardByDashBoardId, dashboardId ? dashboardId : '');
+    const dashboard = queryGetDashBoardByDashBoardId(callQueryGetDashBoardByDashBoardId, dashboardId);
     const [callQueryGetDashBoardsAccessByUserId, setCallQueryGetDashBoardsAccessByUserId] = useState(INIT_QUERY_KEY);
     const [callQueryGetMultipleDashboardsByDashboardIds, setCallQueryGetMultipleDashboardsByDashboardIds] = useState(INIT_QUERY_KEY);
     const dashboardsAccessByUserId = queryGetDashBoardsAccessByUserId(callQueryGetDashBoardsAccessByUserId, userId);
@@ -97,11 +97,16 @@ const SelectedDashBoard: React.FC<Props> = () => {
     }, []));
 
     useEffect(() => {
+        if (userId && userId?.trim() !== INIT_USERNAME) {
+            setCallQueryGetDashBoardByDashBoardId(Constants.serviceKeys.queryGetDashBoardByDashBoardId + dashboardId);
+            setCallQueryGetDashBoardsAccessByUserId(Constants.serviceKeys.queryGetDashboardsAccessByUserId + userId);
+        }
+    }, [userId])
+
+    useEffect(() => {
         if (dashboardId) {
             getCurrentUser().then((user) => {
                 setUserId(user.userId);
-                setCallQueryGetDashBoardByDashBoardId(Constants.serviceKeys.queryGetDashBoardByDashBoardId + dashboardId);
-                setCallQueryGetDashBoardsAccessByUserId(Constants.serviceKeys.queryGetDashboardsAccessByUserId + user.userId);
             });
         }
 
@@ -229,9 +234,8 @@ const SelectedDashBoard: React.FC<Props> = () => {
     useEffect(() => {
         if (updateDashboardDone
         ) {
+            //setSelectedDashboard(INIT)
             setCallQueryGetDashBoardByDashBoardId(Constants.serviceKeys.queryGetDashBoardByDashBoardId + dashboardId);
-            setVisible(false);
-            setLoading(false);
             setUpdateDashboardDone(false);
         }
     }, [updateDashboardDone]);
@@ -264,8 +268,8 @@ const SelectedDashBoard: React.FC<Props> = () => {
                     </View>
 
                     {!loading && (!selectedDashboard || !selectedDashboard.widgets || Object.keys(selectedDashboard.widgets)?.length <= 0) && <View style={{ margin: "auto", alignSelf: "center", marginTop: 150 }}>
-                        <Chip textStyle={{ color: MD2Colors.white, fontSize: 12 }} style={{
-                            backgroundColor: MD2Colors.redA200
+                        <Chip mode="outlined" textStyle={{ color: MD2Colors.grey800, fontSize: 12 }} style={{
+                            borderColor: MD2Colors.redA200
                         }} onPress={() => {
                             setVisible(true);
                         }}>Add Widgets</Chip>
@@ -324,6 +328,8 @@ const SelectedDashBoard: React.FC<Props> = () => {
                                                 icon={() => <Icon source='plus' size={18} color={MD2Colors.white} />}
                                                 onPress={async () => {
                                                     console.log("Adding widget: ");
+                                                    setLoading(true);
+                                                    setSelectedDashboard(INIT);
                                                     if (dashboardId) {
                                                         let toModifyDashboard = selectedDashboard;
 
@@ -349,7 +355,7 @@ const SelectedDashBoard: React.FC<Props> = () => {
                                                                 }
                                                             });
                                                     }
-
+                                                    setVisible(false);
                                                 }}></IconButton>
                                         </View>
 

@@ -86,7 +86,7 @@ const OnOffSwitchWidget: React.FC<Props> = ({
                             style={{ marginLeft: 10 }} onPress={async () => {
 
                                 if (dashboard && dashboard.widgets) {
-
+                                    setLoadingRequest(true);
                                     let modifiedWidgets = { ...dashboard.widgets }
                                     delete modifiedWidgets[widgetCopy.widgetId];
 
@@ -97,7 +97,7 @@ const OnOffSwitchWidget: React.FC<Props> = ({
                                     updateDashboard.mutate(modifiedDashboardObjectAfterDeletingWidget);
 
                                 }
-
+                                setShowConfirmDelete(false);
                             }}>Yes</Chip>
                     </View>
                 </View>

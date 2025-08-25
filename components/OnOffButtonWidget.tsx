@@ -80,9 +80,8 @@ const OnOffButtonWidget: React.FC<Props> = ({
                         <Chip mode='outlined'
                             textStyle={styles.size12Font}
                             style={{ marginLeft: 10 }} onPress={async () => {
-
                                 if (dashboard && dashboard.widgets) {
-
+                                    setLoadingRequest(true);
                                     let modifiedWidgets = { ...dashboard.widgets }
                                     delete modifiedWidgets[widgetCopy.widgetId];
                                     const modifiedDashboardObjectAfterDeletingWidget: any = {
@@ -91,7 +90,7 @@ const OnOffButtonWidget: React.FC<Props> = ({
                                     };
                                     updateDashboard.mutate(modifiedDashboardObjectAfterDeletingWidget);
                                 }
-
+                                setShowConfirmDelete(false);
                             }}>Yes</Chip>
                     </View>
                 </View>

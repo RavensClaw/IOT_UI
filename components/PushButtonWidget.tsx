@@ -85,7 +85,7 @@ const PushButtonWidget: React.FC<Props> = ({
                             style={{ marginLeft: 10 }} onPress={async () => {
 
                                 if (dashboard && dashboard.widgets) {
-
+                                    setLoadingRequest(true);
                                     let modifiedWidgets = { ...dashboard.widgets }
                                     delete modifiedWidgets[widgetCopy.widgetId];
 
@@ -96,7 +96,7 @@ const PushButtonWidget: React.FC<Props> = ({
                                     updateDashboard.mutate(modifiedDashboardObject);
 
                                 }
-
+                                setShowConfirmDelete(false);
                             }}>Yes</Chip>
                     </View>
                 </View>
