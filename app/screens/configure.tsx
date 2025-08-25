@@ -244,9 +244,9 @@ let paramsConstruction = '';
     }, [updateDashboardDone]);
 
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: MD2Colors.white, width: "100%" }}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: MD2Colors.grey200, width: "100%" }}>
             <StackScreenHeader title={"Configure " + (widget.label ? widget.label : '')}></StackScreenHeader>
-            <ScrollView style={{ backgroundColor: MD2Colors.grey200 }}>
+            <ScrollView style={{ backgroundColor: MD2Colors.grey200, marginBottom:50 }}>
                 {loadingPage ? <ActivityIndicator style={{ marginTop: 50 }}></ActivityIndicator> :
                     <View style={{ alignSelf: "center", width: "100%" }}>
                         {generalErrorVisible && <Chip mode="outlined"
@@ -621,7 +621,8 @@ let paramsConstruction = '';
                                 </View>}
 
                                 <Divider></Divider>
-                                {inputStateName !== '' && !loadingRequest && <View style={{ width: "100%", alignSelf: "center", margin: "auto", flexDirection: "row" }}>
+                                {inputStateName !== '' && !loadingRequest && widget && widget.inputStates && widget?.inputStates[inputStateName] && widget?.inputStates[inputStateName].response &&
+                                        widget.inputStates[inputStateName].response?.trim() !== '' && <View style={{ width: "100%", alignSelf: "center", margin: "auto", flexDirection: "row" }}>
                                     <Text style={{ fontSize: 12, fontWeight: 700, marginRight: "auto", marginTop: 15, margin: 5 }}>Output Conditions</Text>
                                     {inputStateName === 'CHECK_STATUS' && <Dropdown
                                         disable={!edit}
@@ -640,8 +641,11 @@ let paramsConstruction = '';
                                             setOutputStateName(item.value);
                                         }}
                                     />}
-                                    {widget.inputStates &&
+                                    {
+                                    widget.inputStates &&
                                         widget.inputStates[inputStateName] &&
+                                        widget.inputStates[inputStateName].response &&
+                                        widget.inputStates[inputStateName].response?.trim() !== '' &&
                                         (
                                             !widget.inputStates[inputStateName].outputStates ||
                                             !widget.inputStates[inputStateName].outputStates[outputStateName] ||
