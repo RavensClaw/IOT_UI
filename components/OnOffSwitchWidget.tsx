@@ -49,6 +49,7 @@ const OnOffSwitchWidget: React.FC<Props> = ({
                 setErrorMessage,
                 "ON",
                 "OFF");
+            setLoadingRequest(false);
         } else {
             setLoadingRequest(false);
             setActionRequest(false);

@@ -51,6 +51,7 @@ const PushButtonWidget: React.FC<Props> = ({
                 setErrorMessage,
                 "PRESSIN",
                 "PRESSOUT");
+            setLoadingRequest(false);
         } else {
             setLoadingRequest(false);
             setActionRequest(false);

@@ -5,7 +5,7 @@ export const makeApiCall = (
     state: InputStateModel,
     setInputState: React.Dispatch<React.SetStateAction<string>>,
     setOutputState: React.Dispatch<React.SetStateAction<string>>,
-    setLoadingRequest: React.Dispatch<React.SetStateAction<boolean>>,
+    setActionRequest: React.Dispatch<React.SetStateAction<boolean>>,
     setHasError: React.Dispatch<React.SetStateAction<boolean>>,
     setErrorMessage: React.Dispatch<React.SetStateAction<string>>,
     outputState1: string,//ON
@@ -13,7 +13,7 @@ export const makeApiCall = (
 ) => {
 
     let isStatusCheck = false;
-    if (state.stateName === "STATUS_CHECK") {
+    if (state.stateName === "CHECK_STATUS") {
         isStatusCheck = true;
     } else {
         outputState1 = state.stateName;
@@ -75,7 +75,6 @@ export const makeApiCall = (
         fetch(apiURL, options).then(async (response: any) => {
             console.log(response)
             const contentType = response.headers['content-type']?.toLowerCase() || '';
-            console.log("@@@@@@@@@@@@@@@@ OVERRIDE @@@@@@@@@@@@@@@@@");
             console.log(contentType)
             const jsonResponse = await response.json();
             console.log(JSON.stringify(jsonResponse))
@@ -86,7 +85,7 @@ export const makeApiCall = (
             console.log("outputState1: " + outputState1);
             if (state.outputStates) {
                 console.log("outputStates found for this input state: " + state.stateName);
-                console.log(state)
+                console.log(JSON.stringify(state))
                 if (state.outputStates[outputState1] &&
                     state.outputStates[outputState1].conditions) {
                         console.log("outputState1 conditions found: " + outputState1);
@@ -152,6 +151,7 @@ export const makeApiCall = (
                 console.log("state1ConditionStatified: " + state1ConditionStatified);
 
                 if (isStatusCheck && !state1ConditionStatified) {
+
                     if (state.outputStates[outputState2] &&
                         state.outputStates[outputState2].conditions) {
 
@@ -222,18 +222,18 @@ export const makeApiCall = (
                     setOutputState(outputState2);
                 }
                 console.log("state2ConditionStatified: " + state2ConditionStatified);
+                setActionRequest(false);
             }else{
                 if(!isStatusCheck){
                     setInputState(outputState1);
                     setOutputState(outputState1);
                 }
                 console.log("No output states defined for this input state: " + state.stateName);
+            setActionRequest(false);
             }
-            
-            setLoadingRequest(false);
         }).catch((error) => {
             console.log(error)
-            setLoadingRequest(false);
+            setActionRequest(false);
             setHasError(true);
             setErrorMessage(error.message);
         });

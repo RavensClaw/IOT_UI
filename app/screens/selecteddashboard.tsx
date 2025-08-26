@@ -62,7 +62,6 @@ const SelectedDashBoard: React.FC<Props> = () => {
     const [nonModifiableDashboard, setNonModifiableDashboard] = useState(INIT);
     const [dashboardError, setDashboardError] = useState(INIT);
 
-    const [dashboardsAccess, setDashboardsAccess] = useState(INIT);
     const [dashboardsAccessIds, setDashboardsAccessIds] = useState(INIT);
 
     const initDashboards: any = undefined;
@@ -88,30 +87,35 @@ const SelectedDashBoard: React.FC<Props> = () => {
 
 
     useFocusEffect(useCallback(() => {
-        //AsyncStorage.clear();
+
+        setCallQueryGetDashBoardByDashBoardId(INIT_QUERY_KEY);
+        setCallQueryGetDashBoardsAccessByUserId(INIT_QUERY_KEY);
+        setUserId(INIT_USERNAME);
+        setDashboardId("");
+        setSelectedDashboard(INIT);
+        setDashboardsAccessIds(INIT);
+
         const dashboardIdInput: any = inputParams.dashboardId;
         if (!dashboardIdInput) {
             router.push({ pathname: '/screens/dashboards' });
         }
-        setDashboardId(dashboardIdInput);
+
+        getCurrentUser().then((user) => {
+            setUserId(user.userId);
+            setDashboardId(dashboardIdInput);
+        });
+
+        //AsyncStorage.clear();
+
+
     }, []));
 
     useEffect(() => {
-        if (userId && userId?.trim() !== INIT_USERNAME) {
+        if (userId && userId?.trim() !== INIT_USERNAME && dashboardId && dashboardId?.trim().length > 0) {
             setCallQueryGetDashBoardByDashBoardId(Constants.serviceKeys.queryGetDashBoardByDashBoardId + dashboardId);
             setCallQueryGetDashBoardsAccessByUserId(Constants.serviceKeys.queryGetDashboardsAccessByUserId + userId);
         }
-    }, [userId])
-
-    useEffect(() => {
-        if (dashboardId) {
-            getCurrentUser().then((user) => {
-                setUserId(user.userId);
-            });
-        }
-
-    }, [dashboardId]);
-
+    }, [userId, dashboardId])
 
     useEffect(() => {
         if (dashboard.dashboard !== undefined) {
@@ -154,7 +158,6 @@ const SelectedDashBoard: React.FC<Props> = () => {
 
                 });
 
-                setDashboardsAccess(data);
                 setDashboardsAccessIds(data.dashboardIds);
                 setCallQueryGetDashBoardsAccessByUserId(INIT_QUERY_KEY);
             } else if (dashboardsAccessByUserId && !dashboardsAccessByUserId.data) {
@@ -202,7 +205,6 @@ const SelectedDashBoard: React.FC<Props> = () => {
                     );
 
                 });
-                setDashboardsAccess(data);
                 setDashboardsAccessIds(data.dashboardIds);
                 setCallQueryGetDashBoardsAccessByUserId(INIT_QUERY_KEY);
             } else if (dashboardsAccessByUserId && !dashboardsAccessByUserId.data) {
@@ -221,7 +223,7 @@ const SelectedDashBoard: React.FC<Props> = () => {
         if (callQueryGetMultipleDashboardsByDashboardIds !== INIT_QUERY_KEY.toString() && accessibleDashboards && accessibleDashboards.length > 0) {
             setDashboards(accessibleDashboards);
             setCallQueryGetMultipleDashboardsByDashboardIds(INIT_QUERY_KEY);
-            
+
         }
     }, [accessibleDashboards]);
 
@@ -398,8 +400,8 @@ const SelectedDashBoard: React.FC<Props> = () => {
                     </View>
                 </View>}
             {selectedDashboard && selectedDashboard.widgets && Object.keys(selectedDashboard.widgets)?.length > 0 && <FAB
-               
-               icon={() => <Icon source='plus' size={25} color={MD2Colors.white} />}
+
+                icon={() => <Icon source='plus' size={25} color={MD2Colors.white} />}
                 size={'medium'}
                 style={{
                     position: 'absolute',
