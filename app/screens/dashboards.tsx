@@ -112,10 +112,6 @@ const Dashboards = () => {
         if (callQueryGetDashBoardsAccessByUserId !== INIT_QUERY_KEY.toString()) {
             if (dashboardsAccessByUserId && dashboardsAccessByUserId?.status !== 'pending') {
                 let data: any = dashboardsAccessByUserId.data
-                console.log("-------------------------------------------------------------------------");
-                console.log("-------------------------------------------------------------------------");
-                console.log(dashboardsAccessByUserId?.data)
-                console.log(dashboardsAccessByUserId?.status)
                 
                 if (dashboardsAccessByUserId?.data && data.dashboardIds) {
                     let modifiedDashboards = [];
@@ -450,7 +446,6 @@ const Dashboards = () => {
                                                 }}
                                                     textStyle={{ color: MD2Colors.grey800, fontSize: 12, fontWeight: 600 }}
                                                     onPress={() => {
-                                                        console.log(":::::::::::::::::::::: " + dashboard.dashboardId);
                                                         router.push({
                                                             pathname: `/screens/selecteddashboard`, params: {
                                                                 "dashboardId": dashboard.dashboardId
@@ -465,7 +460,6 @@ const Dashboards = () => {
                                                     textStyle={{ color: MD2Colors.grey800, fontSize: 12, fontWeight: 600 }}
                                                     icon={() => <Icon source='plus' size={18} color={MD2Colors.grey800} />}
                                                     onPress={() => {
-                                                        console.log(":::::::::::::::::::::: " + dashboard.dashboardId);
                                                         router.push({
                                                             pathname: `/screens/selecteddashboard`, params: {
                                                                 "dashboardId": dashboard.dashboardId

@@ -1,9 +1,8 @@
-import { MutationKey, QueryKey, useQuery, useMutation, useQueryClient, QueryClient, onlineManager } from "@tanstack/react-query"
+import { QueryKey, useQuery, useMutation, useQueryClient, QueryClient, onlineManager } from "@tanstack/react-query"
 import { generateClient } from "aws-amplify/api"
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Schema } from "../amplify/data/resource";
 import { Constants } from "@/constants/constants";
-import NetInfo from "@react-native-community/netinfo";
 
 export const queryGetDashBoardsAccessByUserId = (key: QueryKey, userId: string) => {
 
@@ -15,8 +14,8 @@ export const queryGetDashBoardsAccessByUserId = (key: QueryKey, userId: string) 
         enabled: (
             (key.toString().indexOf(Constants.serviceKeys.queryGetDashboardsAccessByUserId) > -1) &&
             userId?.trim() !== ''),
-            networkMode:'always',
-            queryFn: async () => {
+        networkMode: 'always',
+        queryFn: async () => {
             const { data: dashboardsAccess, errors: errors } = await client.models.DashboardsAccess.get({
                 userId: userId
             });
@@ -78,9 +77,6 @@ export const mutationUpdateDashboardsAccess = (
     const updateDashboardsAccessByUserId = useMutation({
         networkMode: "always",
         mutationFn: async (input: any) => {
-            const netInfo = await NetInfo.fetch()
-            console.log("INSIDE UPDATE DASHBOARDS ACCESS");
-            
             const { data: updateDashboardsAccessResponse, errors: updateDashboardsAccessErrors } = await client.models.DashboardsAccess.update(input);
             if (updateDashboardsAccessErrors) {
                 throw new Error(JSON.stringify(updateDashboardsAccessErrors));
@@ -97,8 +93,6 @@ export const mutationUpdateDashboardsAccess = (
             if (error.toString().indexOf("network error") > -1) {
                 // Some logic to handle network error
             }
-            console.log("ERROR INSIDE CREATE/UPDATE DASHBOARD ACCESS");
-
             const getExistingDashboardsAccess = await AsyncStorage.getItem("IOT" + variables.userId);
             if (getExistingDashboardsAccess) {
                 const existingDashboardsAccess = JSON.parse(getExistingDashboardsAccess);
@@ -111,15 +105,19 @@ export const mutationUpdateDashboardsAccess = (
                         [Constants.UPDATE_DASHBOARDS_ACCESS]: variables
                     }));
                 }
+            } else {
+                await AsyncStorage.setItem("IOT" + variables.userId, JSON.stringify({
+                    [Constants.UPDATE_DASHBOARDS_ACCESS]: variables
+                }));
             }
 
-            
-            
+
+
             queryClient.setQueryData([Constants.serviceKeys.queryGetDashboardsAccessByUserId + variables.userId] as QueryKey, (old: any) => {
                 return {
-                ...old,
-                dashboardIds: variables.dashboardIds
-            }
+                    ...old,
+                    dashboardIds: variables.dashboardIds
+                }
             });
         }
     })
@@ -199,7 +197,6 @@ export const queryGetMultipleDashboardsByDashboardIds = (key: QueryKey, dashboar
             dashboardIds.length > 0),
         networkMode: "always",
         queryFn: async () => {
-            console.log("-----------------------> GET MULTIBLE DASHBOARDS <-----------------------");
             const { data: dashboards, errors: errors } = await client.queries.getMultipleDashboardsByDashboardIds({
                 dashboardIds: dashboardIds
             });
@@ -222,7 +219,6 @@ export const mutationCreateDashboard = (
         networkMode: "always",
         mutationFn: async (input: any) => {
             setCreateDashboardDone(false);
-            console.log("INSIDE CREATE DASHBOARD");
             const { data: createDashboardResponse, errors: createDashboardErrors } = await client.models.Dashboard.create(input);
             if (createDashboardErrors) {
                 throw new Error(JSON.stringify(createDashboardErrors));
@@ -246,7 +242,6 @@ export const mutationCreateDashboard = (
             if (error.toString().indexOf("network error") > -1) {
                 // Some logic to handle network error
             }
-console.log("ERROR INSIDE CREATE DASHBOARD");
             await AsyncStorage.setItem("IOT" + variables.dashboardId, JSON.stringify({
                 [Constants.CREATE_DASHBOARD]: variables
             }));
@@ -255,19 +250,16 @@ console.log("ERROR INSIDE CREATE DASHBOARD");
             });
 
             queryClient.setQueryData([Constants.serviceKeys.queryGetMultipleDashboardsByDashboardIds + userId] as QueryKey, (old: any) => {
-                console.log("mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm")
-                console.log(old)
-                if(old && old.length > 0){
-                    return [...old,variables];
-                }else{
+                if (old && old.length > 0) {
+                    return [...old, variables];
+                } else {
                     return [variables];
                 }
-                
+
             });
         },
         onSettled: async (data, variables, context) => {
             setCreateDashboardDone(true);
-            console.log("Create Dashboard Mutation Settled");
         },
     })
     return { createDashboard };
@@ -327,16 +319,32 @@ export const mutationUpdateDashboard = (
             if (getExistingDashboard) {
                 const existingDashboard = JSON.parse(getExistingDashboard);
                 if (existingDashboard && existingDashboard.CREATE_DASHBOARD) {
+                    console.log("IN CREATE AREA");
                     await AsyncStorage.setItem("IOT" + variables.dashboardId, JSON.stringify({
-                        [Constants.CREATE_DASHBOARD]: variables
+                        [Constants.CREATE_DASHBOARD]: {
+                            ...variables,
+                            widgets: JSON.stringify(variables.widgets)
+                        }
                     }));
                 } else {
+                    console.log("IN UPDATE AREA");
                     await AsyncStorage.setItem("IOT" + variables.dashboardId, JSON.stringify({
-                        [Constants.UPDATE_DASHBOARD]: variables
+                        [Constants.UPDATE_DASHBOARD]: {
+                            ...variables,
+                            widgets: JSON.stringify(variables.widgets)
+                        }
                     }));
                 }
+            } else {
+                console.log("IN OUTER UPDATE AREA");
+                await AsyncStorage.setItem("IOT" + variables.dashboardId, JSON.stringify({
+                    [Constants.UPDATE_DASHBOARD]: {
+                        ...variables,
+                        widgets: JSON.stringify(variables.widgets)
+                    }
+                }));
             }
-            queryClient.setQueryData([Constants.serviceKeys.queryGetDashBoardByDashBoardId + variables.dashboardId] as QueryKey, (old: any) => {
+            /*queryClient.setQueryData([Constants.serviceKeys.queryGetDashBoardByDashBoardId + variables.dashboardId] as QueryKey, (old: any) => {
                 return {
                     ...old,
                     variables
@@ -356,7 +364,7 @@ export const mutationUpdateDashboard = (
                     });
                 }
                 return allDashboards;
-            });
+            });*/
         },
         onSettled: async (data, variables, context) => {
             setUpdateDashboardDone(true);
@@ -435,65 +443,81 @@ export const syncOffline = async () => {
     });
     const allCompleted: Promise<any>[] = [];
     let parsedKeys: string[] = [];
-    
-AsyncStorage.getAllKeys().then(async (keys) => {
-    for (const key of keys) {
+
+    AsyncStorage.getAllKeys().then(async (keys) => {
+        for (const key of keys) {
             if (key.startsWith("IOT")) {
                 try {
                     const jsonString = await AsyncStorage.getItem(key);
                     const jsonData = jsonString ? JSON.parse(jsonString) : null;
                     if (jsonData) {
-                        parsedKeys.push(key);
                         console.log(`Processed data for key ${key}:`, jsonData);
                         Object.keys(jsonData).forEach(async (subKey) => {
                             console.log(`SubKey: ${subKey}, Value: ${jsonData[subKey]}`);
                             if (subKey === Constants.DELETE_DASHBOARDS_ACCESS) {
                                 const deleteDashboardAccessInput = jsonData[subKey];
                                 allCompleted.push(
-                                    client.models.DashboardsAccess.delete(deleteDashboardAccessInput).then(()=>{
-                                        AsyncStorage.removeItem(key);
+                                    client.models.DashboardsAccess.delete(deleteDashboardAccessInput).then((output) => {
+                                        if (!(output.errors && output.errors.length > 0)) {
+                                            parsedKeys.push(key)
+                                        }
+                                    }).catch((e) => {
+                                        console.log(e)
                                     })
                                 );
                             } else if (subKey === Constants.CREATE_DASHBOARDS_ACCESS) {
                                 const createDashboardAccessInput = jsonData[subKey];
-                                console.log("Creating Dashboard Access: ", createDashboardAccessInput);
                                 allCompleted.push(
-                                    client.models.DashboardsAccess.create(createDashboardAccessInput).then(()=>{
-                                        AsyncStorage.removeItem(key);
+                                    client.models.DashboardsAccess.create(createDashboardAccessInput).then((output) => {
+                                        if (!(output.errors && output.errors.length > 0)) {
+                                            parsedKeys.push(key)
+                                        }
+                                    }).catch((e) => {
+                                        console.log(e)
                                     })
                                 );
                             } else if (subKey === Constants.UPDATE_DASHBOARDS_ACCESS) {
                                 const updateDashboardAccessInput = jsonData[subKey];
                                 allCompleted.push(
-                                    client.models.DashboardsAccess.update(updateDashboardAccessInput).then(()=>{
-                                        AsyncStorage.removeItem(key);
+                                    client.models.DashboardsAccess.update(updateDashboardAccessInput).then((output) => {
+                                        if (!(output.errors && output.errors.length > 0)) {
+                                            parsedKeys.push(key)
+                                        }
+                                    }).catch((e) => {
+                                        console.log(e)
                                     })
                                 );
                             } else if (subKey === Constants.DELETE_DASHBOARD) {
                                 const deleteDashboardInput = jsonData[subKey];
                                 allCompleted.push(
-                                    client.models.Dashboard.delete(deleteDashboardInput).then(() => {
-                                        AsyncStorage.removeItem(key);
+                                    client.models.Dashboard.delete(deleteDashboardInput).then((output) => {
+                                        if (!(output.errors && output.errors.length > 0)) {
+                                            parsedKeys.push(key)
+                                        }
+                                    }).catch((e) => {
+                                        console.log(e)
                                     })
                                 );
                             } else if (subKey === Constants.CREATE_DASHBOARD) {
                                 const createDashboardInput = jsonData[subKey];
-                                console.log("HERE");
-                                console.log("########################################");
-                                console.log("########################################");
-                                console.log("########################################");
-                                console.log("########################################");
-                                console.log(createDashboardInput)
                                 allCompleted.push(
-                                    client.models.Dashboard.create(createDashboardInput).then(()=>{
-                                        AsyncStorage.removeItem(key);
+                                    client.models.Dashboard.create(createDashboardInput).then((output) => {
+                                        if (!(output.errors && output.errors.length > 0)) {
+                                            parsedKeys.push(key)
+                                        }
+                                    }).catch((e) => {
+                                        console.log(e)
                                     })
                                 );
                             } else if (subKey === Constants.UPDATE_DASHBOARD) {
                                 const updateDashboardInput = jsonData[subKey];
                                 allCompleted.push(
-                                    client.models.Dashboard.update(updateDashboardInput).then(()=>{
-                                        AsyncStorage.removeItem(key);
+                                    client.models.Dashboard.update(updateDashboardInput).then((output) => {
+                                        if (!(output.errors && output.errors.length > 0)) {
+                                            parsedKeys.push(key)
+                                        }
+                                    }).catch((e) => {
+                                        console.log(e)
                                     })
                                 );
                             }
@@ -511,7 +535,10 @@ AsyncStorage.getAllKeys().then(async (keys) => {
             }
         }
         await Promise.allSettled(allCompleted)
-
+        parsedKeys.forEach((removeKey) => {
+            console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " + removeKey)
+            AsyncStorage.removeItem(removeKey);
+        })
         /*allCompleted.forEach((item, index) => {
             const key = parsedKeys[index];
             console.log(`Removing key: ${key}`);

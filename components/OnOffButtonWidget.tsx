@@ -36,10 +36,8 @@ const OnOffButtonWidget: React.FC<Props> = ({
     const router = useRouter();
 
     useFocusEffect(useCallback(() => {
-        console.log(widget.inputStates)
         if (widget.inputStates && widget.inputStates['CHECK_STATUS'] && widget.inputStates['CHECK_STATUS'].apiUrl) {
             const state = widget.inputStates['CHECK_STATUS'];
-            console.log("CHECK_STATUS", state);
             makeApiCall(
                 state,
                 setInputState,
@@ -229,10 +227,8 @@ const OnOffButtonWidget: React.FC<Props> = ({
                                         [widgetCopy.widgetId]: widgetCopy
                                     }
                                 };
-                                console.log("MODIFIED DASHBOARD OBJECT", modifiedDashboardObject);
                                 updateDashboard.mutate(modifiedDashboardObject);
                             }
-                            console.log("PRESSED")
                         }}>
                         Save
                     </Chip>

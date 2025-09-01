@@ -69,26 +69,17 @@ export const makeApiCall = (
             options["body"] = JSON.stringify(body)
         }
 
-        console.log(options)
-
-
+     
         fetch(apiURL, options).then(async (response: any) => {
-            console.log(response)
             const contentType = response.headers['content-type']?.toLowerCase() || '';
-            console.log(contentType)
             const jsonResponse = await response.json();
-            console.log(JSON.stringify(jsonResponse))
             let state1ConditionStatified = false;
             let state2ConditionStatified = false;
 
             let outputConditions: any = [];
-            console.log("outputState1: " + outputState1);
             if (state.outputStates) {
-                console.log("outputStates found for this input state: " + state.stateName);
-                console.log(JSON.stringify(state))
                 if (state.outputStates[outputState1] &&
                     state.outputStates[outputState1].conditions) {
-                        console.log("outputState1 conditions found: " + outputState1);
                     outputConditions = state.outputStates[outputState1].conditions;
 
                     if (outputConditions && outputConditions.length > 0) {
@@ -116,7 +107,6 @@ export const makeApiCall = (
                                         state1ConditionStatified = true;
                                     }
                                 } else if (outputConditions[i].condition === "Equals") {
-                                    console.log("responseValue: " + responseValue);
                                     if (responseValue == value1) {
                                         state1ConditionStatified = true;
                                     }
@@ -148,8 +138,7 @@ export const makeApiCall = (
                     }
 
                 }
-                console.log("state1ConditionStatified: " + state1ConditionStatified);
-
+          
                 if (isStatusCheck && !state1ConditionStatified) {
 
                     if (state.outputStates[outputState2] &&
@@ -221,7 +210,6 @@ export const makeApiCall = (
                     setInputState(outputState2);
                     setOutputState(outputState2);
                 }
-                console.log("state2ConditionStatified: " + state2ConditionStatified);
                 setActionRequest(false);
             }else{
                 if(!isStatusCheck){

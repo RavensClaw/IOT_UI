@@ -132,6 +132,18 @@ const SelectedDashBoard: React.FC<Props> = () => {
         }
     }, [dashboard]);
 
+    useEffect(() => {
+        if (dashboardsAccessIds && dashboardsAccessIds.length > 0) {
+            setCallQueryGetMultipleDashboardsByDashboardIds(Constants.serviceKeys.queryGetMultipleDashboardsByDashboardIds + userId);
+        }
+    }, [dashboardsAccessIds]);
+
+    useEffect(() => {
+        if (callQueryGetMultipleDashboardsByDashboardIds !== INIT_QUERY_KEY.toString() && accessibleDashboards && accessibleDashboards.length > 0) {
+            setDashboards(accessibleDashboards);
+            setCallQueryGetMultipleDashboardsByDashboardIds(INIT_QUERY_KEY);
+        }
+    }, [accessibleDashboards]);
 
     useEffect(() => {
         //  console.log("############################## dashboardsAccessByUserId ##############################");
@@ -166,52 +178,6 @@ const SelectedDashBoard: React.FC<Props> = () => {
         }
     }, [dashboardsAccessByUserId]);
 
-    useEffect(() => {
-        if (dashboardsAccessIds && dashboardsAccessIds.length > 0) {
-            setCallQueryGetMultipleDashboardsByDashboardIds(Constants.serviceKeys.queryGetMultipleDashboardsByDashboardIds + userId);
-        }
-    }, [dashboardsAccessIds]);
-
-    useEffect(() => {
-        console.log(accessibleDashboards)
-        if (callQueryGetMultipleDashboardsByDashboardIds !== INIT_QUERY_KEY.toString() && accessibleDashboards && accessibleDashboards.length > 0) {
-            setDashboards(accessibleDashboards);
-            setCallQueryGetMultipleDashboardsByDashboardIds(INIT_QUERY_KEY);
-        }
-    }, [accessibleDashboards]);
-
-    useEffect(() => {
-        //  console.log("############################## dashboardsAccessByUserId ##############################");
-        //console.log(dashboardsAccessByUserId);
-        if (dashboardsAccessByUserId && dashboardsAccessByUserId.data) {
-            const data: any = dashboardsAccessByUserId.data;
-            if (data.dashboardIds &&
-                data.dashboardIds.length > 0) {
-                let modifiedDashboards = [];
-                if (dashboards && dashboards.length > 0) {
-                    modifiedDashboards = [...dashboards];
-                }
-
-                data?.dashboardIds.forEach((dashboardId: any) => {
-                    if (dashboardId == null) return;
-                    modifiedDashboards.push(
-                        {
-                            dashboardId: dashboardId,
-                            label: `Dashboard ${dashboardId}`,
-                            userId: userId,
-                            readOnly: false,
-                            widgets: {}
-                        }
-                    );
-
-                });
-                setDashboardsAccessIds(data.dashboardIds);
-                setCallQueryGetDashBoardsAccessByUserId(INIT_QUERY_KEY);
-            } else if (dashboardsAccessByUserId && !dashboardsAccessByUserId.data) {
-                console.log("No dashboards access found for userId: " + userId);
-            }
-        }
-    }, [dashboardsAccessByUserId]);
 
     useEffect(() => {
         if (dashboardsAccessIds && dashboardsAccessIds.length > 0) {

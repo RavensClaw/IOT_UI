@@ -326,7 +326,6 @@ let paramsConstruction = '';
                                             setLoadingRequest(true);
                                             setApiErrorVisible(false);
                                             setApiErrorMessage('');
-                                            console.log("PRESSED")
                                             let headers: any = {};
 
                                             if (widget &&
@@ -380,17 +379,9 @@ let paramsConstruction = '';
                                                         options["body"] = JSON.stringify(widget.inputStates[inputStateName].body)
                                                     }
 
-                                                    console.log(options)
-
-
                                                     fetch(apiURL, options).then(async (response: any) => {
-                                                        console.log(response)
                                                         const contentType = response.headers['content-type']?.toLowerCase() || '';
-                                                        console.log("@@@@@@@@@@@@@@@@ OVERRIDE @@@@@@@@@@@@@@@@@");
-                                                        console.log(contentType)
                                                         const jsonResponse = await response.json();
-                                                        console.log(JSON.stringify(jsonResponse))
-
                                                         setResponseOutput(JSON.stringify(jsonResponse, null, 4));
                                                     }).catch((error) => {
                                                         console.log(error)
@@ -398,9 +389,7 @@ let paramsConstruction = '';
                                                         setApiErrorVisible(true);
 
                                                     }).finally(() => {
-                                                        console.log("###########################");
                                                         setLoadingRequest(false);
-                                                        console.log("###########################");
                                                     });
 
                                                 }
@@ -770,7 +759,6 @@ let paramsConstruction = '';
                                     }
                                     setLoadingPage(false);
                                     setEdit(false);
-                                    console.log("PRESSED")
                                 }}>
                                 Save
                             </Chip>
