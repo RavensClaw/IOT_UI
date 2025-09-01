@@ -344,27 +344,41 @@ export const mutationUpdateDashboard = (
                     }
                 }));
             }
-            /*queryClient.setQueryData([Constants.serviceKeys.queryGetDashBoardByDashBoardId + variables.dashboardId] as QueryKey, (old: any) => {
+
+            queryClient.setQueryData([Constants.serviceKeys.queryGetDashBoardByDashBoardId + variables.dashboardId] as QueryKey, (old: any) => {
                 return {
-                    ...old,
-                    variables
+                    ...variables,
+                    widgets: JSON.stringify(variables.widgets)
                 }
             });
 
+
             queryClient.setQueryData([Constants.serviceKeys.queryGetMultipleDashboardsByDashboardIds + userId] as QueryKey, (old: any) => {
                 let allDashboards: any[] = [];
+                console.log("I AM STARTING HERE");
+                console.log(old);
                 if (old && old.length > 0) {
-
+                    console.log("I AM INSIDE IF 1");
                     old.map((dashboard: any) => {
                         if (dashboard.dashboardId === variables.dashboardId) {
-                            allDashboards.push(variables);
+                            if(variables.widgets){
+                                allDashboards.push({
+                                ...variables,
+                                widgets: JSON.stringify(variables.widgets)
+                            });
+                            }else{
+                                allDashboards.push(variables);
+                            }
+                            
                         } else {
                             allDashboards.push(dashboard);
                         }
                     });
                 }
+                console.log("BEFORE RETURN");
+                console.log(allDashboards)
                 return allDashboards;
-            });*/
+            });
         },
         onSettled: async (data, variables, context) => {
             setUpdateDashboardDone(true);
