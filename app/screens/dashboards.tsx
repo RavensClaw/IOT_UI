@@ -1,5 +1,5 @@
 import { useFocusEffect, useRouter } from "expo-router";
-import { SafeAreaView, View, Text } from "react-native";
+import { SafeAreaView, View, Text, TouchableOpacity } from "react-native";
 import { ActivityIndicator, Chip, Dialog, Divider, FAB, Icon, IconButton, BottomNavigation, MD2Colors, Modal, Portal, TextInput } from "react-native-paper";
 import { use, useCallback, useEffect, useState } from "react";
 import { StackScreenHeader } from "@/components/StackScreenHeader";
@@ -112,7 +112,7 @@ const Dashboards = () => {
         if (callQueryGetDashBoardsAccessByUserId !== INIT_QUERY_KEY.toString()) {
             if (dashboardsAccessByUserId && dashboardsAccessByUserId?.status !== 'pending') {
                 let data: any = dashboardsAccessByUserId.data
-                
+
                 if (dashboardsAccessByUserId?.data && data.dashboardIds) {
                     let modifiedDashboards = [];
                     if (dashboards && dashboards.length > 0) {
@@ -141,7 +141,7 @@ const Dashboards = () => {
                     console.log("No dashboards found for userId: " + userId);
                     setLoading(false);
                 }
-              }
+            }
 
         }
 
@@ -245,7 +245,7 @@ const Dashboards = () => {
 
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: MD2Colors.grey200 }}>
-            <StackScreenHeader title={"IoT Connect"} showBackButton={false}></StackScreenHeader>
+            <StackScreenHeader title={"All Dashboards"} showBackButton={false}></StackScreenHeader>
             {loading ? <ActivityIndicator style={{ margin: 'auto' }} size={"large"}></ActivityIndicator> :
 
                 <View style={{ width: "100%" }}>
@@ -380,17 +380,25 @@ const Dashboards = () => {
                         marginTop: 200,
 
                     }}>
-                        <Chip textStyle={{ color: MD2Colors.white, fontSize: 12 }} style={{
-                            backgroundColor: MD2Colors.indigoA200
-                        }} onPress={() => {
-                            setVisible(true);
-                        }}>Add Dashboard</Chip></View>}
+                        <Chip textStyle={{ color: MD2Colors.white, fontSize: 12 }}
+                            icon={() => <Icon source="plus" size={18} color={MD2Colors.white} />}
+                            style={{
+                                backgroundColor: MD2Colors.indigoA200
+                            }} onPress={() => {
+                                setVisible(true);
+                            }}>Add Dashboard</Chip></View>}
 
                     <View style={{ alignSelf: "center", marginTop: 10, width: "100%" }}>
                         <View style={{ width: "100%", }}>
                             {dashboards && dashboards?.length > 0 && dashboards?.map((dashboard: any) => {
-                                return <View key={dashboard.dashboardId} style={{ margin: 10, marginBottom: 5, marginTop: 5 }}>
-
+                                return <TouchableOpacity key={dashboard.dashboardId} style={{ margin: 10, marginBottom: 5, marginTop: 5 }}
+                                    onPress={() => {
+                                        router.push({
+                                            pathname: `/screens/selecteddashboard`, params: {
+                                                "dashboardId": dashboard.dashboardId
+                                            }
+                                        }); // Remove the braces in params
+                                    }}>
                                     <View style={{
                                         width: "100%", minHeight: 140, backgroundColor: MD2Colors.white,
                                         shadowColor: "#000",
@@ -445,13 +453,6 @@ const Dashboards = () => {
                                                     borderColor: MD2Colors.lightGreen500,
                                                 }}
                                                     textStyle={{ color: MD2Colors.grey800, fontSize: 12, fontWeight: 600 }}
-                                                    onPress={() => {
-                                                        router.push({
-                                                            pathname: `/screens/selecteddashboard`, params: {
-                                                                "dashboardId": dashboard.dashboardId
-                                                            }
-                                                        }); // Remove the braces in params
-                                                    }}
                                                 >Widgets: {dashboard.widgets && Object.keys(JSON.parse(dashboard.widgets)).length}</Chip>
                                                 : <Chip mode="outlined" style={{
                                                     width: 120,
@@ -459,13 +460,7 @@ const Dashboards = () => {
                                                 }}
                                                     textStyle={{ color: MD2Colors.grey800, fontSize: 12, fontWeight: 600 }}
                                                     icon={() => <Icon source='plus' size={18} color={MD2Colors.grey800} />}
-                                                    onPress={() => {
-                                                        router.push({
-                                                            pathname: `/screens/selecteddashboard`, params: {
-                                                                "dashboardId": dashboard.dashboardId
-                                                            }
-                                                        }); // Remove the braces in params
-                                                    }}
+
                                                 >Add Widget</Chip>
                                             }
 
@@ -573,7 +568,7 @@ const Dashboards = () => {
                                         </View>}
                                     </View>
 
-                                </View>
+                                </TouchableOpacity>
 
                             })}
                         </View>

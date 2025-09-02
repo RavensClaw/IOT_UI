@@ -200,8 +200,7 @@ const SelectedDashBoard: React.FC<Props> = () => {
     }, [selectedDashboard]);
 
     useEffect(() => {
-        if (updateDashboardDone
-        ) {
+        if (updateDashboardDone) {
             //setSelectedDashboard(INIT)
             setCallQueryGetDashBoardByDashBoardId(Constants.serviceKeys.queryGetDashBoardByDashBoardId + dashboardId);
             setUpdateDashboardDone(false);
@@ -212,13 +211,16 @@ const SelectedDashBoard: React.FC<Props> = () => {
 
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: MD2Colors.grey200 }}>
-            <StackScreenHeader title={"Selected Dashboard"} showBackButton={false}></StackScreenHeader>
+            <StackScreenHeader title={"Dashboard"} showBackButton={false}></StackScreenHeader>
             {loading ? <ActivityIndicator style={{ margin: 'auto' }} size={"large"}></ActivityIndicator> :
 
                 <View style={{ width: "100%" }}>
                     <View style={{ flexDirection: "row" }}>
                         {dashboards && dashboards.length > 0 && <Dropdown
-                            style={[styles.dropdown, { width: "90%", margin: "auto", marginTop: 25 }]}
+                            style={[styles.dropdown, { width: "90%", margin: "auto", marginTop: 25,
+                                borderColor: MD2Colors.tealA200,
+                                borderWidth:1
+                             }]}
                             placeholderStyle={styles.placeholderStyle}
                             selectedTextStyle={styles.selectedTextStyle}
                             iconStyle={styles.iconStyle}
@@ -236,11 +238,13 @@ const SelectedDashBoard: React.FC<Props> = () => {
                     </View>
 
                     {!loading && (!selectedDashboard || !selectedDashboard.widgets || Object.keys(selectedDashboard.widgets)?.length <= 0) && <View style={{ margin: "auto", alignSelf: "center", marginTop: 150 }}>
-                        <Chip mode="outlined" textStyle={{ color: MD2Colors.grey800, fontSize: 12 }} style={{
-                            borderColor: MD2Colors.redA200
-                        }} onPress={() => {
-                            setVisible(true);
-                        }}>Add Widgets</Chip>
+                        <Chip
+                            icon={() => <Icon source="plus" size={18} color={MD2Colors.white} />}
+                            textStyle={{ color: MD2Colors.white, fontSize: 12 }} style={{
+                                backgroundColor: MD2Colors.redA200
+                            }} onPress={() => {
+                                setVisible(true);
+                            }}>Add Widget</Chip>
                     </View>}
 
                     <Portal>

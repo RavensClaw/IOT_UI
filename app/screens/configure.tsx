@@ -614,8 +614,9 @@ let paramsConstruction = '';
                                         widget.inputStates[inputStateName].response?.trim() !== '' && <View style={{ width: "100%", alignSelf: "center", margin: "auto", flexDirection: "row" }}>
                                     <Text style={{ fontSize: 12, fontWeight: 700, marginRight: "auto", marginTop: 15, margin: 5 }}>Output Conditions</Text>
                                     {inputStateName === 'CHECK_STATUS' && <Dropdown
-                                        disable={!edit}
-                                        style={[styles.dropdown, { width: 200, backgroundColor: !edit ? MD2Colors.grey200 : MD2Colors.white }]}
+                                        //disable={!edit}
+                                        //style={[styles.dropdown, { width: 200, backgroundColor: !edit ? MD2Colors.grey200 : MD2Colors.white }]}
+                                        style={[styles.dropdown, { width: 200, backgroundColor: MD2Colors.white }]}
                                         placeholderStyle={styles.placeholderStyle}
                                         selectedTextStyle={styles.selectedTextStyle}
                                         iconStyle={styles.iconStyle}
