@@ -246,7 +246,7 @@ let paramsConstruction = '';
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: MD2Colors.grey200, width: "100%" }}>
             <StackScreenHeader title={"Configure " + (widget.label ? widget.label : '')}></StackScreenHeader>
-            <ScrollView style={{ backgroundColor: MD2Colors.grey200, marginBottom:50 }}>
+            <ScrollView style={{ backgroundColor: MD2Colors.grey200, marginBottom: 50 }}>
                 {loadingPage ? <ActivityIndicator style={{ marginTop: 50 }}></ActivityIndicator> :
                     <View style={{ alignSelf: "center", width: "100%" }}>
                         {generalErrorVisible && <Chip mode="outlined"
@@ -380,9 +380,14 @@ let paramsConstruction = '';
                                                     }
 
                                                     fetch(apiURL, options).then(async (response: any) => {
-                                                        const contentType = response.headers['content-type']?.toLowerCase() || '';
-                                                        const jsonResponse = await response.json();
-                                                        setResponseOutput(JSON.stringify(jsonResponse, null, 4));
+                                                        const text = await response.text()
+                                                        try {
+                                                            const json = JSON.parse(text)
+                                                            setResponseOutput(JSON.stringify(json, null, 4));
+                                                        } catch (err) {
+                                                            setResponseOutput(JSON.stringify({"response": text}, null, 4));
+                                                        }
+
                                                     }).catch((error) => {
                                                         console.log(error)
                                                         setApiErrorMessage(error.message);
@@ -611,77 +616,77 @@ let paramsConstruction = '';
 
                                 <Divider></Divider>
                                 {inputStateName !== '' && !loadingRequest && widget && widget.inputStates && widget?.inputStates[inputStateName] && widget?.inputStates[inputStateName].response &&
-                                        widget.inputStates[inputStateName].response?.trim() !== '' && <View style={{ width: "100%", alignSelf: "center", margin: "auto", flexDirection: "row" }}>
-                                    <Text style={{ fontSize: 12, fontWeight: 700, marginRight: "auto", marginTop: 15, margin: 5 }}>Output Conditions</Text>
-                                    {inputStateName === 'CHECK_STATUS' && <Dropdown
-                                        //disable={!edit}
-                                        //style={[styles.dropdown, { width: 200, backgroundColor: !edit ? MD2Colors.grey200 : MD2Colors.white }]}
-                                        style={[styles.dropdown, { width: 200, backgroundColor: MD2Colors.white }]}
-                                        placeholderStyle={styles.placeholderStyle}
-                                        selectedTextStyle={styles.selectedTextStyle}
-                                        iconStyle={styles.iconStyle}
-                                        itemTextStyle={styles.selectedTextStyle}
-                                        data={possibleOutputStates}
-                                        maxHeight={300}
-                                        labelField="label"
-                                        valueField="value"
-                                        placeholder="Select For State"
-                                        value={outputStateName}
-                                        onChange={item => {
-                                            setOutputStateName(item.value);
-                                        }}
-                                    />}
-                                    {
-                                    widget.inputStates &&
-                                        widget.inputStates[inputStateName] &&
-                                        widget.inputStates[inputStateName].response &&
-                                        widget.inputStates[inputStateName].response?.trim() !== '' &&
-                                        (
-                                            !widget.inputStates[inputStateName].outputStates ||
-                                            !widget.inputStates[inputStateName].outputStates[outputStateName] ||
-                                            !widget.inputStates[inputStateName].outputStates[outputStateName].conditions ||
-                                            widget.inputStates[inputStateName].outputStates[outputStateName].conditions.length === 0) &&
-                                        <IconButton style={{ marginLeft: "auto" }} iconColor={MD2Colors.grey800} size={20}
-                                            icon={"plus"}
-                                            disabled={!edit}
-                                            onPress={() => {
-                                                if (widget.inputStates && widget.inputStates[inputStateName]) {
+                                    widget.inputStates[inputStateName].response?.trim() !== '' && <View style={{ width: "100%", alignSelf: "center", margin: "auto", flexDirection: "row" }}>
+                                        <Text style={{ fontSize: 12, fontWeight: 700, marginRight: "auto", marginTop: 15, margin: 5 }}>Output Conditions</Text>
+                                        {inputStateName === 'CHECK_STATUS' && <Dropdown
+                                            //disable={!edit}
+                                            //style={[styles.dropdown, { width: 200, backgroundColor: !edit ? MD2Colors.grey200 : MD2Colors.white }]}
+                                            style={[styles.dropdown, { width: 200, backgroundColor: MD2Colors.white }]}
+                                            placeholderStyle={styles.placeholderStyle}
+                                            selectedTextStyle={styles.selectedTextStyle}
+                                            iconStyle={styles.iconStyle}
+                                            itemTextStyle={styles.selectedTextStyle}
+                                            data={possibleOutputStates}
+                                            maxHeight={300}
+                                            labelField="label"
+                                            valueField="value"
+                                            placeholder="Select For State"
+                                            value={outputStateName}
+                                            onChange={item => {
+                                                setOutputStateName(item.value);
+                                            }}
+                                        />}
+                                        {
+                                            widget.inputStates &&
+                                            widget.inputStates[inputStateName] &&
+                                            widget.inputStates[inputStateName].response &&
+                                            widget.inputStates[inputStateName].response?.trim() !== '' &&
+                                            (
+                                                !widget.inputStates[inputStateName].outputStates ||
+                                                !widget.inputStates[inputStateName].outputStates[outputStateName] ||
+                                                !widget.inputStates[inputStateName].outputStates[outputStateName].conditions ||
+                                                widget.inputStates[inputStateName].outputStates[outputStateName].conditions.length === 0) &&
+                                            <IconButton style={{ marginLeft: "auto" }} iconColor={MD2Colors.grey800} size={20}
+                                                icon={"plus"}
+                                                disabled={!edit}
+                                                onPress={() => {
+                                                    if (widget.inputStates && widget.inputStates[inputStateName]) {
 
-                                                    let modifiedWidget = { ...widget };
-                                                    if (widget.inputStates[inputStateName].outputStates) {
-                                                        widget.inputStates[inputStateName].outputStates = {
-                                                            ...widget.inputStates[inputStateName].outputStates,
-                                                            [outputStateName]: {
-                                                                conditions: [{
-                                                                    id: new ObjectID().toHexString(),
-                                                                    key: "",
-                                                                    condition: "",
-                                                                    value1: "",
-                                                                    value2: "",
-                                                                }]
+                                                        let modifiedWidget = { ...widget };
+                                                        if (widget.inputStates[inputStateName].outputStates) {
+                                                            widget.inputStates[inputStateName].outputStates = {
+                                                                ...widget.inputStates[inputStateName].outputStates,
+                                                                [outputStateName]: {
+                                                                    conditions: [{
+                                                                        id: new ObjectID().toHexString(),
+                                                                        key: "",
+                                                                        condition: "",
+                                                                        value1: "",
+                                                                        value2: "",
+                                                                    }]
+                                                                }
+                                                            }
+                                                        } else {
+                                                            widget.inputStates[inputStateName].outputStates = {
+                                                                [outputStateName]: {
+                                                                    conditions: [{
+                                                                        id: new ObjectID().toHexString(),
+                                                                        key: "",
+                                                                        condition: "",
+                                                                        value1: "",
+                                                                        value2: "",
+                                                                    }]
+                                                                }
                                                             }
                                                         }
-                                                    } else {
-                                                        widget.inputStates[inputStateName].outputStates = {
-                                                            [outputStateName]: {
-                                                                conditions: [{
-                                                                    id: new ObjectID().toHexString(),
-                                                                    key: "",
-                                                                    condition: "",
-                                                                    value1: "",
-                                                                    value2: "",
-                                                                }]
-                                                            }
-                                                        }
+                                                        setWidget(modifiedWidget);
                                                     }
-                                                    setWidget(modifiedWidget);
+
+
+
                                                 }
-
-
-
-                                            }
-                                            }></IconButton>}
-                                </View>}
+                                                }></IconButton>}
+                                    </View>}
                             </View>}
                         {inputStateName?.trim() !== '' &&
                             !loadingRequest &&
@@ -690,7 +695,7 @@ let paramsConstruction = '';
                             widget.inputStates[inputStateName].outputStates &&
                             widget.inputStates[inputStateName].outputStates[outputStateName] &&
                             widget.inputStates[inputStateName].outputStates[outputStateName].conditions &&
-                            widget.inputStates[inputStateName].outputStates[outputStateName].conditions.length > 0 && <ScrollView style={{maxHeight:300}}>
+                            widget.inputStates[inputStateName].outputStates[outputStateName].conditions.length > 0 && <ScrollView style={{ maxHeight: 300 }}>
                                 <View style={{ width: "100%", alignSelf: "center" }}>
                                     <OutputConditionsMappingList
                                         edit={edit}

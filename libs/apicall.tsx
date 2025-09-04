@@ -69,10 +69,16 @@ export const makeApiCall = (
             options["body"] = JSON.stringify(body)
         }
 
-     
+
         fetch(apiURL, options).then(async (response: any) => {
-            const contentType = response.headers['content-type']?.toLowerCase() || '';
-            const jsonResponse = await response.json();
+
+            let responseData = await response.text();
+            try {
+                responseData = JSON.parse(responseData)
+            } catch (err) {
+                responseData = { "response": responseData }
+            }
+
             let state1ConditionStatified = false;
             let state2ConditionStatified = false;
 
@@ -87,7 +93,7 @@ export const makeApiCall = (
                             const key = outputConditions[i].key;
                             const value1 = outputConditions[i].value1;
                             const value2 = outputConditions[i].value2;
-                            const responseValue = jsonResponse[key];
+                            const responseValue = responseData[key];
 
                             if (value1) {
                                 if (outputConditions[i].condition === "LessThan") {
@@ -138,7 +144,7 @@ export const makeApiCall = (
                     }
 
                 }
-          
+
                 if (isStatusCheck && !state1ConditionStatified) {
 
                     if (state.outputStates[outputState2] &&
@@ -151,7 +157,7 @@ export const makeApiCall = (
                                 const key = outputConditions[i].key;
                                 const value1 = outputConditions[i].value1;
                                 const value2 = outputConditions[i].value2;
-                                const responseValue = jsonResponse[key];
+                                const responseValue = responseData[key];
 
                                 if (value1) {
                                     if (outputConditions[i].condition === "LessThan") {
@@ -211,13 +217,13 @@ export const makeApiCall = (
                     setOutputState(outputState2);
                 }
                 setActionRequest(false);
-            }else{
-                if(!isStatusCheck){
+            } else {
+                if (!isStatusCheck) {
                     setInputState(outputState1);
                     setOutputState(outputState1);
                 }
                 console.log("No output states defined for this input state: " + state.stateName);
-            setActionRequest(false);
+                setActionRequest(false);
             }
         }).catch((error) => {
             console.log(error)
