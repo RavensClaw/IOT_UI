@@ -390,6 +390,16 @@ const Dashboards = () => {
 
                     <View style={{ alignSelf: "center", marginTop: 10, width: "100%" }}>
                         <View style={{ width: "100%", }}>
+                                <IconButton
+                                    size={14}
+                                    style={{
+                                        backgroundColor: MD2Colors.blue400,
+                                        marginTop: 15
+                                    }}
+                                    icon={() => <Icon source='minus' size={18} color={MD2Colors.white} />}
+                                    onPress={async () => {
+                                        router.push({ pathname: '/screens/bluetoothscreen' });
+                                    }}></IconButton>
                             {dashboards && dashboards?.length > 0 && dashboards?.map((dashboard: any) => {
                                 return <TouchableOpacity key={dashboard.dashboardId} style={{ margin: 10, marginBottom: 5, marginTop: 5 }}
                                     onPress={() => {

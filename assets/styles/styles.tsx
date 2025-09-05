@@ -89,7 +89,7 @@ export const styles = StyleSheet.create({
             backgroundColor: 'white',
             borderRadius: 12,
             padding: 12,
-            shadowColor: '#000',
+            shadowColor: MD2Colors.grey800,
             shadowOffset: {
                 width: 0,
                 height: 1,
