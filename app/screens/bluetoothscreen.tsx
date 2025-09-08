@@ -180,15 +180,6 @@ const BluetoothScreen: React.FC = () => {
     }
   }, [generalErrorVisible]);
 
-  /*
-let paramsConstruction = '';
-          listQueryParamModelItems.map((paramItem: ListModel) => {
-              if (paramItem.name?.trim() !== '' && paramItem.value?.trim() !== '') {
-                  paramsConstruction = paramsConstruction + paramItem.name + "=" + paramItem.value + "&"
-              }
-          });
-  */
-
   useEffect(() => {
     if (inputStateName && inputStateName?.trim() != '') {
       const widgetToModify: WidgetModel = { ...widget };
@@ -360,28 +351,9 @@ let paramsConstruction = '';
         for (const char of characteristics) {
           log(char);
           deviceMapTemp[connected.id][service.uuid][char.uuid] = char
-
-
           log(
             `   ↳ Char: ${char.uuid} [read:${char.isReadable} write:${char.isWritableWithResponse} notify:${char.isNotifiable}]`
           );
-
-          /* if (char.isNotifiable) {
-             connected.monitorCharacteristicForService(
-               service.uuid,
-               char.uuid,
-               (err: any, c: any) => {
-                 if (err) {
-                   log("❌ Notify error: " + err.message);
-                   return;
-                 }
-                 if (c?.value) {
-                   const raw = Buffer.from(c.value, "base64").toString("hex");
-                   log(`🔔 Notify from ${char.uuid}: ${raw}`);
-                 }
-               }
-             );
-           }*/
         }
       }
       setDeviceMap({
@@ -747,7 +719,7 @@ let paramsConstruction = '';
               }}
             />
           </View>}
-          {!edit && <IconButton mode="outlined" style={{ margin: "auto", marginTop: 10, marginRight:20, marginBottom: 10 }} iconColor={MD2Colors.yellow700} size={15}
+          {!edit && devicesDropdown && Object.keys(devicesDropdown).length > 0 && selectedDevice && <IconButton mode="outlined" style={{ margin: "auto", marginTop: 10, marginRight:20, marginBottom: 10 }} iconColor={MD2Colors.yellow700} size={15}
             icon={"circle-edit-outline"}
             onPress={() => {
               setEdit(true);
