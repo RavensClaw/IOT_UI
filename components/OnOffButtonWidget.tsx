@@ -118,7 +118,11 @@ const OnOffButtonWidget: React.FC<Props> = ({
                     </View>
 
                     <View style={styles.widgetHeaderButtons}>
-                        {edit && <IconButton mode='outlined' style={styles.widgetConfigureIcon} size={16} icon={() => <Icon source='cog-outline' size={16} color={MD2Colors.grey900} />}
+                        {edit && (widgetCopy.connectionType === 'BLUETOOTH' || !widgetCopy.connectionType) && <IconButton mode='outlined' style={styles.widgetConfigureIcon} size={16} icon={() => <Icon source='bluetooth-settings' size={16} color={MD2Colors.blue600} />}
+                            onPress={() => {
+                                router.push(`/screens/bluetoothscreen?widgetId=${widgetCopy.widgetId}&userId=${widgetCopy.userId}&dashboardId=${dashboard.dashboardId}`)
+                            }}></IconButton>}
+                        {edit && (widgetCopy.connectionType === 'WIFI' || !widgetCopy.connectionType) && <IconButton mode='outlined' style={styles.widgetConfigureIcon} size={16} icon={() => <Icon source='wifi-settings' size={16} color={MD2Colors.grey900} />}
                             onPress={() => {
                                 router.push(`/screens/configure?widgetId=${widgetCopy.widgetId}&userId=${widgetCopy.userId}&dashboardId=${dashboard.dashboardId}`)
                             }}></IconButton>}

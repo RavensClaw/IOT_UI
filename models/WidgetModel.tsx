@@ -6,7 +6,9 @@ export default interface WidgetModel {
     description?: string | null;
     userId: string;
     inputStates?: InputStates;
-    readOnly: false | true
+    readOnly: false | true;
+    connectionType?: "WIFI" | "BLUETOOTH";
+    bluetoothDevice?: any;
 }
 
 

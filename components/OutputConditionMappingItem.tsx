@@ -14,6 +14,9 @@ export type Props = {
     widget: WidgetModel;
     inputStateName: string;
     outputStateName: string;
+    selectedServiceType?: string;
+    selectedCharacteristicType?: string;
+    selectedCharacteristicsOptionType?: string;
     responseDropDown: any[];
     edit: boolean;
     outputConditionModelItem: ConditionModel;
@@ -27,6 +30,9 @@ const OutputConditionMappingItem: React.FC<Props> = ({
     inputStateName,
     outputStateName,
     responseDropDown,
+    selectedServiceType,
+    selectedCharacteristicType,
+    selectedCharacteristicsOptionType,
     edit,
     outputConditionModelItem,
     setWidget,
@@ -36,7 +42,7 @@ const OutputConditionMappingItem: React.FC<Props> = ({
     const [outputConditionItem, setOutputConditionItem] = useState(outputConditionModelItem);
 
 
-    return <View style={{ width: "98%",paddingBottom:10, marginBottom: 10, alignSelf: "center", borderWidth: 1, borderColor: MD2Colors.grey500, borderRadius: 5 }}>
+    return <View style={{ width: "98%", paddingBottom: 10, marginBottom: 10, alignSelf: "center", borderWidth: 1, borderColor: MD2Colors.grey500, borderRadius: 5 }}>
         <View style={index !== 0 ? { flexDirection: "row" } : { flexDirection: "row", marginLeft: "auto" }}>
             {index !== 0 && <Dropdown
                 disable={!edit}
@@ -54,25 +60,63 @@ const OutputConditionMappingItem: React.FC<Props> = ({
                 onChange={item => {
 
                     let modifiedWidget = { ...widget };
-                    if (modifiedWidget &&
-                        modifiedWidget.inputStates &&
-                        modifiedWidget.inputStates[inputStateName] && 
-                        modifiedWidget.inputStates[inputStateName].outputStates &&
-                        modifiedWidget.inputStates[inputStateName].outputStates[outputStateName] &&
-                        modifiedWidget.inputStates[inputStateName].outputStates[outputStateName].conditions) {
-                        let modifiedOutputConditionModelItems = [...modifiedWidget.inputStates[inputStateName].outputStates[outputStateName].conditions];
-                        for (let i = 0; i < modifiedOutputConditionModelItems.length; i++) {
-                            if (modifiedOutputConditionModelItems[i].id === outputConditionModelItem.id) {
-                                modifiedOutputConditionModelItems[i].conditionWithPrevious = item;
-                                break;
-                            }
-                        }
-                        modifiedWidget.inputStates[inputStateName].outputStates[outputStateName].conditions = modifiedOutputConditionModelItems;
 
-                        setWidget({
-                            ...modifiedWidget,
-                        });
+                    if (modifiedWidget.connectionType === 'BLUETOOTH') {
+                        if (modifiedWidget &&
+                            modifiedWidget.inputStates &&
+                            modifiedWidget.inputStates[inputStateName] &&
+                            modifiedWidget.inputStates[inputStateName].service &&
+                            selectedServiceType &&
+                            selectedCharacteristicType &&
+                            selectedCharacteristicsOptionType &&
+                            modifiedWidget.inputStates[inputStateName].service[selectedServiceType] &&
+                            modifiedWidget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType] &&
+                            modifiedWidget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType][selectedCharacteristicsOptionType] &&
+                            modifiedWidget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType][selectedCharacteristicsOptionType].outputState[outputStateName] &&
+                            modifiedWidget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType][selectedCharacteristicsOptionType].outputState[outputStateName].conditions) {
+
+                            let modifiedOutputConditionModelItems = [...modifiedWidget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType][selectedCharacteristicsOptionType].outputState[outputStateName].conditions];
+
+                            for (let i = 0; i < modifiedOutputConditionModelItems.length; i++) {
+                                if (modifiedOutputConditionModelItems[i].id === outputConditionModelItem.id) {
+                                    modifiedOutputConditionModelItems[i].conditionWithPrevious = item;
+                                    break;
+                                }
+                            }
+                            modifiedWidget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType][selectedCharacteristicsOptionType].outputState[outputStateName].conditions = modifiedOutputConditionModelItems;
+
+                            setWidget({
+                                ...modifiedWidget,
+                            });
+
+                        }
+
+                    } else {
+
+
+                        if (modifiedWidget &&
+                            modifiedWidget.inputStates &&
+                            modifiedWidget.inputStates[inputStateName] &&
+                            modifiedWidget.inputStates[inputStateName].wifiOutputStates &&
+                            modifiedWidget.inputStates[inputStateName].wifiOutputStates[outputStateName] &&
+                            modifiedWidget.inputStates[inputStateName].wifiOutputStates[outputStateName].conditions) {
+                            let modifiedOutputConditionModelItems = [...modifiedWidget.inputStates[inputStateName].wifiOutputStates[outputStateName].conditions];
+
+                            for (let i = 0; i < modifiedOutputConditionModelItems.length; i++) {
+                                if (modifiedOutputConditionModelItems[i].id === outputConditionModelItem.id) {
+                                    modifiedOutputConditionModelItems[i].conditionWithPrevious = item;
+                                    break;
+                                }
+                            }
+                            modifiedWidget.inputStates[inputStateName].wifiOutputStates[outputStateName].conditions = modifiedOutputConditionModelItems;
+
+                            setWidget({
+                                ...modifiedWidget,
+                            });
+                        }
+
                     }
+
                 }}
             />}
             <IconButton
@@ -81,6 +125,8 @@ const OutputConditionMappingItem: React.FC<Props> = ({
                 mode="outlined"
                 iconColor={MD2Colors.black}
                 onPress={() => {
+console.log("{} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}");
+
                     const item = {
                         id: new ObjectID().toHexString(),
                         key: "",
@@ -89,18 +135,39 @@ const OutputConditionMappingItem: React.FC<Props> = ({
                         value2: "",
                     }
                     let modifiedWidget = { ...widget };
-                    if (modifiedWidget &&
-                        modifiedWidget.inputStates &&
-                        modifiedWidget.inputStates[inputStateName] && 
-                        modifiedWidget.inputStates[inputStateName].outputStates &&
-                        modifiedWidget.inputStates[inputStateName].outputStates[outputStateName] &&
-                        modifiedWidget.inputStates[inputStateName].outputStates[outputStateName].conditions) {
-                        setOutputConditionItem(item);
-                        modifiedWidget.inputStates[inputStateName].outputStates[outputStateName].conditions = [...modifiedWidget.inputStates[inputStateName].outputStates[outputStateName].conditions, item];
-                        setWidget({
-                            ...modifiedWidget,
-                        });
+                    if (modifiedWidget.connectionType === 'BLUETOOTH') {
+                        if (modifiedWidget &&
+                            modifiedWidget.inputStates &&
+                            modifiedWidget.inputStates[inputStateName] &&
+                            modifiedWidget.inputStates[inputStateName].service &&
+                            selectedServiceType &&
+                            selectedCharacteristicType &&
+                            selectedCharacteristicsOptionType &&
+                            modifiedWidget.inputStates[inputStateName].service[selectedServiceType] &&
+                            modifiedWidget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType] &&
+                            modifiedWidget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType][selectedCharacteristicsOptionType] &&
+                            modifiedWidget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType][selectedCharacteristicsOptionType].outputState[outputStateName] &&
+                            modifiedWidget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType][selectedCharacteristicsOptionType].outputState[outputStateName].conditions) {
+                            setOutputConditionItem(item);
+                            modifiedWidget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType][selectedCharacteristicsOptionType].outputState[outputStateName].conditions = [...modifiedWidget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType][selectedCharacteristicsOptionType].outputState[outputStateName].conditions, item];
+                            
+                            setWidget(modifiedWidget);
+                        }
+
+                    } else {
+                        if (modifiedWidget &&
+                            modifiedWidget.inputStates &&
+                            modifiedWidget.inputStates[inputStateName] &&
+                            modifiedWidget.inputStates[inputStateName].wifiOutputStates &&
+                            modifiedWidget.inputStates[inputStateName].wifiOutputStates[outputStateName] &&
+                            modifiedWidget.inputStates[inputStateName].wifiOutputStates[outputStateName].conditions) {
+                            setOutputConditionItem(item);
+                            modifiedWidget.inputStates[inputStateName].wifiOutputStates[outputStateName].conditions = [...modifiedWidget.inputStates[inputStateName].wifiOutputStates[outputStateName].conditions, item];
+                            
+                            setWidget(modifiedWidget);
+                        }
                     }
+                    console.log(selectedServiceType)
                 }}
                 disabled={!edit}
                 icon={"plus"} />
@@ -110,26 +177,57 @@ const OutputConditionMappingItem: React.FC<Props> = ({
                 mode="outlined"
                 iconColor={MD2Colors.black}
                 onPress={() => {
-
                     let modifiedWidget = { ...widget };
-                    if (modifiedWidget &&
-                        modifiedWidget.inputStates &&
-                        modifiedWidget.inputStates[inputStateName] && 
-                        modifiedWidget.inputStates[inputStateName].outputStates &&
-                        modifiedWidget.inputStates[inputStateName].outputStates[outputStateName] &&
-                        modifiedWidget.inputStates[inputStateName].outputStates[outputStateName].conditions) {
-                        let modifiedConditions = [...modifiedWidget.inputStates[inputStateName].outputStates[outputStateName].conditions];
-                        modifiedWidget.inputStates[inputStateName].outputStates[outputStateName].conditions = [...modifiedConditions];
 
-                        for (let i = 0; i < modifiedConditions.length; i++) {
-                            if (modifiedConditions[i].id === outputConditionItem.id) {
-                                modifiedConditions.splice(i, 1);
-                                modifiedWidget.inputStates[inputStateName].outputStates[outputStateName].conditions = modifiedConditions;
-                                break;
+                    if (modifiedWidget.connectionType === 'BLUETOOTH') {
+                        if (modifiedWidget &&
+                            modifiedWidget.inputStates &&
+                            modifiedWidget.inputStates[inputStateName] &&
+                            modifiedWidget.inputStates[inputStateName].service &&
+                            selectedServiceType &&
+                            selectedCharacteristicType &&
+                            selectedCharacteristicsOptionType &&
+                            modifiedWidget.inputStates[inputStateName].service[selectedServiceType] &&
+                            modifiedWidget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType] &&
+                            modifiedWidget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType][selectedCharacteristicsOptionType] &&
+                            modifiedWidget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType][selectedCharacteristicsOptionType].outputState[outputStateName] &&
+                            modifiedWidget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType][selectedCharacteristicsOptionType].outputState[outputStateName].conditions) {
+                            console.log("[] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] []");
+                            let modifiedConditions = [...modifiedWidget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType][selectedCharacteristicsOptionType].outputState[outputStateName].conditions];
+                            modifiedWidget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType][selectedCharacteristicsOptionType].outputState[outputStateName].conditions = [...modifiedConditions];
+
+                            for (let i = 0; i < modifiedConditions.length; i++) {
+                                if (modifiedConditions[i].id === outputConditionItem.id) {
+                                    modifiedConditions.splice(i, 1);
+                                    modifiedWidget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType][selectedCharacteristicsOptionType].outputState[outputStateName].conditions = modifiedConditions;
+                                    break;
+                                }
                             }
+                            setWidget(modifiedWidget);
+
                         }
-                       setWidget(modifiedWidget);
+                    } else {
+                        if (modifiedWidget &&
+                            modifiedWidget.inputStates &&
+                            modifiedWidget.inputStates[inputStateName] &&
+                            modifiedWidget.inputStates[inputStateName].wifiOutputStates &&
+                            modifiedWidget.inputStates[inputStateName].wifiOutputStates[outputStateName] &&
+                            modifiedWidget.inputStates[inputStateName].wifiOutputStates[outputStateName].conditions) {
+                            let modifiedConditions = [...modifiedWidget.inputStates[inputStateName].wifiOutputStates[outputStateName].conditions];
+                            modifiedWidget.inputStates[inputStateName].wifiOutputStates[outputStateName].conditions = [...modifiedConditions];
+
+                            for (let i = 0; i < modifiedConditions.length; i++) {
+                                if (modifiedConditions[i].id === outputConditionItem.id) {
+                                    modifiedConditions.splice(i, 1);
+                                    modifiedWidget.inputStates[inputStateName].wifiOutputStates[outputStateName].conditions = modifiedConditions;
+                                    break;
+                                }
+                            }
+                            setWidget(modifiedWidget);
+                        }
                     }
+
+
                 }}
                 disabled={!edit}
                 icon={"delete"} />
@@ -149,26 +247,61 @@ const OutputConditionMappingItem: React.FC<Props> = ({
             value={outputConditionItem.key}
             onChange={item => {
                 let modifiedWidget = { ...widget };
-                if (modifiedWidget &&
-                    modifiedWidget.inputStates &&
-                    modifiedWidget.inputStates[inputStateName].outputStates &&
-                    modifiedWidget.inputStates[inputStateName].outputStates[outputStateName] &&
-                    modifiedWidget.inputStates[inputStateName].outputStates[outputStateName].conditions) {
-                        let modifiedOutputConditionModelItems = [...modifiedWidget.inputStates[inputStateName].outputStates[outputStateName].conditions];
+
+                if (modifiedWidget.connectionType === 'BLUETOOTH') {
+
+                    if (modifiedWidget &&
+                        modifiedWidget.inputStates &&
+                        modifiedWidget.inputStates[inputStateName] &&
+                        modifiedWidget.inputStates[inputStateName].service &&
+                        selectedServiceType &&
+                        selectedCharacteristicType &&
+                        selectedCharacteristicsOptionType &&
+                        modifiedWidget.inputStates[inputStateName].service[selectedServiceType] &&
+                        modifiedWidget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType] &&
+                        modifiedWidget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType][selectedCharacteristicsOptionType] &&
+                        modifiedWidget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType][selectedCharacteristicsOptionType].outputState[outputStateName] &&
+                        modifiedWidget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType][selectedCharacteristicsOptionType].outputState[outputStateName].conditions) {
+
+                        let modifiedOutputConditionModelItems = [...modifiedWidget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType][selectedCharacteristicsOptionType].outputState[outputStateName].conditions];
 
 
-                    for (let i = 0; i < modifiedOutputConditionModelItems.length; i++) {
-                        if (modifiedOutputConditionModelItems[i].id === outputConditionModelItem.id) {
-                            modifiedOutputConditionModelItems[i].key = item.value;
-                            setOutputConditionItem(modifiedOutputConditionModelItems[i]);
-                            break;
+                        for (let i = 0; i < modifiedOutputConditionModelItems.length; i++) {
+                            if (modifiedOutputConditionModelItems[i].id === outputConditionModelItem.id) {
+                                modifiedOutputConditionModelItems[i].key = item.value;
+                                setOutputConditionItem(modifiedOutputConditionModelItems[i]);
+                                break;
+                            }
                         }
+                        modifiedWidget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType][selectedCharacteristicsOptionType].outputState[outputStateName].conditions = modifiedOutputConditionModelItems;
+                        setWidget({
+                            ...modifiedWidget,
+                        });
                     }
-                    modifiedWidget.inputStates[inputStateName].outputStates[outputStateName].conditions = modifiedOutputConditionModelItems;
-                    setWidget({
-                        ...modifiedWidget,
-                    });
+                } else {
+                    if (modifiedWidget &&
+                        modifiedWidget.inputStates &&
+                        modifiedWidget.inputStates[inputStateName].wifiOutputStates &&
+                        modifiedWidget.inputStates[inputStateName].wifiOutputStates[outputStateName] &&
+                        modifiedWidget.inputStates[inputStateName].wifiOutputStates[outputStateName].conditions) {
+                        let modifiedOutputConditionModelItems = [...modifiedWidget.inputStates[inputStateName].wifiOutputStates[outputStateName].conditions];
+
+
+                        for (let i = 0; i < modifiedOutputConditionModelItems.length; i++) {
+                            if (modifiedOutputConditionModelItems[i].id === outputConditionModelItem.id) {
+                                modifiedOutputConditionModelItems[i].key = item.value;
+                                setOutputConditionItem(modifiedOutputConditionModelItems[i]);
+                                break;
+                            }
+                        }
+                        modifiedWidget.inputStates[inputStateName].wifiOutputStates[outputStateName].conditions = modifiedOutputConditionModelItems;
+                        setWidget({
+                            ...modifiedWidget,
+                        });
+                    }
                 }
+
+
 
             }}
         />
@@ -190,10 +323,10 @@ const OutputConditionMappingItem: React.FC<Props> = ({
                 let modifiedWidget = { ...widget };
                 if (modifiedWidget &&
                     modifiedWidget.inputStates &&
-                    modifiedWidget.inputStates[inputStateName].outputStates &&
-                    modifiedWidget.inputStates[inputStateName].outputStates[outputStateName] &&
-                    modifiedWidget.inputStates[inputStateName].outputStates[outputStateName].conditions) {
-                    let modifiedOutputConditionModelItems = [...modifiedWidget.inputStates[inputStateName].outputStates[outputStateName].conditions];
+                    modifiedWidget.inputStates[inputStateName].wifiOutputStates &&
+                    modifiedWidget.inputStates[inputStateName].wifiOutputStates[outputStateName] &&
+                    modifiedWidget.inputStates[inputStateName].wifiOutputStates[outputStateName].conditions) {
+                    let modifiedOutputConditionModelItems = [...modifiedWidget.inputStates[inputStateName].wifiOutputStates[outputStateName].conditions];
 
 
 
@@ -204,7 +337,7 @@ const OutputConditionMappingItem: React.FC<Props> = ({
                             break;
                         }
                     }
-                    modifiedWidget.inputStates[inputStateName].outputStates[outputStateName].conditions = modifiedOutputConditionModelItems;
+                    modifiedWidget.inputStates[inputStateName].wifiOutputStates[outputStateName].conditions = modifiedOutputConditionModelItems;
                     setWidget({
                         ...modifiedWidget,
                     });
@@ -219,28 +352,62 @@ const OutputConditionMappingItem: React.FC<Props> = ({
             mode="outlined"
             onChangeText={text => {
                 let modifiedWidget = { ...widget };
-                if (modifiedWidget &&
-                    modifiedWidget.inputStates &&
-                    modifiedWidget.inputStates[inputStateName].outputStates &&
-                    modifiedWidget.inputStates[inputStateName].outputStates[outputStateName] &&
-                    modifiedWidget.inputStates[inputStateName].outputStates[outputStateName].conditions) {
-                    let modifiedOutputConditionModelItems = [...modifiedWidget.inputStates[inputStateName].outputStates[outputStateName].conditions];
 
+                if (modifiedWidget.connectionType === 'BLUETOOTH') {
 
-
-                    for (let i = 0; i < modifiedOutputConditionModelItems.length; i++) {
-                        if (modifiedOutputConditionModelItems[i].id === outputConditionModelItem.id) {
-                            modifiedOutputConditionModelItems[i].value1 = text;
-                            setOutputConditionItem(modifiedOutputConditionModelItems[i]);
-                            break;
+                    if (modifiedWidget &&
+                        modifiedWidget.inputStates &&
+                        modifiedWidget.inputStates[inputStateName] &&
+                        modifiedWidget.inputStates[inputStateName].service &&
+                        selectedServiceType &&
+                        selectedCharacteristicType &&
+                        selectedCharacteristicsOptionType &&
+                        modifiedWidget.inputStates[inputStateName].service[selectedServiceType] &&
+                        modifiedWidget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType] &&
+                        modifiedWidget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType][selectedCharacteristicsOptionType] &&
+                        modifiedWidget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType][selectedCharacteristicsOptionType].outputState[outputStateName] &&
+                        modifiedWidget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType][selectedCharacteristicsOptionType].outputState[outputStateName].conditions) {
+                        let modifiedOutputConditionModelItems = [...modifiedWidget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType][selectedCharacteristicsOptionType].outputState[outputStateName].conditions];
+                        for (let i = 0; i < modifiedOutputConditionModelItems.length; i++) {
+                            if (modifiedOutputConditionModelItems[i].id === outputConditionModelItem.id) {
+                                modifiedOutputConditionModelItems[i].value1 = text;
+                                setOutputConditionItem(modifiedOutputConditionModelItems[i]);
+                                break;
+                            }
                         }
-                    }
-                    modifiedWidget.inputStates[inputStateName].outputStates[outputStateName].conditions = modifiedOutputConditionModelItems;
+                        modifiedWidget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType][selectedCharacteristicsOptionType].outputState[outputStateName].conditions = modifiedOutputConditionModelItems;
 
-                    setWidget({
-                        ...modifiedWidget,
-                    });
+                        setWidget({
+                            ...modifiedWidget,
+                        });
+                    }
+
+                } else {
+                    if (modifiedWidget &&
+                        modifiedWidget.inputStates &&
+                        modifiedWidget.inputStates[inputStateName].wifiOutputStates &&
+                        modifiedWidget.inputStates[inputStateName].wifiOutputStates[outputStateName] &&
+                        modifiedWidget.inputStates[inputStateName].wifiOutputStates[outputStateName].conditions) {
+                        let modifiedOutputConditionModelItems = [...modifiedWidget.inputStates[inputStateName].wifiOutputStates[outputStateName].conditions];
+
+
+
+                        for (let i = 0; i < modifiedOutputConditionModelItems.length; i++) {
+                            if (modifiedOutputConditionModelItems[i].id === outputConditionModelItem.id) {
+                                modifiedOutputConditionModelItems[i].value1 = text;
+                                setOutputConditionItem(modifiedOutputConditionModelItems[i]);
+                                break;
+                            }
+                        }
+                        modifiedWidget.inputStates[inputStateName].wifiOutputStates[outputStateName].conditions = modifiedOutputConditionModelItems;
+
+                        setWidget({
+                            ...modifiedWidget,
+                        });
+                    }
                 }
+
+
             }}
         />
         {outputConditionItem.condition === 'Between' &&
@@ -248,32 +415,64 @@ const OutputConditionMappingItem: React.FC<Props> = ({
                 readOnly={!edit}
                 label="Value"
                 value={outputConditionItem.value2}
-                style={{ fontSize: 12, width: "90%", margin: "auto",backgroundColor: !edit ? MD2Colors.grey100 : MD2Colors.white }}
+                style={{ fontSize: 12, width: "90%", margin: "auto", backgroundColor: !edit ? MD2Colors.grey100 : MD2Colors.white }}
                 mode="outlined"
                 onChangeText={text => {
                     let modifiedWidget = { ...widget };
-                    if (modifiedWidget &&
-                        modifiedWidget.inputStates &&
-                        modifiedWidget.inputStates[inputStateName].outputStates &&
-                        modifiedWidget.inputStates[inputStateName].outputStates[outputStateName] &&
-                        modifiedWidget.inputStates[inputStateName].outputStates[outputStateName].conditions) {
-                        let modifiedOutputConditionModelItems = [...modifiedWidget.inputStates[inputStateName].outputStates[outputStateName].conditions];
 
-
-
-                        for (let i = 0; i < modifiedOutputConditionModelItems.length; i++) {
-                            if (modifiedOutputConditionModelItems[i].id === outputConditionModelItem.id) {
-                                modifiedOutputConditionModelItems[i].value2 = text;
-                                setOutputConditionItem(modifiedOutputConditionModelItems[i]);
-                                break;
+                    if (modifiedWidget.connectionType === 'BLUETOOTH') {
+                        if (modifiedWidget &&
+                            modifiedWidget.inputStates &&
+                            modifiedWidget.inputStates[inputStateName] &&
+                            modifiedWidget.inputStates[inputStateName].service &&
+                            selectedServiceType &&
+                            selectedCharacteristicType &&
+                            selectedCharacteristicsOptionType &&
+                            modifiedWidget.inputStates[inputStateName].service[selectedServiceType] &&
+                            modifiedWidget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType] &&
+                            modifiedWidget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType][selectedCharacteristicsOptionType] &&
+                            modifiedWidget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType][selectedCharacteristicsOptionType].outputState[outputStateName] &&
+                            modifiedWidget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType][selectedCharacteristicsOptionType].outputState[outputStateName].conditions) {
+                            let modifiedOutputConditionModelItems = [...modifiedWidget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType][selectedCharacteristicsOptionType].outputState[outputStateName].conditions];
+                            for (let i = 0; i < modifiedOutputConditionModelItems.length; i++) {
+                                if (modifiedOutputConditionModelItems[i].id === outputConditionModelItem.id) {
+                                    modifiedOutputConditionModelItems[i].value2 = text;
+                                    setOutputConditionItem(modifiedOutputConditionModelItems[i]);
+                                    break;
+                                }
                             }
-                        }
-                        modifiedWidget.inputStates[inputStateName].outputStates[outputStateName].conditions = modifiedOutputConditionModelItems;
+                            modifiedWidget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType][selectedCharacteristicsOptionType].outputState[outputStateName].conditions = modifiedOutputConditionModelItems;
 
-                        setWidget({
-                            ...modifiedWidget,
-                        });
+                            setWidget({
+                                ...modifiedWidget,
+                            });
+                        }
+                    } else {
+                        if (modifiedWidget &&
+                            modifiedWidget.inputStates &&
+                            modifiedWidget.inputStates[inputStateName].wifiOutputStates &&
+                            modifiedWidget.inputStates[inputStateName].wifiOutputStates[outputStateName] &&
+                            modifiedWidget.inputStates[inputStateName].wifiOutputStates[outputStateName].conditions) {
+                            let modifiedOutputConditionModelItems = [...modifiedWidget.inputStates[inputStateName].wifiOutputStates[outputStateName].conditions];
+
+
+
+                            for (let i = 0; i < modifiedOutputConditionModelItems.length; i++) {
+                                if (modifiedOutputConditionModelItems[i].id === outputConditionModelItem.id) {
+                                    modifiedOutputConditionModelItems[i].value2 = text;
+                                    setOutputConditionItem(modifiedOutputConditionModelItems[i]);
+                                    break;
+                                }
+                            }
+                            modifiedWidget.inputStates[inputStateName].wifiOutputStates[outputStateName].conditions = modifiedOutputConditionModelItems;
+
+                            setWidget({
+                                ...modifiedWidget,
+                            });
+                        }
                     }
+
+
                 }}
             />}
     </View>

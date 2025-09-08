@@ -8,6 +8,9 @@ export type Props = {
     widget: WidgetModel;
     inputStateName: string;
     outputStateName: string;
+    selectedServiceType?: string;
+    selectedCharacteristicType?: string;
+    selectedCharacteristicsOptionType?: string;
     edit: boolean;
     setWidget: React.Dispatch<React.SetStateAction<WidgetModel>>;
 };
@@ -56,6 +59,9 @@ const extractKeys = (jsonObject: any, keysArray: any[], keyPath: string) => {
 const OutputConditionsMappingList: React.FC<Props> = ({
     inputStateName,
     outputStateName,
+    selectedServiceType,
+    selectedCharacteristicType,
+    selectedCharacteristicsOptionType,
     widget,
     edit,
     setWidget }) => {
@@ -63,34 +69,73 @@ const OutputConditionsMappingList: React.FC<Props> = ({
     const [responseDropDown, setResponseDropDown] = useState(init);
 
     useEffect(() => {
-         if (widget &&
+        if (widget &&
+            widget.connectionType === 'BLUETOOTH' &&
             widget.inputStates &&
             widget.inputStates[inputStateName] &&
-            widget.inputStates[inputStateName].response) {
-            let populateDropDown: any =  populateResponseArray(widget.inputStates[inputStateName].response);
+            widget.inputStates[inputStateName].wifiResponse) {
+            let populateDropDown: any = populateResponseArray(widget.inputStates[inputStateName].wifiResponse);
+            setResponseDropDown(populateDropDown);
+        } else if (widget &&
+            widget.inputStates &&
+            widget.inputStates[inputStateName] &&
+            widget.inputStates[inputStateName].service &&
+            selectedServiceType &&
+            selectedCharacteristicType &&
+            selectedCharacteristicsOptionType &&
+            outputStateName &&
+            widget.inputStates[inputStateName].service[selectedServiceType] &&
+            widget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType] &&
+            widget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType][selectedCharacteristicsOptionType] &&
+            widget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType][selectedCharacteristicsOptionType]?.bluetoothResponse) {
+            let populateDropDown: any = populateResponseArray(widget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType][selectedCharacteristicsOptionType]?.bluetoothResponse);
+            console.log(":::::::::::::::::::::::::::::::::::::::::::::::");
             setResponseDropDown(populateDropDown);
         }
     }, [widget])
 
-    return <List.Section>
-        {
-            widget &&
-            widget.inputStates &&
-            widget.inputStates[inputStateName] && 
-            widget.inputStates[inputStateName].outputStates &&
-            widget.inputStates[inputStateName].outputStates[outputStateName] &&
-            widget.inputStates[inputStateName].outputStates[outputStateName].conditions?.map((item: ConditionModel, index: number) => {
+    return widget &&
+        widget.inputStates &&
+        widget.inputStates[inputStateName] ?
+        <List.Section>{
+            widget.connectionType === "BLUETOOTH" &&
+            widget.inputStates[inputStateName]?.service &&
+            selectedServiceType &&
+            selectedCharacteristicType &&
+            selectedCharacteristicsOptionType &&
+            widget.inputStates[inputStateName]?.service[selectedServiceType][selectedCharacteristicType][selectedCharacteristicsOptionType] &&
+            widget.inputStates[inputStateName]?.service[selectedServiceType][selectedCharacteristicType][selectedCharacteristicsOptionType].outputState[outputStateName]?.conditions?.map((item: ConditionModel, index: number) => {
+                console.log(item)
                 return <OutputConditionMappingItem
                     responseDropDown={responseDropDown}
                     inputStateName={inputStateName}
                     outputStateName={outputStateName}
+                    selectedServiceType={selectedServiceType}
+                    selectedCharacteristicType={selectedCharacteristicType}
+                    selectedCharacteristicsOptionType={selectedCharacteristicsOptionType}
                     edit={edit}
                     key={item.id}
                     outputConditionModelItem={item}
                     setWidget={setWidget}
                     index={index} widget={widget}></OutputConditionMappingItem>
             })}
-    </List.Section>
+            {
+                widget.connectionType === "WIFI" &&
+                widget.inputStates[inputStateName].wifiOutputStates &&
+                widget.inputStates[inputStateName].wifiOutputStates[outputStateName] &&
+                widget.inputStates[inputStateName].wifiOutputStates[outputStateName].conditions?.map((item: ConditionModel, index: number) => {
+
+                    return <OutputConditionMappingItem
+                        responseDropDown={responseDropDown}
+                        inputStateName={inputStateName}
+                        outputStateName={outputStateName}
+                        edit={edit}
+                        key={item.id}
+                        outputConditionModelItem={item}
+                        setWidget={setWidget}
+                        index={index} widget={widget}></OutputConditionMappingItem>
+                })}
+        </List.Section> : <></>
 }
 
 export default OutputConditionsMappingList;

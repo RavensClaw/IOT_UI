@@ -98,7 +98,9 @@ const Configure = () => {
                 let keys = Object.keys(jsonWidgets);
                 for (let i = 0; i < keys.length; i++) {
                     if (keys[i] === widgetId) {
-                        setWidget(jsonWidgets[keys[i]]);
+                        let modifyWidget = jsonWidgets[keys[i]];
+                        modifyWidget.connectionType = "WIFI";
+                        setWidget(modifyWidget);
                         widgetFound = true;
                         break;
                     }
@@ -143,18 +145,18 @@ let paramsConstruction = '';
 
     useEffect(() => {
         if (inputStateName && inputStateName?.trim() != '') {
-            const widgetToMofidy: WidgetModel = { ...widget };
-            if (widgetToMofidy.inputStates) {
-                const inputStates = Object.keys(widgetToMofidy.inputStates);
+            const widgetToModify: WidgetModel = { ...widget };
+            if (widgetToModify.inputStates) {
+                const inputStates = Object.keys(widgetToModify.inputStates);
                 let noInputState = true;
                 for (let i = 0; i < inputStates.length; i++) {
-                    if (widgetToMofidy.inputStates[inputStates[i]].stateName === inputStateName) {
+                    if (widgetToModify.inputStates[inputStates[i]].stateName === inputStateName) {
                         noInputState = false;
                         break;
                     }
                 }
                 if (noInputState) {
-                    widgetToMofidy.inputStates[inputStateName] = {
+                    widgetToModify.inputStates[inputStateName] = {
                         stateName: inputStateName,
                         apiUrl: '',
                         method: '',
@@ -172,9 +174,9 @@ let paramsConstruction = '';
                         ]
                     }
                 } else {
-                    if (!widgetToMofidy?.inputStates[inputStateName]?.params) {
-                        widgetToMofidy.inputStates[inputStateName] = {
-                            ...widgetToMofidy.inputStates[inputStateName],
+                    if (!widgetToModify?.inputStates[inputStateName]?.params) {
+                        widgetToModify.inputStates[inputStateName] = {
+                            ...widgetToModify.inputStates[inputStateName],
                             params: [
                                 {
                                     enabled: true,
@@ -184,9 +186,9 @@ let paramsConstruction = '';
                         }
                     }
 
-                    if (!widgetToMofidy?.inputStates[inputStateName]?.headers) {
-                        widgetToMofidy.inputStates[inputStateName] = {
-                            ...widgetToMofidy.inputStates[inputStateName],
+                    if (!widgetToModify?.inputStates[inputStateName]?.headers) {
+                        widgetToModify.inputStates[inputStateName] = {
+                            ...widgetToModify.inputStates[inputStateName],
                             headers: [
                                 {
                                     enabled: true,
@@ -196,7 +198,7 @@ let paramsConstruction = '';
                         }
                     }
                 }
-                setWidget(widgetToMofidy);
+                setWidget(widgetToModify);
             }
         }
     }, [inputStateName])
@@ -207,30 +209,30 @@ let paramsConstruction = '';
     }, [widget])*/
 
     useEffect(() => {
-        const widgetToMofidy: WidgetModel = { ...widget };
-        if (widgetToMofidy.inputStates) {
-            const inputStates = Object.keys(widgetToMofidy.inputStates);
+        const widgetToModify: WidgetModel = { ...widget };
+        if (widgetToModify.inputStates) {
+            const inputStates = Object.keys(widgetToModify.inputStates);
             for (let i = 0; i < inputStates.length; i++) {
-                if (widgetToMofidy.inputStates[inputStates[i]].stateName === inputStateName) {
-                    widgetToMofidy.inputStates[inputStates[i]].body = bodyInput;
+                if (widgetToModify.inputStates[inputStates[i]].stateName === inputStateName) {
+                    widgetToModify.inputStates[inputStates[i]].body = bodyInput;
                     break;
                 }
             }
-            setWidget(widgetToMofidy);
+            setWidget(widgetToModify);
         }
     }, [bodyInput])
 
     useEffect(() => {
-        const widgetToMofidy: WidgetModel = { ...widget };
-        if (widgetToMofidy.inputStates) {
-            const inputStates = Object.keys(widgetToMofidy.inputStates);
+        const widgetToModify: WidgetModel = { ...widget };
+        if (widgetToModify.inputStates) {
+            const inputStates = Object.keys(widgetToModify.inputStates);
             for (let i = 0; i < inputStates.length; i++) {
-                if (widgetToMofidy.inputStates[inputStates[i]].stateName === inputStateName) {
-                    widgetToMofidy.inputStates[inputStates[i]].response = responseOutput;
+                if (widgetToModify.inputStates[inputStates[i]].stateName === inputStateName) {
+                    widgetToModify.inputStates[inputStates[i]].wifiResponse = responseOutput;
                     break;
                 }
             }
-            setWidget(widgetToMofidy);
+            setWidget(widgetToModify);
         }
     }, [responseOutput]);
 
@@ -298,16 +300,16 @@ let paramsConstruction = '';
                                         placeholder="Method"
                                         value={widget.inputStates[inputStateName].method}
                                         onChange={(item) => {
-                                            const widgetToMofidy: WidgetModel = { ...widget };
-                                            if (widgetToMofidy.inputStates) {
-                                                const inputStates = Object.keys(widgetToMofidy.inputStates);
+                                            const widgetToModify: WidgetModel = { ...widget };
+                                            if (widgetToModify.inputStates) {
+                                                const inputStates = Object.keys(widgetToModify.inputStates);
                                                 for (let i = 0; i < inputStates.length; i++) {
-                                                    if (widgetToMofidy.inputStates[inputStates[i]].stateName === inputStateName) {
-                                                        widgetToMofidy.inputStates[inputStates[i]].method = item.value;
+                                                    if (widgetToModify.inputStates[inputStates[i]].stateName === inputStateName) {
+                                                        widgetToModify.inputStates[inputStates[i]].method = item.value;
                                                         break;
                                                     }
                                                 }
-                                                setWidget(widgetToMofidy);
+                                                setWidget(widgetToModify);
                                             }
                                         }}
                                         disable={!edit}
@@ -431,13 +433,13 @@ let paramsConstruction = '';
                                         }}
                                         mode="outlined"
                                         onChangeText={apiUrlText => {
-                                            const widgetToMofidy: WidgetModel = { ...widget };
-                                            if (widgetToMofidy.inputStates) {
-                                                const inputStates = Object.keys(widgetToMofidy.inputStates);
+                                            const widgetToModify: WidgetModel = { ...widget };
+                                            if (widgetToModify.inputStates) {
+                                                const inputStates = Object.keys(widgetToModify.inputStates);
                                                 for (let i = 0; i < inputStates.length; i++) {
-                                                    if (widgetToMofidy.inputStates[inputStates[i]].stateName === inputStateName) {
+                                                    if (widgetToModify.inputStates[inputStates[i]].stateName === inputStateName) {
                                                         /*if (apiUrlText && apiUrlText?.trim() !== '') {
-                                                            const paramsListModelItems = widgetToMofidy.inputStates[inputStates[i]].params;
+                                                            const paramsListModelItems = widgetToModify.inputStates[inputStates[i]].params;
                                                             if (paramsListModelItems && paramsListModelItems.length > 0) {
                                                                 let appendParamsToUrl = '';
                                                                 paramsListModelItems.map((paramItem: ListModel, index) => {
@@ -452,7 +454,7 @@ let paramsConstruction = '';
                                                                         }
                                                                     }
                                                                 });
-                                                                widgetToMofidy.inputStates[inputStates[i]].apiUrl = apiUrlText + appendParamsToUrl;
+                                                                widgetToModify.inputStates[inputStates[i]].apiUrl = apiUrlText + appendParamsToUrl;
                                                             }
                                                         } else if (apiUrlText &&
                                                             apiUrlText?.trim() !== '' &&
@@ -468,11 +470,11 @@ let paramsConstruction = '';
                                                             } while (m);
         
                                                         }*/
-                                                        widgetToMofidy.inputStates[inputStates[i]].apiUrl = apiUrlText;
+                                                        widgetToModify.inputStates[inputStates[i]].apiUrl = apiUrlText;
                                                         break;
                                                     }
                                                 }
-                                                setWidget(widgetToMofidy);
+                                                setWidget(widgetToModify);
                                             }
                                         }}
                                     />
@@ -610,13 +612,13 @@ let paramsConstruction = '';
                                 {selectedParentTab === 'r' && <View style={{ marginTop: 10, marginLeft: 5, marginRight: 5, maxHeight: 300, width: 200, }}>
                                     <Text
                                         style={{ fontSize: 12, width: "100%", color: MD2Colors.black, margin: 20 }}>
-                                        {widget && widget.inputStates && widget.inputStates[inputStateName] && widget.inputStates[inputStateName].response}
+                                        {widget && widget.inputStates && widget.inputStates[inputStateName] && widget.inputStates[inputStateName].wifiResponse}
                                     </Text>
                                 </View>}
 
                                 <Divider></Divider>
-                                {inputStateName !== '' && !loadingRequest && widget && widget.inputStates && widget?.inputStates[inputStateName] && widget?.inputStates[inputStateName].response &&
-                                    widget.inputStates[inputStateName].response?.trim() !== '' && <View style={{ width: "100%", alignSelf: "center", margin: "auto", flexDirection: "row" }}>
+                                {inputStateName !== '' && !loadingRequest && widget && widget.inputStates && widget?.inputStates[inputStateName] && widget?.inputStates[inputStateName].wifiResponse &&
+                                    widget.inputStates[inputStateName].wifiResponse?.trim() !== '' && <View style={{ width: "100%", alignSelf: "center", margin: "auto", flexDirection: "row" }}>
                                         <Text style={{ fontSize: 12, fontWeight: 700, marginRight: "auto", marginTop: 15, margin: 5 }}>Output Conditions</Text>
                                         {inputStateName === 'CHECK_STATUS' && <Dropdown
                                             //disable={!edit}
@@ -639,13 +641,13 @@ let paramsConstruction = '';
                                         {
                                             widget.inputStates &&
                                             widget.inputStates[inputStateName] &&
-                                            widget.inputStates[inputStateName].response &&
-                                            widget.inputStates[inputStateName].response?.trim() !== '' &&
+                                            widget.inputStates[inputStateName].wifiResponse &&
+                                            widget.inputStates[inputStateName].wifiResponse?.trim() !== '' &&
                                             (
-                                                !widget.inputStates[inputStateName].outputStates ||
-                                                !widget.inputStates[inputStateName].outputStates[outputStateName] ||
-                                                !widget.inputStates[inputStateName].outputStates[outputStateName].conditions ||
-                                                widget.inputStates[inputStateName].outputStates[outputStateName].conditions.length === 0) &&
+                                                !widget.inputStates[inputStateName].wifiOutputStates ||
+                                                !widget.inputStates[inputStateName].wifiOutputStates[outputStateName] ||
+                                                !widget.inputStates[inputStateName].wifiOutputStates[outputStateName].conditions ||
+                                                widget.inputStates[inputStateName].wifiOutputStates[outputStateName].conditions.length === 0) &&
                                             <IconButton style={{ marginLeft: "auto" }} iconColor={MD2Colors.grey800} size={20}
                                                 icon={"plus"}
                                                 disabled={!edit}
@@ -653,9 +655,9 @@ let paramsConstruction = '';
                                                     if (widget.inputStates && widget.inputStates[inputStateName]) {
 
                                                         let modifiedWidget = { ...widget };
-                                                        if (widget.inputStates[inputStateName].outputStates) {
-                                                            widget.inputStates[inputStateName].outputStates = {
-                                                                ...widget.inputStates[inputStateName].outputStates,
+                                                        if (widget.inputStates[inputStateName].wifiOutputStates) {
+                                                            widget.inputStates[inputStateName].wifiOutputStates = {
+                                                                ...widget.inputStates[inputStateName].wifiOutputStates,
                                                                 [outputStateName]: {
                                                                     conditions: [{
                                                                         id: new ObjectID().toHexString(),
@@ -667,7 +669,7 @@ let paramsConstruction = '';
                                                                 }
                                                             }
                                                         } else {
-                                                            widget.inputStates[inputStateName].outputStates = {
+                                                            widget.inputStates[inputStateName].wifiOutputStates = {
                                                                 [outputStateName]: {
                                                                     conditions: [{
                                                                         id: new ObjectID().toHexString(),
@@ -681,9 +683,6 @@ let paramsConstruction = '';
                                                         }
                                                         setWidget(modifiedWidget);
                                                     }
-
-
-
                                                 }
                                                 }></IconButton>}
                                     </View>}
@@ -692,10 +691,10 @@ let paramsConstruction = '';
                             !loadingRequest &&
                             widget.inputStates &&
                             widget.inputStates[inputStateName] &&
-                            widget.inputStates[inputStateName].outputStates &&
-                            widget.inputStates[inputStateName].outputStates[outputStateName] &&
-                            widget.inputStates[inputStateName].outputStates[outputStateName].conditions &&
-                            widget.inputStates[inputStateName].outputStates[outputStateName].conditions.length > 0 && <ScrollView style={{ maxHeight: 300 }}>
+                            widget.inputStates[inputStateName].wifiOutputStates &&
+                            widget.inputStates[inputStateName].wifiOutputStates[outputStateName] &&
+                            widget.inputStates[inputStateName].wifiOutputStates[outputStateName].conditions &&
+                            widget.inputStates[inputStateName].wifiOutputStates[outputStateName].conditions.length > 0 && <ScrollView style={{ maxHeight: 300 }}>
                                 <View style={{ width: "100%", alignSelf: "center" }}>
                                     <OutputConditionsMappingList
                                         edit={edit}
@@ -710,10 +709,10 @@ let paramsConstruction = '';
                             !loadingRequest &&
                             widget.inputStates &&
                             widget.inputStates[inputStateName] &&
-                            (!widget.inputStates[inputStateName].outputStates ||
-                                !widget.inputStates[inputStateName].outputStates[outputStateName] ||
-                                !widget.inputStates[inputStateName].outputStates[outputStateName].conditions ||
-                                widget.inputStates[inputStateName].outputStates[outputStateName].conditions.length === 0))
+                            (!widget.inputStates[inputStateName].wifiOutputStates ||
+                                !widget.inputStates[inputStateName].wifiOutputStates[outputStateName] ||
+                                !widget.inputStates[inputStateName].wifiOutputStates[outputStateName].conditions ||
+                                widget.inputStates[inputStateName].wifiOutputStates[outputStateName].conditions.length === 0))
                             && <View style={{ alignSelf: "center", alignContent: "center" }}>
                                 <Text style={{ fontSize: 12, margin: 10 }}>No Conditions</Text>
                             </View>}

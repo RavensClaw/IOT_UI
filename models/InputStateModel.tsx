@@ -1,17 +1,20 @@
 import ListModel from "./ListModel";
-import OutputStateModel from "./OutputStateModel";
+import OutputStateModel, { Service } from "./OutputStateModel";
 
 export default interface InputStateModel {
-    method: string;
+    method?: string;
     stateName: string;
-    apiUrl: string;
+    apiUrl?: string;
     params?: ListModel[];
     headers?: ListModel[];
     body?: any;
-    response?: any;
+    wifiResponse?: any;
     responseType?: string;
-    outputStates?: OutputState;
+    service?: Service;
+    wifiOutputStates?: OutputState;
 }
+
+
 
 export interface OutputState {
     [s: string]: OutputStateModel;
