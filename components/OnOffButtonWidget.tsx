@@ -62,7 +62,7 @@ const OnOffButtonWidget: React.FC<Props> = ({
         }
     }, [updateDashboardDone])
 
-    return (<View style={[styles.container, { borderColor: MD2Colors.lightGreenA700 }]}>
+    return (<View style={{backgroundColor: MD2Colors.white, margin: 10, padding: 10, borderRadius: 10, borderWidth: 1, borderColor: MD2Colors.lightGreenA700}}>
         <Portal>
             <Dialog
                 visible={showConfirmDelete} onDismiss={() => { setShowConfirmDelete(false) }}

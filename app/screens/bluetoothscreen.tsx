@@ -747,6 +747,11 @@ let paramsConstruction = '';
               }}
             />
           </View>}
+          {!edit && <IconButton mode="outlined" style={{ margin: "auto", marginTop: 10, marginRight:20, marginBottom: 10 }} iconColor={MD2Colors.yellow700} size={15}
+            icon={"circle-edit-outline"}
+            onPress={() => {
+              setEdit(true);
+            }}></IconButton>}
           {selectedDevice && inputStateName !== 'CHECK_STATUS' &&
             widget.inputStates &&
             widget.inputStates[inputStateName] &&
@@ -756,7 +761,7 @@ let paramsConstruction = '';
             selectedCharacteristic.value &&
             selectedCharacteristicsOption &&
             selectedCharacteristicsOption.value
-            && <View style={{ margin: 10 }}>
+            && <View style={{ backgroundColor: MD2Colors.white, margin: 10, padding: 10, borderRadius: 10, borderColor: MD2Colors.grey400, borderWidth: 1 }}>
               <TextInput
                 //disabled={!edit}
                 label="Input"
@@ -899,11 +904,7 @@ let paramsConstruction = '';
       widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value]?.bluetoothResponse && <View style={{ backgroundColor: MD2Colors.white, margin: 10, padding: 10, borderRadius: 10, borderColor: MD2Colors.grey400, borderWidth: 1 }}>
             <Text>{widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value]?.bluetoothResponse}</Text>
           </View>}
-          {!edit && <IconButton mode="outlined" style={{ margin: "auto", marginTop: 10, marginBottom: 10 }} iconColor={MD2Colors.yellow700} size={15}
-            icon={"circle-edit-outline"}
-            onPress={() => {
-              setEdit(true);
-            }}></IconButton>}
+          
 
           {inputStateName !== '' && !loadingRequest && 
                 widget && 
@@ -918,7 +919,7 @@ let paramsConstruction = '';
                 widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value] &&
                 widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value] &&
                 widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value]?.bluetoothResponse && <View style={{ width: "100%", alignSelf: "center", margin: "auto", flexDirection: "row" }}>
-              <Text style={{ fontSize: 12, fontWeight: 700, marginRight: "auto", marginTop: 15, margin: 5 }}>Output Conditions</Text>
+              <Text style={{ fontSize: 12, fontWeight: 700, marginRight: "auto", marginTop: 15, margin: 5 }}>Output Condition</Text>
               { <IconButton style={{ marginLeft: "auto" }} iconColor={MD2Colors.grey800} size={20}
                   icon={"plus"}
                   disabled={!edit}

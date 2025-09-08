@@ -119,7 +119,7 @@ const OutputConditionMappingItem: React.FC<Props> = ({
 
                 }}
             />}
-            <IconButton
+            {/*<IconButton
                 style={{ marginTop: 15 }}
                 size={16}
                 mode="outlined"
@@ -170,7 +170,7 @@ console.log("{} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {
                     console.log(selectedServiceType)
                 }}
                 disabled={!edit}
-                icon={"plus"} />
+                icon={"plus"} />*/}
             <IconButton
                 style={{ marginTop: 15 }}
                 size={16}

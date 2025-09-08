@@ -390,18 +390,8 @@ const Dashboards = () => {
 
                     <View style={{ alignSelf: "center", marginTop: 10, width: "100%" }}>
                         <View style={{ width: "100%", }}>
-                                <IconButton
-                                    size={14}
-                                    style={{
-                                        backgroundColor: MD2Colors.blue400,
-                                        marginTop: 15
-                                    }}
-                                    icon={() => <Icon source='minus' size={18} color={MD2Colors.white} />}
-                                    onPress={async () => {
-                                        router.push({ pathname: '/screens/bluetoothscreen' });
-                                    }}></IconButton>
                             {dashboards && dashboards?.length > 0 && dashboards?.map((dashboard: any) => {
-                                return <TouchableOpacity key={dashboard.dashboardId} style={{ margin: 10, marginBottom: 5, marginTop: 5 }}
+                                return <TouchableOpacity key={dashboard.dashboardId} style={{ backgroundColor: MD2Colors.white, margin: 10, padding: 10, borderRadius: 10, borderColor: MD2Colors.grey400, borderWidth: 1 }}
                                     onPress={() => {
                                         router.push({
                                             pathname: `/screens/selecteddashboard`, params: {
@@ -410,17 +400,7 @@ const Dashboards = () => {
                                         }); // Remove the braces in params
                                     }}>
                                     <View style={{
-                                        width: "100%", minHeight: 140, backgroundColor: MD2Colors.white,
-                                        shadowColor: "#000",
-                                        shadowOffset: {
-                                            width: 0,
-                                            height: 2,
-                                        },
-                                        borderRadius: 5,
-                                        shadowOpacity: 0.25,
-                                        shadowRadius: 3,
-                                        elevation: 1,
-                                    }}>
+                                                                            }}>
                                         {editDashboardHasError && <Chip mode="outlined"
                                             style={{ margin: 5, borderColor: MD2Colors.red300, padding: 5 }}
                                             textStyle={{ color: MD2Colors.grey700, fontSize: 10, }}

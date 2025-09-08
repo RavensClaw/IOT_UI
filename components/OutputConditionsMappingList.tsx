@@ -70,13 +70,14 @@ const OutputConditionsMappingList: React.FC<Props> = ({
 
     useEffect(() => {
         if (widget &&
-            widget.connectionType === 'BLUETOOTH' &&
+            widget.connectionType === 'WIFI' &&
             widget.inputStates &&
             widget.inputStates[inputStateName] &&
             widget.inputStates[inputStateName].wifiResponse) {
             let populateDropDown: any = populateResponseArray(widget.inputStates[inputStateName].wifiResponse);
             setResponseDropDown(populateDropDown);
         } else if (widget &&
+            widget.connectionType === 'BLUETOOTH' &&
             widget.inputStates &&
             widget.inputStates[inputStateName] &&
             widget.inputStates[inputStateName].service &&

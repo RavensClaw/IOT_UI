@@ -619,7 +619,7 @@ let paramsConstruction = '';
                                 <Divider></Divider>
                                 {inputStateName !== '' && !loadingRequest && widget && widget.inputStates && widget?.inputStates[inputStateName] && widget?.inputStates[inputStateName].wifiResponse &&
                                     widget.inputStates[inputStateName].wifiResponse?.trim() !== '' && <View style={{ width: "100%", alignSelf: "center", margin: "auto", flexDirection: "row" }}>
-                                        <Text style={{ fontSize: 12, fontWeight: 700, marginRight: "auto", marginTop: 15, margin: 5 }}>Output Conditions</Text>
+                                        <Text style={{ fontSize: 12, fontWeight: 700, marginRight: "auto", marginTop: 15, margin: 5 }}>Output Condition</Text>
                                         {inputStateName === 'CHECK_STATUS' && <Dropdown
                                             //disable={!edit}
                                             //style={[styles.dropdown, { width: 200, backgroundColor: !edit ? MD2Colors.grey200 : MD2Colors.white }]}
