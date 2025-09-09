@@ -39,7 +39,10 @@ const PushButtonWidget: React.FC<Props> = ({
     const router = useRouter();
 
     useFocusEffect(useCallback(() => {
-        if (widget.inputStates && widget.inputStates['CHECK_STATUS'] && widget.inputStates['CHECK_STATUS'].apiUrl) {
+        if (widget.inputStates && widget.inputStates['CHECK_STATUS'] &&
+            (widget.connectionType === "WIFI" && widget.inputStates['CHECK_STATUS'].apiUrl ||
+                widget.connectionType === "BLUETOOTH"
+            )) {
             const state = widget.inputStates['CHECK_STATUS'];
             if (widget.connectionType === "BLUETOOTH") {
                 makeBluetoothCall(
@@ -138,6 +141,7 @@ const PushButtonWidget: React.FC<Props> = ({
                     </View>
 
                     <View style={styles.widgetHeaderButtons}>
+                        {(widgetCopy.connectionType === 'BLUETOOTH' && widgetCopy.bluetoothDevice && widgetCopy.bluetoothDevice.device) && <Text style={{fontSize: 12, marginTop: 14, fontWeight:600}}>{widgetCopy.bluetoothDevice.device.name}</Text>}
                         {edit && (widgetCopy.connectionType === 'BLUETOOTH' || !widgetCopy.connectionType) && <IconButton mode='outlined' style={styles.widgetConfigureIcon} size={16} icon={() => <Icon source='bluetooth-settings' size={16} color={MD2Colors.blue600} />}
                             onPress={() => {
                                 router.push(`/screens/bluetoothscreen?widgetId=${widgetCopy.widgetId}&userId=${widgetCopy.userId}&dashboardId=${dashboard.dashboardId}`)
@@ -175,7 +179,10 @@ const PushButtonWidget: React.FC<Props> = ({
                                 onPressIn={() => {
                                     setActionRequest(true);
                                     setHasError(false);
-                                    if (widget.inputStates && widget.inputStates['PRESSIN'] && widget.inputStates['PRESSIN'].apiUrl) {
+                                    if (widget.inputStates && widget.inputStates['PRESSIN'] &&
+                                        (widget.connectionType === "WIFI" && widget.inputStates['PRESSIN'].apiUrl ||
+                                            widget.connectionType === "BLUETOOTH"
+                                        )) {
                                         const statePRESSIN = widget.inputStates['PRESSIN'];
                                         if (widget.connectionType === "BLUETOOTH") {
                                             makeBluetoothCall(
@@ -210,7 +217,10 @@ const PushButtonWidget: React.FC<Props> = ({
                                 onPressOut={() => {
                                     setActionRequest(true);
                                     setHasError(false);
-                                    if (widget.inputStates && widget.inputStates['PRESSOUT'] && widget.inputStates['PRESSOUT'].apiUrl) {
+                                    if (widget.inputStates && widget.inputStates['PRESSOUT'] &&
+                                        (widget.connectionType === "WIFI" && widget.inputStates['PRESSOUT'].apiUrl ||
+                                            widget.connectionType === "BLUETOOTH"
+                                        )) {
                                         const statePRESSOUT = widget.inputStates['PRESSOUT'];
                                         if (widget.connectionType === "BLUETOOTH") {
                                             makeBluetoothCall(

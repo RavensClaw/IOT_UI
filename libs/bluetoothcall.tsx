@@ -1,9 +1,8 @@
 import { BleManager } from "react-native-ble-plx";
 import InputStateModel from "../models/InputStateModel";
-import { useEffect, useState } from "react";
 import WidgetModel from "@/models/WidgetModel";
 import { OutputState } from "@/models/OutputStateModel";
-
+import { Buffer } from "buffer";
 export const makeBluetoothCall = async (
     widget: WidgetModel,
     state: InputStateModel,
@@ -16,14 +15,11 @@ export const makeBluetoothCall = async (
     outputState2: string//OFF
 ) => {
 
-    const  bleManager = new BleManager();
+    const bleManager = new BleManager();
+    console.log("BREAK POINT 3");
 
-    useEffect(()=>{
-         return () => {
-            bleManager.destroy();
-        };
-    },[])
-   
+    console.log("::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
+
 
     if (bleManager && widget && widget.bluetoothDevice && widget.bluetoothDevice.device) {
 
@@ -55,13 +51,27 @@ export const makeBluetoothCall = async (
             try {
                 let bleResponse = null;
                 let hasResponse = false;
-                const connected = await bleManager.connectToDevice(widget.bluetoothDevice.device.id);
+                console.log(widget.bluetoothDevice.device.id)
+                const connected = await bleManager.connectToDevice(widget.bluetoothDevice.device.id, { autoConnect: true });
+                
+                // Important: discover services/characteristics
+                await connected.discoverAllServicesAndCharacteristics();
+
+                // Monitor disconnection
+                connected.onDisconnected((error, dev) => {
+                console.log(`❌ Disconnected from ${dev?.id}`);
+                if (error) console.log("Reason: " + error.message);
+                });
+
+                console.log(connected.isConnected());
+                console.log(connected)
                 if (characteristicsOptions === 'isReadable') {
                     bleResponse = await connected.readCharacteristicForService(
                         serviceIdKey,
                         characteristics);
                     hasResponse = true;
                 } else if (characteristicsOptions === 'isWritableWithResponse') {
+                    console.log("INSIDE isWritableWithResponse");
                     bleResponse = await connected.writeCharacteristicWithResponseForService(
                         serviceIdKey,
                         characteristics,
@@ -241,16 +251,21 @@ export const makeBluetoothCall = async (
                     console.log("Without response")
                 }
             } catch (e: any) {
-
+                console.log(e)
+                setHasError(true);
+                setErrorMessage(e.message);
+                setActionRequest(false);
             }
         } else {
             setHasError(true);
             setErrorMessage("no device found");
+            setActionRequest(false);
         }
 
     } else {
         setHasError(true);
         setErrorMessage("no bleManager found");
+        setActionRequest(false);
     }
 
 }

@@ -336,7 +336,7 @@ const BluetoothScreen: React.FC = () => {
       let deviceMapTemp: any = {}
       setLoading(false);
       manager.stopDeviceScan();
-      log(`🔗 Connecting to ${device.name}...`);
+      log(`🔗 Connecting to ${device.name}...${device.id}`);
       const connected = await manager.connectToDevice(device.id);
       await connected.discoverAllServicesAndCharacteristics();
       setConnected(connected);

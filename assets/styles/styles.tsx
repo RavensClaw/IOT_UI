@@ -56,7 +56,7 @@ export const styles = StyleSheet.create({
         margin: 5, borderColor: MD2Colors.red300, padding: 5
     },
     errorMessageText: {
-        margin: 5, borderColor: MD2Colors.red300, padding: 5
+        margin: 5, borderColor: MD2Colors.red300, padding: 5, fontSize: 12
     },
     onOffText: {
         fontSize: 10, margin: 'auto', fontWeight: "600", color: MD2Colors.grey700

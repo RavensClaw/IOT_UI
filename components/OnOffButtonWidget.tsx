@@ -37,7 +37,10 @@ const OnOffButtonWidget: React.FC<Props> = ({
     const router = useRouter();
 
     useFocusEffect(useCallback(() => {
-        if (widget.inputStates && widget.inputStates['CHECK_STATUS'] && widget.inputStates['CHECK_STATUS'].apiUrl) {
+        if (widget.inputStates && widget.inputStates['CHECK_STATUS'] &&
+            (widget.connectionType === "WIFI" && widget.inputStates['CHECK_STATUS'].apiUrl ||
+                widget.connectionType === "BLUETOOTH"
+            )) {
             const state = widget.inputStates['CHECK_STATUS'];
             if (widget.connectionType === "BLUETOOTH") {
                 makeBluetoothCall(
@@ -133,6 +136,7 @@ const OnOffButtonWidget: React.FC<Props> = ({
                     </View>
 
                     <View style={styles.widgetHeaderButtons}>
+                        {(widgetCopy.connectionType === 'BLUETOOTH' && widgetCopy.bluetoothDevice && widgetCopy.bluetoothDevice.device) && <Text style={{fontSize: 12, marginTop: 14, fontWeight:600}}>{widgetCopy.bluetoothDevice.device.name}</Text>}
                         {edit && (widgetCopy.connectionType === 'BLUETOOTH' || !widgetCopy.connectionType) && <IconButton mode='outlined' style={styles.widgetConfigureIcon} size={16} icon={() => <Icon source='bluetooth-settings' size={16} color={MD2Colors.blue600} />}
                             onPress={() => {
                                 router.push(`/screens/bluetoothscreen?widgetId=${widgetCopy.widgetId}&userId=${widgetCopy.userId}&dashboardId=${dashboard.dashboardId}`)
@@ -170,7 +174,10 @@ const OnOffButtonWidget: React.FC<Props> = ({
                                     setActionRequest(true);
                                     setHasError(false);
                                     if (inputState === 'ON') {
-                                        if (widget.inputStates && widget.inputStates['OFF'] && widget.inputStates['OFF'].apiUrl) {
+                                        if (widget.inputStates && widget.inputStates['OFF'] &&
+                                            (widget.connectionType === "WIFI" && widget.inputStates['OFF'].apiUrl ||
+                                                widget.connectionType === "BLUETOOTH"
+                                            )) {
                                             const stateOFF = widget.inputStates['OFF'];
 
                                             if (widget.connectionType === 'BLUETOOTH') {
@@ -203,7 +210,10 @@ const OnOffButtonWidget: React.FC<Props> = ({
                                             setErrorMessage('Please configure OFF state');
                                         }
                                     } else {
-                                        if (widget.inputStates && widget.inputStates['ON'] && widget.inputStates['ON'].apiUrl) {
+                                        if (widget.inputStates && widget.inputStates['ON'] &&
+                                            (widget.connectionType === "WIFI" && widget.inputStates['ON'].apiUrl ||
+                                                widget.connectionType === "BLUETOOTH"
+                                            )) {
                                             const stateON = widget.inputStates['ON'];
                                             if (widget.connectionType === 'BLUETOOTH') {
                                                 makeBluetoothCall(
