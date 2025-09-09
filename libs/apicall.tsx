@@ -18,7 +18,7 @@ export const makeApiCall = (
     } else {
         outputState1 = state.stateName;
     }
-    let apiURL: string = state.apiUrl;
+    let apiURL: string = state.apiUrl?state.apiUrl: '';
     if (apiURL && apiURL?.trim() !== '') {
 
         const method = state.method;
@@ -83,10 +83,10 @@ export const makeApiCall = (
             let state2ConditionStatified = false;
 
             let outputConditions: any = [];
-            if (state.outputStates) {
-                if (state.outputStates[outputState1] &&
-                    state.outputStates[outputState1].conditions) {
-                    outputConditions = state.outputStates[outputState1].conditions;
+            if (state.wifiOutputStates) {
+                if (state.wifiOutputStates[outputState1] &&
+                    state.wifiOutputStates[outputState1].conditions) {
+                    outputConditions = state.wifiOutputStates[outputState1].conditions;
 
                     if (outputConditions && outputConditions.length > 0) {
                         for (let i = 0; i < outputConditions?.length; i++) {
@@ -147,10 +147,10 @@ export const makeApiCall = (
 
                 if (isStatusCheck && !state1ConditionStatified) {
 
-                    if (state.outputStates[outputState2] &&
-                        state.outputStates[outputState2].conditions) {
+                    if (state.wifiOutputStates[outputState2] &&
+                        state.wifiOutputStates[outputState2].conditions) {
 
-                        outputConditions = state.outputStates[outputState2].conditions;
+                        outputConditions = state.wifiOutputStates[outputState2].conditions;
 
                         if (outputConditions && outputConditions.length > 0) {
                             for (let i = 0; i < outputConditions?.length; i++) {

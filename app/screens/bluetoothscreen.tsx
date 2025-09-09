@@ -950,8 +950,7 @@ const BluetoothScreen: React.FC = () => {
             widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value] &&
             widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value].outputState[outputStateName] &&
             widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value]?.bluetoothResponse &&
-            widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value].outputState[outputStateName].conditions &&
-            widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value].outputState[outputStateName].conditions?.length > 0 &&<ScrollView style={{ maxHeight: 300 }}>
+            widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value].outputState[outputStateName].conditions && <ScrollView style={{ maxHeight: 300 }}>
               <View style={{ width: "100%", alignSelf: "center" }}>
                 <OutputConditionsMappingList
                   edit={edit}

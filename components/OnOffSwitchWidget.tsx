@@ -7,6 +7,7 @@ import {
     View, Text,
 } from 'react-native';
 import { ActivityIndicator, Button, Chip, Dialog, Icon, IconButton, MD2Colors, Portal, Switch, TextInput } from 'react-native-paper';
+import { makeBluetoothCall } from '@/libs/bluetoothcall';
 
 export type Props = {
     widget: WidgetModel;
@@ -38,15 +39,28 @@ const OnOffSwitchWidget: React.FC<Props> = ({
     useFocusEffect(useCallback(() => {
         if (widget.inputStates && widget.inputStates['CHECK_STATUS'] && widget.inputStates['CHECK_STATUS'].apiUrl) {
             const state = widget.inputStates['CHECK_STATUS'];
-            makeApiCall(
-                state,
-                setInputState,
-                setOutputState,
-                setActionRequest,
-                setHasError,
-                setErrorMessage,
-                "ON",
-                "OFF");
+            if (widget.connectionType === "BLUETOOTH") {
+                makeBluetoothCall(
+                    widget,
+                    state,
+                    setInputState,
+                    setOutputState,
+                    setActionRequest,
+                    setHasError,
+                    setErrorMessage,
+                    "ON",
+                    "OFF")
+            } else {
+                makeApiCall(
+                    state,
+                    setInputState,
+                    setOutputState,
+                    setActionRequest,
+                    setHasError,
+                    setErrorMessage,
+                    "ON",
+                    "OFF");
+            }
             setLoadingRequest(false);
         } else {
             setLoadingRequest(false);
@@ -63,7 +77,7 @@ const OnOffSwitchWidget: React.FC<Props> = ({
     }, [updateDashboardDone])
 
 
-    return (<View style={{backgroundColor: MD2Colors.white, margin: 10, padding: 10, borderRadius: 10, borderWidth: 1, borderColor: MD2Colors.yellow700}}>
+    return (<View style={{ backgroundColor: MD2Colors.white, margin: 10, padding: 10, borderRadius: 10, borderWidth: 1, borderColor: MD2Colors.yellow700 }}>
         <Portal>
             <Dialog
                 visible={showConfirmDelete} onDismiss={() => { setShowConfirmDelete(false) }}
@@ -156,15 +170,28 @@ const OnOffSwitchWidget: React.FC<Props> = ({
                                 if (inputState === 'ON') {
                                     if (widget.inputStates && widget.inputStates['OFF'] && widget.inputStates['OFF'].apiUrl) {
                                         const stateOFF = widget.inputStates['OFF'];
-                                        makeApiCall(
-                                            stateOFF,
-                                            setInputState,
-                                            setOutputState,
-                                            setActionRequest,
-                                            setHasError,
-                                            setErrorMessage,
-                                            "",
-                                            "");
+                                        if (widget.connectionType === "BLUETOOTH") {
+                                            makeBluetoothCall(
+                                                widget,
+                                                stateOFF,
+                                                setInputState,
+                                                setOutputState,
+                                                setActionRequest,
+                                                setHasError,
+                                                setErrorMessage,
+                                                "",
+                                                "")
+                                        } else {
+                                            makeApiCall(
+                                                stateOFF,
+                                                setInputState,
+                                                setOutputState,
+                                                setActionRequest,
+                                                setHasError,
+                                                setErrorMessage,
+                                                "",
+                                                "");
+                                        }
                                     } else {
                                         setActionRequest(false);
                                         setOutputState('ERROR');
@@ -174,15 +201,28 @@ const OnOffSwitchWidget: React.FC<Props> = ({
                                 } else {
                                     if (widget.inputStates && widget.inputStates['ON'] && widget.inputStates['ON'].apiUrl) {
                                         const stateON = widget.inputStates['ON'];
-                                        makeApiCall(
-                                            stateON,
-                                            setInputState,
-                                            setOutputState,
-                                            setActionRequest,
-                                            setHasError,
-                                            setErrorMessage,
-                                            "",
-                                            "");
+                                        if (widget.connectionType === "BLUETOOTH") {
+                                            makeBluetoothCall(
+                                                widget,
+                                                stateON,
+                                                setInputState,
+                                                setOutputState,
+                                                setActionRequest,
+                                                setHasError,
+                                                setErrorMessage,
+                                                "",
+                                                "")
+                                        } else {
+                                            makeApiCall(
+                                                stateON,
+                                                setInputState,
+                                                setOutputState,
+                                                setActionRequest,
+                                                setHasError,
+                                                setErrorMessage,
+                                                "",
+                                                "");
+                                        }
                                     } else {
                                         setActionRequest(false);
                                         setHasError(true);
