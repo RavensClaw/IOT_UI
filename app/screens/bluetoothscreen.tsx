@@ -55,6 +55,7 @@ const BluetoothScreen: React.FC = () => {
   const [selectedDevice, setSelectedDevice] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [isConnectingDone, setIsConnectingDone] = useState<boolean>(false);
+  const [connectButtonClicked, setConnectButtonClicked] = useState<boolean>(false);
   const [servicesDropdown, setServicesDropdown] = useState<any[]>([]);
   const [characteristicDropdown, setCharacteristicDropdown] = useState<any[]>([]);
   const [selectedService, setSelectedService] = useState<any>(null);
@@ -72,6 +73,7 @@ const BluetoothScreen: React.FC = () => {
 
   const INIT_USERNAME = "";
   const [userId, setUserId] = useState(INIT_USERNAME);
+  const [hasError, setHasError] = useState(false);
   const [generalErrorVisible, setGeneralErrorVisible] = useState(false);
   const [generalErrorMessage, setGeneralErrorMessage] = useState('');
   const [apiErrorVisible, setApiErrorVisible] = useState(false);
@@ -332,6 +334,9 @@ const BluetoothScreen: React.FC = () => {
   };
 
   const connectToDevice = async (device: any) => {
+    setHasError(false);
+    setIsConnectingDone(false);
+    setConnectButtonClicked(true);
     try {
       let deviceMapTemp: any = {}
       setLoading(false);
@@ -361,7 +366,11 @@ const BluetoothScreen: React.FC = () => {
         ...deviceMapTemp
       });
     } catch (e: any) {
+      setHasError(true);
+      setGeneralErrorMessage(connected.name+" "+e.message);
       log("❌ Connection error: " + e.message);
+    }finally{
+      setConnectButtonClicked(false);
     }
   };
 
@@ -610,16 +619,11 @@ const BluetoothScreen: React.FC = () => {
               placeholder="Select Device"
               value={selectedDevice && selectedDevice.device && selectedDevice.device.id ? selectedDevice.device.id : ''}
               onChange={item => {
-                console.log("<><><><><><><><><><><><><><><><><><><><><><><><><><><><>");
-                console.log(item);
-                console.log(devices)
                 setSelectedDevice(devices[item.value]);
-                console.log(devices[item.value])
-                console.log("<><><><><><><><><><><><><><><><><><><><><><><><><><><><>");
               }}
             />}
 
-          {devicesDropdown && Object.keys(devicesDropdown).length > 0 && selectedDevice && <Button
+          {devicesDropdown && Object.keys(devicesDropdown).length > 0 && selectedDevice && <View style={{flexDirection:'row', alignSelf:"center", alignItems:"center"}}><Button
             icon={() => <Icon color={MD2Colors.white} source="bluetooth-connect" size={20} />}
             onPress={() => connectToDevice(selectedDevice)} mode='outlined' style={{
               borderRadius: 5,
@@ -628,9 +632,19 @@ const BluetoothScreen: React.FC = () => {
               alignSelf: 'center',
             }}
             textColor={MD2Colors.white}
-          >Connect</Button>}
+          >Connect</Button>
+          {connectButtonClicked && selectedDevice && <View style={{flexDirection:'row'}}>
+          <ActivityIndicator animating={true} color={MD2Colors.blue500} style={{ paddingLeft: 10, }} size="small" />
+          <Text style={{marginLeft:10,marginTop:10,fontSize:10}}>Connecting...</Text>
+          </View>}
+          </View>}
         </View>
       
+       {hasError && <Chip mode="outlined"
+                          style={styles.errorMessageContainer}
+                          textStyle={styles.errorMessageText}
+                          icon={() => <Icon source='information-outline' size={20} color={MD2Colors.red400} />}>{generalErrorMessage}</Chip>}
+
       {devicesDropdown && Object.keys(devicesDropdown).length > 0 && selectedDevice && <View style={{ flexDirection: "row", alignItems: "center", alignSelf: "center" }}>
         <Chip textStyle={{ fontSize: 12, fontWeight: "900", color: MD2Colors.white }}
           style={{ marginLeft: 5, marginTop: 5, backgroundColor: MD2Colors.pinkA200 }} disabled={true}>INPUT STATE</Chip>
