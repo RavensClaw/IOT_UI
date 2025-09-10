@@ -75,7 +75,7 @@ const BluetoothScreen: React.FC = () => {
   const [userId, setUserId] = useState(INIT_USERNAME);
   const [hasError, setHasError] = useState(false);
   const [generalErrorVisible, setGeneralErrorVisible] = useState(false);
-  const [generalErrorMessage, setGeneralErrorMessage] = useState('');
+  const [generalErrorMessage, setGeneralErrorMessage] = useState<any>(null);
   const [apiErrorVisible, setApiErrorVisible] = useState(false);
   const [apiErrorMessage, setApiErrorMessage] = useState('');
   const [edit, setEdit] = useState(false);
@@ -281,6 +281,7 @@ const BluetoothScreen: React.FC = () => {
 
   useEffect(() => {
     // Request BLE permissions when screen mounts
+    //enableBluetooth();
     requestBlePermissions();
 
     return () => {
@@ -293,7 +294,11 @@ const BluetoothScreen: React.FC = () => {
     setLogs((prev) => [...prev, msg]);
   };
 
+  
+
   const startScan = async () => {
+    //enableBluetooth();
+    setHasError(false);
     const hasPermission = await requestBlePermissions();
     if (!hasPermission) {
       log("❌ Permission denied. Please enable Bluetooth & Location.");
@@ -305,6 +310,8 @@ const BluetoothScreen: React.FC = () => {
     manager.startDeviceScan(null, null, (error, device) => {
       if (error) {
         log("❌ Scan error: " + error.message);
+      setHasError(true);
+      setGeneralErrorMessage(error.message);
         setLoading(false);
         return;
       }
@@ -330,11 +337,15 @@ const BluetoothScreen: React.FC = () => {
           };
         });
       }
+    }).catch((e)=>{
+      setHasError(true);
+      setGeneralErrorMessage(e.message);
     });
   };
 
   const connectToDevice = async (device: any) => {
     setHasError(false);
+    setGeneralErrorMessage(null);
     setIsConnectingDone(false);
     setConnectButtonClicked(true);
     try {
@@ -342,7 +353,7 @@ const BluetoothScreen: React.FC = () => {
       setLoading(false);
       manager.stopDeviceScan();
       log(`🔗 Connecting to ${device.name}...${device.id}`);
-      const connected = await manager.connectToDevice(device.id);
+      const connected = await manager.connectToDevice(device.id, { autoConnect: true });
       await connected.discoverAllServicesAndCharacteristics();
       setConnected(connected);
       log(`✅ Connected to ${connected.name}`);
@@ -461,6 +472,9 @@ const BluetoothScreen: React.FC = () => {
       const characteristicsOptions = deviceMap[selectedDevice.device.id][selectedService.value][selectedCharacteristic.value]
       if (characteristicsOptions && characteristicsOptions.isReadable) {
         try {
+          if(!connected.isConnected()){
+            connected.connect();
+          }
           connected.readCharacteristicForService(
             characteristicsOptions.serviceUUID,
             characteristicsOptions.uuid
@@ -529,22 +543,24 @@ const BluetoothScreen: React.FC = () => {
         const input = widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value].input;
         if (input) {
           if (characteristicsOptions.isWritableWithResponse) {
+            if(!connected.isConnected()){
+              connected.connect();
+            }
             connected.writeCharacteristicWithResponseForService(
               characteristicsOptions.serviceUUID,
               characteristicsOptions.uuid,
               btoa(input)
             ).then((response: any) => {
               if (response?.value) {
-                console.log("*********************************************")
-                console.log(response?.value)
-                console.log("*********************************************")
+                let decoded = '';
                 try {
-                  const json = JSON.parse(response?.value);
+                  decoded = Buffer.from(response?.value, "base64").toString("utf-8");
+                  const json = JSON.parse(decoded);
                   setResponseOutput(JSON.stringify(json, null, 4));
                 } catch (err) {
-                  setResponseOutput(JSON.stringify({ "response": response?.value }, null, 4));
+                  setResponseOutput(JSON.stringify({ "response": decoded }, null, 4));
                 }
-                log(`📖 Write with response from ${characteristicsOptions.uuid}: ${response?.value}`);
+                log(`📖 Write with response from ${characteristicsOptions.uuid}: ${decoded}`);
               }
             }).catch((error: any) => {
               console.log(error)
@@ -554,6 +570,9 @@ const BluetoothScreen: React.FC = () => {
 
 
           } else if (characteristicsOptions.isWritableWithResponse) {
+            if(!connected.isConnected()){
+              connected.connect();
+            }
             connected.writeCharacteristicWithoutResponseForService(
               characteristicsOptions.serviceUUID,
               characteristicsOptions.uuid,
@@ -635,7 +654,7 @@ const BluetoothScreen: React.FC = () => {
           >Connect</Button>
           {connectButtonClicked && selectedDevice && <View style={{flexDirection:'row'}}>
           <ActivityIndicator animating={true} color={MD2Colors.blue500} style={{ paddingLeft: 10, }} size="small" />
-          <Text style={{marginLeft:10,marginTop:10,fontSize:10}}>Connecting...</Text>
+          <Text style={{marginLeft:10,marginTop:7,fontSize:10}}>Connecting...</Text>
           </View>}
           </View>}
         </View>

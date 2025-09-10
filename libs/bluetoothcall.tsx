@@ -60,7 +60,9 @@ export const makeBluetoothCall = async (
                 // Monitor disconnection
                 connected.onDisconnected((error, dev) => {
                 console.log(`❌ Disconnected from ${dev?.id}`);
-                if (error) console.log("Reason: " + error.message);
+                if (error) {
+                        console.log("Reason: " + error.message);
+                    }
                 });
 
                 console.log(connected.isConnected());
@@ -90,7 +92,7 @@ export const makeBluetoothCall = async (
                         console.log("*********************************************")
 
                         const decoded = Buffer.from(bleResponse.value, "base64").toString("utf-8");
-
+                        
                         let responseData = null;
 
                         try {
@@ -99,16 +101,22 @@ export const makeBluetoothCall = async (
                             responseData = { "response": decoded }
                         }
 
+                        console.log("WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW");
+                        console.log(responseData);
+
                         let state1ConditionStatified = false;
                         let state2ConditionStatified = false;
 
                         let outputConditions: any = [];
                         if (state.service && state.service[serviceIdKey][characteristics][characteristicsOptions]) {
+                            console.log("IN HERE 1")
                             const outputState: OutputState = state.service[serviceIdKey][characteristics][characteristicsOptions].outputState;
                             if (state.service[serviceIdKey][characteristics][characteristicsOptions].outputState[outputState1] &&
                                 outputState[outputState1].conditions) {
-                                outputConditions = outputState[outputState1].conditions;
+                                    console.log("IN HERE 2")
 
+                                outputConditions = outputState[outputState1].conditions;
+                                            console.log(outputConditions)
                                 if (outputConditions && outputConditions.length > 0) {
                                     for (let i = 0; i < outputConditions?.length; i++) {
                                         const key = outputConditions[i].key;
@@ -134,6 +142,11 @@ export const makeBluetoothCall = async (
                                                     state1ConditionStatified = true;
                                                 }
                                             } else if (outputConditions[i].condition === "Equals") {
+                                                console.log("INSIDE EQUALS")
+                                                console.log(responseValue)
+                                                console.log(value1)
+                                                
+
                                                 if (responseValue == value1) {
                                                     state1ConditionStatified = true;
                                                 }
@@ -230,6 +243,9 @@ export const makeBluetoothCall = async (
                                 }
 
                             }
+                            console.log(state1ConditionStatified)
+                            console.log(state2ConditionStatified)
+                            console.log("Q Q Q QQ QQ QQ QQ QQ QQ QQ QQ QQ QQ QQ QQ QQ QQ QQ Q");
                             if (state1ConditionStatified) {
                                 setInputState(outputState1);
                                 setOutputState(outputState1);

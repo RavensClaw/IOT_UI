@@ -84,10 +84,7 @@ const OutputConditionMappingItem: React.FC<Props> = ({
                                 }
                             }
                             modifiedWidget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType][selectedCharacteristicsOptionType].outputState[outputStateName].conditions = modifiedOutputConditionModelItems;
-
-                            setWidget({
-                                ...modifiedWidget,
-                            });
+                            setWidget(modifiedWidget);
 
                         }
 
@@ -110,9 +107,7 @@ const OutputConditionMappingItem: React.FC<Props> = ({
                             }
                             modifiedWidget.inputStates[inputStateName].wifiOutputStates[outputStateName].conditions = modifiedOutputConditionModelItems;
 
-                            setWidget({
-                                ...modifiedWidget,
-                            });
+                            setWidget(modifiedWidget);
                         }
 
                     }
@@ -321,7 +316,38 @@ console.log("{} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {
             value={outputConditionItem.condition}
             onChange={item => {
                 let modifiedWidget = { ...widget };
-                if (modifiedWidget &&
+
+                if (modifiedWidget.connectionType === 'BLUETOOTH') {
+
+                    if (modifiedWidget &&
+                        modifiedWidget.inputStates &&
+                        modifiedWidget.inputStates[inputStateName] &&
+                        modifiedWidget.inputStates[inputStateName].service &&
+                        selectedServiceType &&
+                        selectedCharacteristicType &&
+                        selectedCharacteristicsOptionType &&
+                        modifiedWidget.inputStates[inputStateName].service[selectedServiceType] &&
+                        modifiedWidget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType] &&
+                        modifiedWidget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType][selectedCharacteristicsOptionType] &&
+                        modifiedWidget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType][selectedCharacteristicsOptionType].outputState[outputStateName] &&
+                        modifiedWidget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType][selectedCharacteristicsOptionType].outputState[outputStateName].conditions) {
+
+                        let modifiedOutputConditionModelItems = [...modifiedWidget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType][selectedCharacteristicsOptionType].outputState[outputStateName].conditions];
+
+                        for (let i = 0; i < modifiedOutputConditionModelItems.length; i++) {
+                            if (modifiedOutputConditionModelItems[i].id === outputConditionModelItem.id) {
+                                modifiedOutputConditionModelItems[i].condition = item.value;
+                                setOutputConditionItem(modifiedOutputConditionModelItems[i]);
+                                break;
+                            }
+                        }
+                        modifiedWidget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType][selectedCharacteristicsOptionType].outputState[outputStateName].conditions = modifiedOutputConditionModelItems;
+                        setWidget({
+                            ...modifiedWidget,
+                        });
+
+                    }
+                } else if (modifiedWidget &&
                     modifiedWidget.inputStates &&
                     modifiedWidget.inputStates[inputStateName].wifiOutputStates &&
                     modifiedWidget.inputStates[inputStateName].wifiOutputStates[outputStateName] &&
