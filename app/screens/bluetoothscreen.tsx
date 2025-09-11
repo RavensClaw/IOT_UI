@@ -772,7 +772,11 @@ const BluetoothScreen: React.FC = () => {
                 label="Input"
                 readOnly={!edit}
                 value={
-                  widget.inputStates[inputStateName].service && widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value].input ?
+                  widget.inputStates[inputStateName].service && 
+                  widget.inputStates[inputStateName].service[selectedService.value] &&
+                  widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value] &&
+                  widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value] &&
+                  widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value].input ?
                     widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value].input : ''
                 }
                 style={{
