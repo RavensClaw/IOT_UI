@@ -1,6 +1,6 @@
 import { styles } from '@/assets/styles/styles';
 import { StackScreenHeader } from '@/components/StackScreenHeader';
-import React, { use, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -86,8 +86,8 @@ const BluetoothScreen: React.FC = () => {
   const inputParams: Partial<ParamsModel> = useLocalSearchParams();
 
   //widgetId=68bd1f9699e5085b3dec3827&userId=31f3edda-3071-7042-8de5-fb93b2f7df84&dashboardId=68b55c305680d63089c0bb03
-  const dashboardId = inputParams.dashboardId || '68b55c305680d63089c0bb03';
-  const widgetId = inputParams.widgetId || '68bd1f9699e5085b3dec3827';
+  const dashboardId = inputParams.dashboardId;
+  const widgetId = inputParams.widgetId;
   const initWidget: WidgetModel = {
     widgetId: inputParams.widgetId ? inputParams.widgetId : new ObjectID().toHexString(),
     userId: userId,
@@ -247,7 +247,7 @@ const BluetoothScreen: React.FC = () => {
   useEffect(() => {
     const widgetToModify: WidgetModel = { ...widget };
     if (inputStateName &&
-      outputStateName && 
+      outputStateName &&
       widgetToModify.inputStates &&
       widgetToModify.inputStates[inputStateName] &&
       widgetToModify.inputStates[inputStateName].service &&
@@ -295,111 +295,113 @@ const BluetoothScreen: React.FC = () => {
     setLogs((prev) => [...prev, msg]);
   };
 
-  
+
 
   const startScan = () => {
     //enableBluetooth();
-    ManageBluetooth.enableBluetooth().then(async ()=>{
-    setHasError(false);
-    const hasPermission = await requestBlePermissions();
-    if (!hasPermission) {
-      log("❌ Permission denied. Please enable Bluetooth & Location.");
-      return;
-    }
-
-    setDevices([]);
-    setLoading(true);
-    manager.startDeviceScan(null, null, (error, device) => {
-      if (error) {
-        log("❌ Scan error: " + error.message);
-      setHasError(true);
-      setGeneralErrorMessage(error.message);
-        setLoading(false);
+    ManageBluetooth.enableBluetooth().then(async () => {
+      setHasError(false);
+      const hasPermission = await requestBlePermissions();
+      if (!hasPermission) {
+        log("❌ Permission denied. Please enable Bluetooth & Location.");
+        setHasError(true);
+        setGeneralErrorMessage('Please enable Bluetooth & Location.');
         return;
       }
-      if (device && device.name) {
-        console.log(JSON.stringify(device));
-        setDevicesDropdown((existing: any) => {
-          const exists = existing.find((d: any) => d.value === device.id);
-          if (exists) return existing;
-          return [
-            ...existing,
-            { label: device.name, value: device.id }
-          ];
-        });
 
-        setDevices((existing: any) => {
-          return {
-            ...existing,
-            [device.id]: {
-              id: device.id,
-              name: device.name,
-              device: device
-            }
-          };
-        });
-      }
-    }).catch((e)=>{
-      setHasError(true);
-      setGeneralErrorMessage(e.message);
-    })
-      
+      setDevices([]);
+      setLoading(true);
+      manager.startDeviceScan(null, null, (error, device) => {
+        if (error) {
+          log("❌ Scan error: " + error.message);
+          setHasError(true);
+          setGeneralErrorMessage(error.message);
+          setLoading(false);
+          return;
+        }
+        if (device && device.name) {
+          setDevicesDropdown((existing: any) => {
+            const exists = existing.find((d: any) => d.value === device.id);
+            if (exists) return existing;
+            return [
+              ...existing,
+              { label: device.name, value: device.id }
+            ];
+          });
+
+          setDevices((existing: any) => {
+            return {
+              ...existing,
+              [device.id]: {
+                id: device.id,
+                name: device.name,
+                device: device
+              }
+            };
+          });
+        }
+      }).catch((e) => {
+        setHasError(true);
+        console.log(e);
+        setGeneralErrorMessage(e.message);
+      })
+
     }).catch((error) => {
-    // Failure code
+      // Failure code
       setHasError(true);
       console.log(error);
       setGeneralErrorMessage('Bluetooth is not enabled');
-  });
-    
+    });
+
   };
 
   const connectToDevice = async (device: any) => {
     setHasError(false);
     setGeneralErrorMessage(null);
-    ManageBluetooth.enableBluetooth().then(async ()=>{
-    setIsConnectingDone(false);
-    setConnectButtonClicked(true);
-    try {
-      let deviceMapTemp: any = {}
-      setLoading(false);
-      manager.stopDeviceScan();
-      log(`🔗 Connecting to ${device.name}...${device.id}`);
-      const connected = await manager.connectToDevice(device.id, { autoConnect: true });
-      await connected.discoverAllServicesAndCharacteristics();
-      setConnected(connected);
-      log(`✅ Connected to ${connected.name}`);
-      deviceMapTemp[connected.id] = {}
-      const services = await connected.services();
-      for (const service of services) {
-        deviceMapTemp[connected.id][service.uuid] = {}
-        log(service);
-        log(`🔹 Service: ${service.uuid}`);
-        const characteristics = await service.characteristics();
-        for (const char of characteristics) {
-          log(char);
-          deviceMapTemp[connected.id][service.uuid][char.uuid] = char
-          log(
-            `   ↳ Char: ${char.uuid} [read:${char.isReadable} write:${char.isWritableWithResponse} notify:${char.isNotifiable}]`
-          );
+    ManageBluetooth.enableBluetooth().then(async () => {
+      setIsConnectingDone(false);
+      setConnectButtonClicked(true);
+      try {
+        let deviceMapTemp: any = {}
+        setLoading(false);
+        manager.stopDeviceScan();
+        log(`🔗 Connecting to ${device.name}...${device.id}`);
+        const connected = await manager.connectToDevice(device.id, { autoConnect: true });
+        await connected.discoverAllServicesAndCharacteristics();
+        setConnected(connected);
+        log(`✅ Connected to ${connected.name}`);
+        deviceMapTemp[connected.id] = {}
+        const services = await connected.services();
+        for (const service of services) {
+          deviceMapTemp[connected.id][service.uuid] = {}
+          log(service);
+          log(`🔹 Service: ${service.uuid}`);
+          const characteristics = await service.characteristics();
+          for (const char of characteristics) {
+            log(char);
+            deviceMapTemp[connected.id][service.uuid][char.uuid] = char
+            log(
+              `   ↳ Char: ${char.uuid} [read:${char.isReadable} write:${char.isWritableWithResponse} notify:${char.isNotifiable}]`
+            );
+          }
         }
+        setDeviceMap({
+          ...deviceMap,
+          ...deviceMapTemp
+        });
+      } catch (e: any) {
+        setHasError(true);
+        setGeneralErrorMessage(connected.name + " " + e.message);
+        log("❌ Connection error: " + e.message);
+      } finally {
+        setConnectButtonClicked(false);
       }
-      setDeviceMap({
-        ...deviceMap,
-        ...deviceMapTemp
-      });
-    } catch (e: any) {
-      setHasError(true);
-      setGeneralErrorMessage(connected.name+" "+e.message);
-      log("❌ Connection error: " + e.message);
-    }finally{
-      setConnectButtonClicked(false);
-    }
     }).catch((error) => {
-    // Failure code
+      // Failure code
       setHasError(true);
       console.log(error);
       setGeneralErrorMessage('Bluetooth is not enabled');
-  });
+    });
   };
 
   useEffect(() => {
@@ -419,17 +421,11 @@ const BluetoothScreen: React.FC = () => {
       Object.keys(deviceMap[selectedDevice.device.id]).length > 0) {
       let servicesDropdownTemp: any[] = [];
 
-      console.log("Device Map:", deviceMap);
       Object.keys(deviceMap[selectedDevice.device.id]).forEach((key: any) => {
-        console.log("Service Key:", key);
         servicesDropdownTemp.push({ label: key ? key : "Service", value: key });
 
       });
-      console.log("..............................................");
-      console.log(servicesDropdownTemp)
-      console.log("..............................................");
       setServicesDropdown(servicesDropdownTemp);
-
     }
     setIsConnectingDone(false);
   }, [isConnectingDone]);
@@ -461,14 +457,12 @@ const BluetoothScreen: React.FC = () => {
       selectedDevice.device.id &&
       selectedCharacteristic &&
       selectedCharacteristic.value) {
-      console.log("IN HERE >>>>>>>>>>>>>>>>>>>>>>>")
       const characteristicsOptions = deviceMap[selectedDevice.device.id][selectedService.value][selectedCharacteristic.value]
       let enabledActionTypes: any[] = [];
       Object.keys(characteristicsOptions).map((key: any) => {
         if (characteristicsOptions[key] === true) {
           enabledActionTypes.push({ label: key, value: key });
         }
-        //console.log(key + " : " + deviceMap[selectedDevice.device.id][selectedService.value][selectedCharacteristic.value][key]);
       });
 
 
@@ -489,7 +483,7 @@ const BluetoothScreen: React.FC = () => {
       const characteristicsOptions = deviceMap[selectedDevice.device.id][selectedService.value][selectedCharacteristic.value]
       if (characteristicsOptions && characteristicsOptions.isReadable) {
         try {
-          if(!connected.isConnected()){
+          if (!connected.isConnected()) {
             connected.connect();
           }
           connected.readCharacteristicForService(
@@ -515,6 +509,9 @@ const BluetoothScreen: React.FC = () => {
           });
         } catch (e: any) {
           log(`❌ Read error from ${characteristicsOptions.uuid}: ${e.message}`);
+          setHasError(true);
+          console.log(e);
+          setGeneralErrorMessage(`Read error from ${characteristicsOptions.uuid}: ${e.message}`);
         }
       }
     }
@@ -522,22 +519,6 @@ const BluetoothScreen: React.FC = () => {
 
 
   useEffect(() => {
-
-    console.log("-----------------------------------------------");
-    console.log(widget &&
-      widget.inputStates &&
-      widget.inputStates[inputStateName].service &&
-      write && deviceMap &&
-      selectedService &&
-      selectedService.value &&
-      selectedCharacteristicsOption &&
-      selectedCharacteristicsOption.value &&
-      selectedDevice &&
-      selectedDevice.device &&
-      selectedDevice.device.id &&
-      selectedCharacteristic &&
-      selectedCharacteristic.value)
-    console.log("-----------------------------------------------");
 
     if (
       widget &&
@@ -560,7 +541,7 @@ const BluetoothScreen: React.FC = () => {
         const input = widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value].input;
         if (input) {
           if (characteristicsOptions.isWritableWithResponse) {
-            if(!connected.isConnected()){
+            if (!connected.isConnected()) {
               connected.connect();
             }
             connected.writeCharacteristicWithResponseForService(
@@ -580,14 +561,16 @@ const BluetoothScreen: React.FC = () => {
                 log(`📖 Write with response from ${characteristicsOptions.uuid}: ${decoded}`);
               }
             }).catch((error: any) => {
-              console.log(error)
+              setHasError(true);
+              console.log(error);
+              setGeneralErrorMessage(`Read error from ${characteristicsOptions.uuid}: ${error.message}`);
             }).finally(() => {
               setWrite(false);
             })
 
 
           } else if (characteristicsOptions.isWritableWithResponse) {
-            if(!connected.isConnected()){
+            if (!connected.isConnected()) {
               connected.connect();
             }
             connected.writeCharacteristicWithoutResponseForService(
@@ -597,7 +580,9 @@ const BluetoothScreen: React.FC = () => {
             ).then((response: any) => {
               //response.value
             }).catch((error: any) => {
-              console.log(error)
+              setHasError(true);
+              console.log(error);
+              setGeneralErrorMessage(`Read error from ${characteristicsOptions.uuid}: ${error.message}`);
             }).finally(() => {
               setWrite(false);
             })
@@ -659,7 +644,7 @@ const BluetoothScreen: React.FC = () => {
               }}
             />}
 
-          {devicesDropdown && Object.keys(devicesDropdown).length > 0 && selectedDevice && <View style={{flexDirection:'row', alignSelf:"center", alignItems:"center"}}><Button
+          {devicesDropdown && Object.keys(devicesDropdown).length > 0 && selectedDevice && <View style={{ flexDirection: 'row', alignSelf: "center", alignItems: "center" }}><Button
             icon={() => <Icon color={MD2Colors.white} source="bluetooth-connect" size={20} />}
             onPress={() => connectToDevice(selectedDevice)} mode='outlined' style={{
               borderRadius: 5,
@@ -669,43 +654,43 @@ const BluetoothScreen: React.FC = () => {
             }}
             textColor={MD2Colors.white}
           >Connect</Button>
-          {connectButtonClicked && selectedDevice && <View style={{flexDirection:'row'}}>
-          <ActivityIndicator animating={true} color={MD2Colors.blue500} style={{ paddingLeft: 10, }} size="small" />
-          <Text style={{marginLeft:10,marginTop:7,fontSize:10}}>Connecting...</Text>
-          </View>}
+            {connectButtonClicked && selectedDevice && <View style={{ flexDirection: 'row' }}>
+              <ActivityIndicator animating={true} color={MD2Colors.blue500} style={{ paddingLeft: 10, }} size="small" />
+              <Text style={{ marginLeft: 10, marginTop: 7, fontSize: 10 }}>Connecting...</Text>
+            </View>}
           </View>}
         </View>
-      
-       {hasError && <Chip mode="outlined"
-                          style={styles.errorMessageContainer}
-                          textStyle={styles.errorMessageText}
-                          icon={() => <Icon source='information-outline' size={20} color={MD2Colors.red400} />}>{generalErrorMessage}</Chip>}
 
-      {devicesDropdown && Object.keys(devicesDropdown).length > 0 && selectedDevice && <View style={{ flexDirection: "row", alignItems: "center", alignSelf: "center" }}>
-        <Chip textStyle={{ fontSize: 12, fontWeight: "900", color: MD2Colors.white }}
-          style={{ marginLeft: 5, marginTop: 5, backgroundColor: MD2Colors.pinkA200 }} disabled={true}>INPUT STATE</Chip>
-        {<Dropdown
-          //disable={!edit}
-          style={[styles.dropdown, { width: 200 }]}
-          placeholderStyle={styles.placeholderStyle}
-          selectedTextStyle={styles.selectedTextStyle}
-          iconStyle={styles.iconStyle}
-          itemTextStyle={styles.selectedTextStyle}
-          data={possibleInputStates}
-          maxHeight={300}
-          labelField="label"
-          valueField="value"
-          placeholder="Select"
-          value={inputStateName}
-          onChange={item => {
-            if (item.value && item.value.trim() !== 'CHECK_STATUS') {
-              setOutputStateName(item.value);
-            }
-            setInputStateName(item.value);
-          }}
-        />}
-      </View>}
-      
+        {hasError && <Chip mode="outlined"
+          style={styles.errorMessageContainer}
+          textStyle={styles.errorMessageText}
+          icon={() => <Icon source='information-outline' size={20} color={MD2Colors.red400} />}>{generalErrorMessage}</Chip>}
+
+        {devicesDropdown && Object.keys(devicesDropdown).length > 0 && selectedDevice && <View style={{ flexDirection: "row", alignItems: "center", alignSelf: "center" }}>
+          <Chip textStyle={{ fontSize: 12, fontWeight: "900", color: MD2Colors.white }}
+            style={{ marginLeft: 5, marginTop: 5, backgroundColor: MD2Colors.pinkA200 }} disabled={true}>INPUT STATE</Chip>
+          {<Dropdown
+            //disable={!edit}
+            style={[styles.dropdown, { width: 200 }]}
+            placeholderStyle={styles.placeholderStyle}
+            selectedTextStyle={styles.selectedTextStyle}
+            iconStyle={styles.iconStyle}
+            itemTextStyle={styles.selectedTextStyle}
+            data={possibleInputStates}
+            maxHeight={300}
+            labelField="label"
+            valueField="value"
+            placeholder="Select"
+            value={inputStateName}
+            onChange={item => {
+              if (item.value && item.value.trim() !== 'CHECK_STATUS') {
+                setOutputStateName(item.value);
+              }
+              setInputStateName(item.value);
+            }}
+          />}
+        </View>}
+
         <View style={{ marginBottom: 100 }}>
           {servicesDropdown && Object.keys(servicesDropdown).length > 0 && <View style={{ backgroundColor: MD2Colors.white, margin: 10, padding: 10, borderRadius: 10, borderColor: MD2Colors.grey400, borderWidth: 1 }}>
             <Text style={{ marginLeft: 20, fontSize: 12, fontWeight: 500 }}>Service</Text>
@@ -769,7 +754,7 @@ const BluetoothScreen: React.FC = () => {
               }}
             />
           </View>}
-          {!edit && devicesDropdown && Object.keys(devicesDropdown).length > 0 && selectedDevice && <IconButton mode="outlined" style={{ margin: "auto", marginTop: 10, marginRight:20, marginBottom: 10 }} iconColor={MD2Colors.yellow700} size={15}
+          {!edit && devicesDropdown && Object.keys(devicesDropdown).length > 0 && selectedDevice && <IconButton mode="outlined" style={{ margin: "auto", marginTop: 10, marginRight: 20, marginBottom: 10 }} iconColor={MD2Colors.yellow700} size={15}
             icon={"circle-edit-outline"}
             onPress={() => {
               setEdit(true);
@@ -789,11 +774,11 @@ const BluetoothScreen: React.FC = () => {
                 label="Input"
                 readOnly={!edit}
                 value={
-                  widget.inputStates[inputStateName].service && 
-                  widget.inputStates[inputStateName].service[selectedService.value] &&
-                  widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value] &&
-                  widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value] &&
-                  widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value].input ?
+                  widget.inputStates[inputStateName].service &&
+                    widget.inputStates[inputStateName].service[selectedService.value] &&
+                    widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value] &&
+                    widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value] &&
+                    widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value].input ?
                     widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value].input : ''
                 }
                 style={{
@@ -917,48 +902,61 @@ const BluetoothScreen: React.FC = () => {
           <Divider></Divider>
 
           {inputStateName &&
-      outputStateName && 
-      widget.inputStates &&
-      widget.inputStates[inputStateName] &&
-      widget.inputStates[inputStateName].service &&
-      selectedService &&
-      selectedCharacteristic &&
-      selectedCharacteristicsOption &&
-      widget.inputStates[inputStateName].service[selectedService.value] &&
-      widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value] &&
-      widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value] &&
-      widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value]?.bluetoothResponse && <View style={{ backgroundColor: MD2Colors.white, margin: 10, padding: 10, borderRadius: 10, borderColor: MD2Colors.grey400, borderWidth: 1 }}>
-            <Text>{widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value]?.bluetoothResponse}</Text>
-          </View>}
-          
+            outputStateName &&
+            widget.inputStates &&
+            widget.inputStates[inputStateName] &&
+            widget.inputStates[inputStateName].service &&
+            selectedService &&
+            selectedCharacteristic &&
+            selectedCharacteristicsOption &&
+            widget.inputStates[inputStateName].service[selectedService.value] &&
+            widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value] &&
+            widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value] &&
+            widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value]?.bluetoothResponse && <View style={{ backgroundColor: MD2Colors.white, margin: 10, padding: 10, borderRadius: 10, borderColor: MD2Colors.grey400, borderWidth: 1 }}>
+              <Text>{widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value]?.bluetoothResponse}</Text>
+            </View>}
 
-          {inputStateName !== '' && !loadingRequest && 
-                widget && 
-                widget.inputStates && 
-                widget.inputStates[inputStateName] &&
-                widget.inputStates[inputStateName].service &&
-                selectedService &&
-                selectedCharacteristic &&
-                selectedCharacteristicsOption &&
-                outputStateName &&
-                widget.inputStates[inputStateName].service[selectedService.value] &&
-                widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value] &&
-                widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value] &&
-                widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value]?.bluetoothResponse && <View style={{ width: "100%", alignSelf: "center", margin: "auto", flexDirection: "row" }}>
+
+          {inputStateName !== '' && !loadingRequest &&
+            widget &&
+            widget.inputStates &&
+            widget.inputStates[inputStateName] &&
+            widget.inputStates[inputStateName].service &&
+            selectedService &&
+            selectedCharacteristic &&
+            selectedCharacteristicsOption &&
+            outputStateName &&
+            widget.inputStates[inputStateName].service[selectedService.value] &&
+            widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value] &&
+            widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value] &&
+            widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value]?.bluetoothResponse && <View style={{ width: "100%", alignSelf: "center", margin: "auto", flexDirection: "row" }}>
               <Text style={{ fontSize: 12, fontWeight: 700, marginRight: "auto", marginTop: 15, margin: 5 }}>Output Condition</Text>
-              { <IconButton style={{ marginLeft: "auto" }} iconColor={MD2Colors.grey800} size={20}
-                  icon={"plus"}
-                  disabled={!edit}
-                  onPress={() => {
-                    let modifiedWidget = { ...widget };
-                    if (modifiedWidget.inputStates &&
-                      modifiedWidget.inputStates[inputStateName] &&
-                      modifiedWidget.inputStates[inputStateName].service
-                    ) {
+              {<IconButton style={{ marginLeft: "auto" }} iconColor={MD2Colors.grey800} size={20}
+                icon={"plus"}
+                disabled={!edit}
+                onPress={() => {
+                  let modifiedWidget = { ...widget };
+                  if (modifiedWidget.inputStates &&
+                    modifiedWidget.inputStates[inputStateName] &&
+                    modifiedWidget.inputStates[inputStateName].service
+                  ) {
 
-                      if (modifiedWidget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value].outputState) {
-                        modifiedWidget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value].outputState = {
-                          ...modifiedWidget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value].outputState,
+                    if (modifiedWidget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value].outputState) {
+                      modifiedWidget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value].outputState = {
+                        ...modifiedWidget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value].outputState,
+                        [outputStateName]: {
+                          conditions: [{
+                            id: new ObjectID().toHexString(),
+                            key: "",
+                            condition: "",
+                            value1: "",
+                            value2: "",
+                          }]
+                        }
+                      }
+                    } else {
+                      modifiedWidget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value] = {
+                        outputState: {
                           [outputStateName]: {
                             conditions: [{
                               id: new ObjectID().toHexString(),
@@ -969,26 +967,13 @@ const BluetoothScreen: React.FC = () => {
                             }]
                           }
                         }
-                      } else {
-                        modifiedWidget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value] = {
-                          outputState: {
-                            [outputStateName]: {
-                              conditions: [{
-                                id: new ObjectID().toHexString(),
-                                key: "",
-                                condition: "",
-                                value1: "",
-                                value2: "",
-                              }]
-                            }
-                          }
-                        }
                       }
-                      console.log(JSON.stringify(modifiedWidget))
-                      setWidget(modifiedWidget);
                     }
+                    console.log(JSON.stringify(modifiedWidget))
+                    setWidget(modifiedWidget);
                   }
-                  }></IconButton>}
+                }
+                }></IconButton>}
             </View>}
           {inputStateName?.trim() !== '' &&
             !loadingRequest &&

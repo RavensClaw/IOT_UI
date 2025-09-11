@@ -20,10 +20,6 @@ export const makeBluetoothCall = async (
 ManageBluetooth.enableBluetooth().then(async ()=>{
 
     const bleManager = new BleManager();
-    console.log("BREAK POINT 3");
-
-    console.log("::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
-
 
     if (bleManager && widget && widget.bluetoothDevice && widget.bluetoothDevice.device) {
 
@@ -69,8 +65,6 @@ ManageBluetooth.enableBluetooth().then(async ()=>{
                     }
                 });
 
-                console.log(connected.isConnected());
-                console.log(connected)
                 if (characteristicsOptions === 'isReadable') {
                     bleResponse = await connected.readCharacteristicForService(
                         serviceIdKey,
@@ -105,20 +99,14 @@ ManageBluetooth.enableBluetooth().then(async ()=>{
                             responseData = { "response": decoded }
                         }
 
-                        console.log("WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW");
-                        console.log(responseData);
-
                         let state1ConditionStatified = false;
                         let state2ConditionStatified = false;
 
                         let outputConditions: any = [];
                         if (state.service && state.service[serviceIdKey][characteristics][characteristicsOptions]) {
-                            console.log("IN HERE 1")
                             const outputState: OutputState = state.service[serviceIdKey][characteristics][characteristicsOptions].outputState;
                             if (state.service[serviceIdKey][characteristics][characteristicsOptions].outputState[outputState1] &&
                                 outputState[outputState1].conditions) {
-                                    console.log("IN HERE 2")
-
                                 outputConditions = outputState[outputState1].conditions;
                                             console.log(outputConditions)
                                 if (outputConditions && outputConditions.length > 0) {
@@ -146,11 +134,6 @@ ManageBluetooth.enableBluetooth().then(async ()=>{
                                                     state1ConditionStatified = true;
                                                 }
                                             } else if (outputConditions[i].condition === "Equals") {
-                                                console.log("INSIDE EQUALS")
-                                                console.log(responseValue)
-                                                console.log(value1)
-                                                
-
                                                 if (responseValue == value1) {
                                                     state1ConditionStatified = true;
                                                 }
@@ -247,9 +230,6 @@ ManageBluetooth.enableBluetooth().then(async ()=>{
                                 }
 
                             }
-                            console.log(state1ConditionStatified)
-                            console.log(state2ConditionStatified)
-                            console.log("Q Q Q QQ QQ QQ QQ QQ QQ QQ QQ QQ QQ QQ QQ QQ QQ QQ Q");
                             if (state1ConditionStatified) {
                                 setInputState(outputState1);
                                 setOutputState(outputState1);
