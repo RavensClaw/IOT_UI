@@ -141,6 +141,8 @@ const OnOffSwitchWidget: React.FC<Props> = ({
 
                     <View style={styles.widgetHeaderButtons}>
                         {(widgetCopy.connectionType === 'BLUETOOTH' && widgetCopy.bluetoothDevice && widgetCopy.bluetoothDevice.device) && <Text style={{fontSize: 12, marginTop: 14, fontWeight:600}}>{widgetCopy.bluetoothDevice.device.name}</Text>}
+                        {!edit && ((widgetCopy.connectionType === 'BLUETOOTH' && widgetCopy.bluetoothDevice && widgetCopy.bluetoothDevice.device) && <View style={{marginTop: 14,marginLeft: 5}} ><Icon source='bluetooth' size={16} color={MD2Colors.blue600} /></View>)}
+                        {!edit && widgetCopy.connectionType === 'WIFI' && <View style={{marginTop: 12,marginLeft: 5}} ><Icon source='wifi' size={16} color={MD2Colors.grey800} /></View>}
                         {edit && (widgetCopy.connectionType === 'BLUETOOTH' || !widgetCopy.connectionType) && <IconButton mode='outlined' style={styles.widgetConfigureIcon} size={16} icon={() => <Icon source='bluetooth-settings' size={16} color={MD2Colors.blue600} />}
                             onPress={() => {
                                 router.push(`/screens/bluetoothscreen?widgetId=${widgetCopy.widgetId}&userId=${widgetCopy.userId}&dashboardId=${dashboard.dashboardId}`)
