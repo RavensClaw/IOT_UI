@@ -3,6 +3,8 @@ import InputStateModel from "../models/InputStateModel";
 import WidgetModel from "@/models/WidgetModel";
 import { OutputState } from "@/models/OutputStateModel";
 import { Buffer } from "buffer";
+import ManageBluetooth from 'react-native-ble-manager';
+
 export const makeBluetoothCall = async (
     widget: WidgetModel,
     state: InputStateModel,
@@ -14,6 +16,8 @@ export const makeBluetoothCall = async (
     outputState1: string,//ON
     outputState2: string//OFF
 ) => {
+
+ManageBluetooth.enableBluetooth().then(async ()=>{
 
     const bleManager = new BleManager();
     console.log("BREAK POINT 3");
@@ -283,5 +287,12 @@ export const makeBluetoothCall = async (
         setErrorMessage("no bleManager found");
         setActionRequest(false);
     }
+    }).catch((error) => {
+    // Failure code
+      setHasError(true);
+      console.log(error);
+      setErrorMessage("no bleManager found");
+      setActionRequest(false);
+  });
 
 }

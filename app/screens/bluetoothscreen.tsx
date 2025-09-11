@@ -22,6 +22,7 @@ import ParamsModel from '@/models/ParamsModel';
 import { mutationUpdateDashboard, queryGetDashBoardByDashBoardId } from '@/service/servicehook';
 import { getCurrentUser } from 'aws-amplify/auth';
 import OutputConditionsMappingList from '@/components/OutputConditionsMappingList';
+import ManageBluetooth from 'react-native-ble-manager';
 
 async function requestBlePermissions() {
   if (Platform.OS === "android") {
@@ -296,8 +297,9 @@ const BluetoothScreen: React.FC = () => {
 
   
 
-  const startScan = async () => {
+  const startScan = () => {
     //enableBluetooth();
+    ManageBluetooth.enableBluetooth().then(async ()=>{
     setHasError(false);
     const hasPermission = await requestBlePermissions();
     if (!hasPermission) {
@@ -340,12 +342,21 @@ const BluetoothScreen: React.FC = () => {
     }).catch((e)=>{
       setHasError(true);
       setGeneralErrorMessage(e.message);
-    });
+    })
+      
+    }).catch((error) => {
+    // Failure code
+      setHasError(true);
+      console.log(error);
+      setGeneralErrorMessage('Bluetooth is not enabled');
+  });
+    
   };
 
   const connectToDevice = async (device: any) => {
     setHasError(false);
     setGeneralErrorMessage(null);
+    ManageBluetooth.enableBluetooth().then(async ()=>{
     setIsConnectingDone(false);
     setConnectButtonClicked(true);
     try {
@@ -383,6 +394,12 @@ const BluetoothScreen: React.FC = () => {
     }finally{
       setConnectButtonClicked(false);
     }
+    }).catch((error) => {
+    // Failure code
+      setHasError(true);
+      console.log(error);
+      setGeneralErrorMessage('Bluetooth is not enabled');
+  });
   };
 
   useEffect(() => {
