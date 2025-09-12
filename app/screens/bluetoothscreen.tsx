@@ -23,31 +23,9 @@ import { mutationUpdateDashboard, queryGetDashBoardByDashBoardId } from '@/servi
 import { getCurrentUser } from 'aws-amplify/auth';
 import OutputConditionsMappingList from '@/components/OutputConditionsMappingList';
 import ManageBluetooth from 'react-native-ble-manager';
+import {requestBlePermissions} from '../util/bleutils';
 
-async function requestBlePermissions() {
-  if (Platform.OS === "android") {
-    if (Platform.Version >= 31) {
-      // Android 12+
-      const granted = await PermissionsAndroid.requestMultiple([
-        PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
-        PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-      ]);
-      return (
-        granted["android.permission.BLUETOOTH_SCAN"] === PermissionsAndroid.RESULTS.GRANTED &&
-        granted["android.permission.BLUETOOTH_CONNECT"] === PermissionsAndroid.RESULTS.GRANTED &&
-        granted["android.permission.ACCESS_FINE_LOCATION"] === PermissionsAndroid.RESULTS.GRANTED
-      );
-    } else {
-      // Android 6-11
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
-      );
-      return granted === PermissionsAndroid.RESULTS.GRANTED;
-    }
-  }
-  return true; // iOS asks in system popup
-}
+
 
 const BluetoothScreen: React.FC = () => {
   const [deviceMap, setDeviceMap] = useState<any>({});
@@ -366,7 +344,10 @@ const BluetoothScreen: React.FC = () => {
         setLoading(false);
         manager.stopDeviceScan();
         log(`🔗 Connecting to ${device.name}...${device.id}`);
-        const connected = await manager.connectToDevice(device.id, { autoConnect: true });
+        const connected = await manager.connectToDevice(device.id, { 
+          timeout: Constants.BLUETOOTH_CONNECTION_TIMEOUT,
+          autoConnect: true 
+        });
         await connected.discoverAllServicesAndCharacteristics();
         setConnected(connected);
         log(`✅ Connected to ${connected.name}`);
