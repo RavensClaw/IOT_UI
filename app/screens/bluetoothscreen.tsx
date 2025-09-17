@@ -45,7 +45,9 @@ const BluetoothScreen: React.FC = () => {
   const [selectedCharacteristicsOption, setSelectedCharacteristicsOption] = useState<any>(null);
   const [connected, setConnected] = useState<any>(null);
   const [read, setRead] = useState<boolean>(false);
+  const [readLoading, setReadLoading] = useState<boolean>(false);
   const [write, setWrite] = useState<boolean>(false);
+  const [writeLoading, setWriteLoading] = useState<boolean>(false);
   const [logs, setLogs] = useState<string[]>([]);
 
   let manager = new BleManager();
@@ -491,14 +493,20 @@ const BluetoothScreen: React.FC = () => {
             }
           }).finally(() => {
             setRead(false);
+            setReadLoading(false);
           });
         } catch (e: any) {
+          setRead(false);
+          setReadLoading(false);
           log(`❌ Read error from ${characteristicsOptions.uuid}: ${e.message}`);
           setHasError(true);
           console.log(e);
           setGeneralErrorMessage(`Read error from ${characteristicsOptions.uuid}: ${e.message}`);
         }
       }
+    } else {
+      setRead(false);
+      setReadLoading(false);
     }
   }, [read]);
 
@@ -571,16 +579,20 @@ const BluetoothScreen: React.FC = () => {
               setGeneralErrorMessage(`Read error from ${characteristicsOptions.uuid}: ${error.message}`);
             }).finally(() => {
               setWrite(false);
+              setWriteLoading(false);
             })
           }
         } else {
           setWrite(false);
+          setWriteLoading(false);
         }
       } else {
         setWrite(false);
+        setWriteLoading(false);
       }
     } else {
       setWrite(false);
+      setWriteLoading(false);
     }
   }, [write]);
 
@@ -821,17 +833,26 @@ const BluetoothScreen: React.FC = () => {
                   }
                 }}
               />
-              <Button
-                disabled={!edit}
-                onPress={() => setWrite(true)} mode='outlined' style={{
-                  borderRadius: 5,
-                  marginTop: 10,
-                  backgroundColor: MD2Colors.green400,
-                  borderWidth: 0,
-                  alignSelf: 'center',
-                }}
-                textColor={MD2Colors.white}
-              >WRITE</Button>
+              <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
+                <Button
+                  disabled={!edit}
+                  onPress={() => {
+                    setWriteLoading(true);
+                    setWrite(true)
+                  }} mode='outlined' style={{
+                    borderRadius: 5,
+                    marginTop: 10,
+                    backgroundColor: MD2Colors.green400,
+                    borderWidth: 0,
+                    alignSelf: 'center',
+                  }}
+                  textColor={MD2Colors.white}
+                >WRITE</Button>
+                {writeLoading && (
+                  <ActivityIndicator animating={true} color={MD2Colors.green400} style={{ paddingLeft: 10, }} size="small" />
+                )}
+              </View>
+
             </View>
           }
           {inputStateName === 'CHECK_STATUS' && readActionTypes && readActionTypes.length > 0 && <View style={{ backgroundColor: MD2Colors.white, margin: 10, padding: 10, borderRadius: 10, borderColor: MD2Colors.grey400, borderWidth: 1 }}>
@@ -874,16 +895,24 @@ const BluetoothScreen: React.FC = () => {
               }}
             />
 
-            {selectedDevice && <Button
-              onPress={() => setRead(true)} mode='outlined' style={{
-                borderRadius: 5,
-                backgroundColor: MD2Colors.green400,
-                borderWidth: 0,
-                alignSelf: 'center',
-              }}
-              textColor={MD2Colors.white}
-            >READ</Button>}
-
+            {selectedDevice &&
+              <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
+                <Button
+                  onPress={() => {
+                    setRead(true);
+                    setReadLoading(true);
+                  }} mode='outlined' style={{
+                    borderRadius: 5,
+                    backgroundColor: MD2Colors.green400,
+                    borderWidth: 0,
+                    alignSelf: 'center',
+                  }}
+                  textColor={MD2Colors.white}
+                >READ</Button>
+                {writeLoading && (
+                  <ActivityIndicator animating={true} color={MD2Colors.green400} style={{ paddingLeft: 10, }} size="small" />
+                )}
+              </View>}
           </View>}
 
           <Divider></Divider>
