@@ -4,8 +4,9 @@ import WidgetModel from "@/models/WidgetModel";
 import { OutputState } from "@/models/OutputStateModel";
 import { Buffer } from "buffer";
 import ManageBluetooth from 'react-native-ble-manager';
-import {requestBlePermissions} from "@/app/util/bleutils";
+
 import { Constants } from "@/constants/constants";
+import BLEPermissionsManager from "@/app/util/blepermissionsmanager";
 
 export const makeBluetoothCall = async (
     widget: WidgetModel,
@@ -19,7 +20,8 @@ export const makeBluetoothCall = async (
     outputState2: string//OFF
 ) => {
 
-    const permissions = await requestBlePermissions();
+    const permissions = await BLEPermissionsManager.checkBLEPermissions();
+
     if (permissions) {
 
         ManageBluetooth.enableBluetooth().then(async () => {

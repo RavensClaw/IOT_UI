@@ -23,7 +23,8 @@ import { mutationUpdateDashboard, queryGetDashBoardByDashBoardId } from '@/servi
 import { getCurrentUser } from 'aws-amplify/auth';
 import OutputConditionsMappingList from '@/components/OutputConditionsMappingList';
 import ManageBluetooth from 'react-native-ble-manager';
-import {requestBlePermissions} from '../util/bleutils';
+import BLEPermissionsManager from '../util/blepermissionsmanager';
+
 
 
 
@@ -46,10 +47,9 @@ const BluetoothScreen: React.FC = () => {
   const [read, setRead] = useState<boolean>(false);
   const [write, setWrite] = useState<boolean>(false);
   const [logs, setLogs] = useState<string[]>([]);
-  const manager = new BleManager();
 
-
-
+  let manager = new BleManager();
+  
   const INIT_USERNAME = "";
   const [userId, setUserId] = useState(INIT_USERNAME);
   const [hasError, setHasError] = useState(false);
@@ -261,11 +261,13 @@ const BluetoothScreen: React.FC = () => {
   useEffect(() => {
     // Request BLE permissions when screen mounts
     //enableBluetooth();
-    requestBlePermissions();
+    //requestBlePermissions();
 
-    return () => {
-      manager.destroy();
-    };
+    BLEPermissionsManager.checkBLEPermissions().then((hasPermissions)=>{
+      return () => {
+        manager.destroy();
+      };
+    })
   }, []);
 
   const log = (msg: any) => {
@@ -276,64 +278,73 @@ const BluetoothScreen: React.FC = () => {
 
 
   const startScan = () => {
-    //enableBluetooth();
-    ManageBluetooth.enableBluetooth().then(async () => {
-      setHasError(false);
-      const hasPermission = await requestBlePermissions();
-      if (!hasPermission) {
-        log("❌ Permission denied. Please enable Bluetooth & Location.");
-        setHasError(true);
-        setGeneralErrorMessage('Please enable Bluetooth & Location.');
-        return;
-      }
+    if (!manager) {
+      manager = new BleManager();
+    } //enableBluetooth();
+      ManageBluetooth.enableBluetooth().then(async () => {
+        setHasError(false);
 
-      setDevices([]);
-      setLoading(true);
-      manager.startDeviceScan(null, null, (error, device) => {
-        if (error) {
-          log("❌ Scan error: " + error.message);
+        const hasPermissions = await BLEPermissionsManager.ensureBLEPermissions();
+  
+        if (!hasPermissions) {
+          log("❌ Permission denied. Please enable Bluetooth & Location.");
           setHasError(true);
-          setGeneralErrorMessage(error.message);
-          setLoading(false);
+          setGeneralErrorMessage('Please enable Bluetooth & Location.');
           return;
-        }
-        if (device && device.name) {
-          setDevicesDropdown((existing: any) => {
-            const exists = existing.find((d: any) => d.value === device.id);
-            if (exists) return existing;
-            return [
-              ...existing,
-              { label: device.name, value: device.id }
-            ];
-          });
+        }else{
+          
 
-          setDevices((existing: any) => {
-            return {
-              ...existing,
-              [device.id]: {
-                id: device.id,
-                name: device.name,
-                device: device
-              }
-            };
-          });
+        setDevices([]);
+        setLoading(true);
+        manager.startDeviceScan(null, null, (error, device) => {
+          if (error) {
+            log("❌ Scan error: " + error.message);
+            setHasError(true);
+            setGeneralErrorMessage(error.message);
+            setLoading(false);
+            return;
+          }
+          if (device && device.name) {
+            setDevicesDropdown((existing: any) => {
+              const exists = existing.find((d: any) => d.value === device.id);
+              if (exists) return existing;
+              return [
+                ...existing,
+                { label: device.name, value: device.id }
+              ];
+            });
+
+            setDevices((existing: any) => {
+              return {
+                ...existing,
+                [device.id]: {
+                  id: device.id,
+                  name: device.name,
+                  device: device
+                }
+              };
+            });
+          }
+        }).catch((e) => {
+          setHasError(true);
+          console.log(e);
+          setGeneralErrorMessage(e.message);
+        })
+
         }
-      }).catch((e) => {
+      }).catch((error) => {
+        // Failure code
         setHasError(true);
-        console.log(e);
-        setGeneralErrorMessage(e.message);
-      })
-
-    }).catch((error) => {
-      // Failure code
-      setHasError(true);
-      console.log(error);
-      setGeneralErrorMessage('Bluetooth is not enabled');
-    });
-
+        console.log(error);
+        setGeneralErrorMessage('Bluetooth is not enabled');
+      });
   };
 
   const connectToDevice = async (device: any) => {
+    if (!manager) {
+      manager = new BleManager();
+    }
+
     setHasError(false);
     setGeneralErrorMessage(null);
     ManageBluetooth.enableBluetooth().then(async () => {
@@ -344,9 +355,9 @@ const BluetoothScreen: React.FC = () => {
         setLoading(false);
         manager.stopDeviceScan();
         log(`🔗 Connecting to ${device.name}...${device.id}`);
-        const connected = await manager.connectToDevice(device.id, { 
+        const connected = await manager.connectToDevice(device.id, {
           timeout: Constants.BLUETOOTH_CONNECTION_TIMEOUT,
-          autoConnect: true 
+          autoConnect: true
         });
         await connected.discoverAllServicesAndCharacteristics();
         setConnected(connected);
@@ -504,6 +515,7 @@ const BluetoothScreen: React.FC = () => {
     if (
       widget &&
       widget.inputStates &&
+      widget.inputStates[inputStateName] &&
       widget.inputStates[inputStateName].service &&
       write && deviceMap &&
       selectedService &&
@@ -590,12 +602,13 @@ const BluetoothScreen: React.FC = () => {
             {loading && (
               <ActivityIndicator animating={true} color={MD2Colors.grey800} style={{ paddingRight: 10, }} size="small" />
             )}
-            <Button icon={() => <Icon color={MD2Colors.white} source="magnify-scan" size={20} />} onPress={startScan} mode='outlined' style={{
-              borderRadius: 5,
-              backgroundColor: MD2Colors.grey800,
-              borderWidth: 0,
-              alignSelf: 'center',
-            }}
+            <Button icon={() => <Icon color={MD2Colors.white} source="magnify-scan" size={20} />}
+              onPress={startScan} mode='outlined' style={{
+                borderRadius: 5,
+                backgroundColor: MD2Colors.grey800,
+                borderWidth: 0,
+                alignSelf: 'center',
+              }}
               textColor={MD2Colors.white}
             >Scan for Devices
             </Button>
