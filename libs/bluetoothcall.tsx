@@ -20,7 +20,7 @@ export const makeBluetoothCall = async (
     outputState2: string//OFF
 ) => {
 
-    const permissions = await BLEPermissionsManager.checkBLEPermissions();
+    const permissions = await BLEPermissionsManager.ensureBLEPermissions();
 
     if (permissions) {
 

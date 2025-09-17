@@ -32,13 +32,11 @@ class BLEPermissionsManager {
                 // Android 12+ (API 31+)
                 const bluetoothScan = await check(PERMISSIONS.ANDROID.BLUETOOTH_SCAN);
                 const bluetoothConnect = await check(PERMISSIONS.ANDROID.BLUETOOTH_CONNECT);
-                const bluetoothAdvertise = await check(PERMISSIONS.ANDROID.BLUETOOTH_ADVERTISE);
                 const fineLocation = await check(PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION);
 
                 return (
                     bluetoothScan === RESULTS.GRANTED &&
                     bluetoothConnect === RESULTS.GRANTED &&
-                    bluetoothAdvertise === RESULTS.GRANTED &&
                     fineLocation === RESULTS.GRANTED
                 );
             } else if (androidVersion >= 23) {

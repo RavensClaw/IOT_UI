@@ -259,15 +259,9 @@ const BluetoothScreen: React.FC = () => {
 
 
   useEffect(() => {
-    // Request BLE permissions when screen mounts
-    //enableBluetooth();
-    //requestBlePermissions();
-
-    BLEPermissionsManager.checkBLEPermissions().then((hasPermissions)=>{
       return () => {
         manager.destroy();
       };
-    })
   }, []);
 
   const log = (msg: any) => {
