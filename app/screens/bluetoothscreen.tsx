@@ -49,7 +49,7 @@ const BluetoothScreen: React.FC = () => {
   const [logs, setLogs] = useState<string[]>([]);
 
   let manager = new BleManager();
-  
+
   const INIT_USERNAME = "";
   const [userId, setUserId] = useState(INIT_USERNAME);
   const [hasError, setHasError] = useState(false);
@@ -259,9 +259,9 @@ const BluetoothScreen: React.FC = () => {
 
 
   useEffect(() => {
-      return () => {
-        manager.destroy();
-      };
+    return () => {
+      manager.destroy();
+    };
   }, []);
 
   const log = (msg: any) => {
@@ -275,18 +275,18 @@ const BluetoothScreen: React.FC = () => {
     if (!manager) {
       manager = new BleManager();
     } //enableBluetooth();
-      ManageBluetooth.enableBluetooth().then(async () => {
-        setHasError(false);
+    ManageBluetooth.enableBluetooth().then(async () => {
+      setHasError(false);
 
-        const hasPermissions = await BLEPermissionsManager.ensureBLEPermissions();
-  
-        if (!hasPermissions) {
-          log("❌ Permission denied. Please enable Bluetooth & Location.");
-          setHasError(true);
-          setGeneralErrorMessage('Please enable Bluetooth & Location.');
-          return;
-        }else{
-          
+      const hasPermissions = await BLEPermissionsManager.ensureBLEPermissions();
+
+      if (!hasPermissions) {
+        log("❌ Permission denied. Please enable Bluetooth & Location.");
+        setHasError(true);
+        setGeneralErrorMessage('Please enable Bluetooth & Location.');
+        return;
+      } else {
+
 
         setDevices([]);
         setLoading(true);
@@ -325,13 +325,13 @@ const BluetoothScreen: React.FC = () => {
           setGeneralErrorMessage(e.message);
         })
 
-        }
-      }).catch((error) => {
-        // Failure code
-        setHasError(true);
-        console.log(error);
-        setGeneralErrorMessage('Bluetooth is not enabled');
-      });
+      }
+    }).catch((error) => {
+      // Failure code
+      setHasError(true);
+      console.log(error);
+      setGeneralErrorMessage('Bluetooth is not enabled');
+    });
   };
 
   const connectToDevice = async (device: any) => {
@@ -350,8 +350,7 @@ const BluetoothScreen: React.FC = () => {
         manager.stopDeviceScan();
         log(`🔗 Connecting to ${device.name}...${device.id}`);
         const connected = await manager.connectToDevice(device.id, {
-          timeout: Constants.BLUETOOTH_CONNECTION_TIMEOUT,
-          autoConnect: true
+          timeout: Constants.BLUETOOTH_CONNECTION_TIMEOUT_IN_MS
         });
         await connected.discoverAllServicesAndCharacteristics();
         setConnected(connected);

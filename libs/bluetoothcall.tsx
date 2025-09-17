@@ -61,8 +61,7 @@ export const makeBluetoothCall = async (
                         console.log(widget.bluetoothDevice.device.id)
                         console.log("BEFORE CONNECT");
                         const connected = await bleManager.connectToDevice(widget.bluetoothDevice.device.id, {
-                            timeout: Constants.BLUETOOTH_CONNECTION_TIMEOUT,
-                            autoConnect: true
+                            timeout: Constants.BLUETOOTH_CONNECTION_TIMEOUT_IN_MS
                         });
                         console.log("AFTER CONNECT");
                         // Important: discover services/characteristics

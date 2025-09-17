@@ -11,7 +11,7 @@ export class Constants {
   static readonly CREATE_DASHBOARD = 'CREATE_DASHBOARD';
   static readonly UPDATE_DASHBOARD = 'UPDATE_DASHBOARD';
   static readonly DELETE_DASHBOARD = 'DELETE_DASHBOARD';
-  static readonly BLUETOOTH_CONNECTION_TIMEOUT: 15000;
+  static readonly BLUETOOTH_CONNECTION_TIMEOUT_IN_MS: 15000;
   static readonly serviceKeys = {
       queryGetDashboardsAccessByUserId: "queryGetDashboardsAccessByUserId",
       queryGetDashBoardByDashBoardId: "queryGetDashBoardByDashBoardId",

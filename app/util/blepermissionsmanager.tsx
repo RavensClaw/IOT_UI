@@ -69,11 +69,12 @@ class BLEPermissionsManager {
                     PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION,
                 ];
 
-                const results = await Promise.all(
-                    permissions.map(permission => request(permission))
-                );
-              
-                return results.every(result => result === RESULTS.GRANTED);
+                const granted = await PermissionsAndroid.requestMultiple(permissions);
+            return (
+                granted["android.permission.BLUETOOTH_SCAN"] === PermissionsAndroid.RESULTS.GRANTED &&
+                granted["android.permission.BLUETOOTH_CONNECT"] === PermissionsAndroid.RESULTS.GRANTED &&
+                granted["android.permission.ACCESS_FINE_LOCATION"] === PermissionsAndroid.RESULTS.GRANTED
+            );
 
             } else if (androidVersion >= 23) {
                 // Android 6+ (API 23+) - Request location permissions
