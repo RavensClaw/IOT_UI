@@ -47,7 +47,7 @@ export const styles = StyleSheet.create({
         left: 0, borderColor: MD2Colors.red200
     },
     widgetEditIcon: {
-        left: 0, borderColor: MD2Colors.yellow300
+        left: 0
     },
     deleteMessageContainer: {
         flexDirection: "row", alignSelf: "center", marginBottom: 30

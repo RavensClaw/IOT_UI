@@ -242,8 +242,11 @@ const ConfigureApi = () => {
                             textStyle={styles.errorMessageText}
                             icon={() => <Icon source='information-outline' size={20} color={MD2Colors.red400} />}>{generalErrorMessage}</Chip>}
                         <View style={{ flexDirection: "row", alignItems: "center", alignSelf: "center" }}>
-                            <Chip textStyle={{ fontSize: 12, fontWeight: "900", color: MD2Colors.white }}
-                                style={{ marginLeft: 5, marginTop: 5, backgroundColor: MD2Colors.grey800 }} disabled={true}>INPUT STATE</Chip>
+                            <Chip mode="outlined" textStyle={{ fontSize: 12, fontWeight: "900", color: MD2Colors.white }}
+                                style={{ marginLeft: 5, marginTop: 5, 
+                                    borderColor: MD2Colors.transparent,
+                                    backgroundColor: MD2Colors.pinkA200
+                                }} disabled={true}>INPUT STATE</Chip>
                             {<Dropdown
                                 //disable={!edit}
                                 style={[styles.dropdown, { width: 200 }]}
@@ -308,7 +311,7 @@ const ConfigureApi = () => {
                                             width: 100,
                                             margin: "auto",
                                             marginLeft: 5,
-                                            backgroundColor: edit ? MD2Colors.pinkA200 : MD2Colors.grey400
+                                            backgroundColor: edit ? MD2Colors.green500 : MD2Colors.grey400
                                         }}
                                         textColor={MD2Colors.white}
 
@@ -403,8 +406,10 @@ const ConfigureApi = () => {
                                         }}>
                                         Send
                                     </Button>
-                                    {!edit && <IconButton mode="outlined" style={{ margin: "auto" }} iconColor={MD2Colors.yellow700} size={15}
-                                        icon={"circle-edit-outline"}
+                                    {!edit && <IconButton mode="outlined" style={{ 
+                                        margin: "auto", 
+                                    }} iconColor={MD2Colors.grey900} size={15}
+                                        icon={"application-edit"}
                                         onPress={() => {
                                             setEdit(true);
                                         }}></IconButton>}
@@ -612,7 +617,7 @@ const ConfigureApi = () => {
                                         widget.inputStates[inputStateName] &&
                                         widget.inputStates[inputStateName].wifiResponse ? <View style={{ backgroundColor: MD2Colors.white, margin: 10, minHeight: 10, width: '100%', alignSelf: "center", alignItems: "center" }}>
                                         <Text
-                                            style={{ fontSize: 12, width: "100%", color: MD2Colors.black }}>
+                                            style={{ fontSize: 12, width: "100%", color: MD2Colors.black, marginLeft:40, marginBottom: 10, marginTop:10 }}>
                                             {widget.inputStates[inputStateName].wifiResponse}
                                         </Text>
                                     </View> : <View style={{ margin: 10, minHeight: 10, width: '100%', alignSelf: "center", alignItems: "center" }}>

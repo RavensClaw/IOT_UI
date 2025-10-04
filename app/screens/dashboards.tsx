@@ -431,7 +431,7 @@ const Dashboards = () => {
                                                     setDeleteDashboard(dashboard);
                                                     setShowConfirmDelete(true);
                                                 }}></IconButton> :
-                                                <IconButton mode='outlined' style={{ marginLeft: "auto", borderColor: MD2Colors.yellow800 }} size={16} icon={() => <Icon source='application-edit' size={16} color={MD2Colors.grey800} />}
+                                                <IconButton mode='outlined' style={{ marginLeft: "auto" }} size={16} icon={() => <Icon source='application-edit' size={16} color={MD2Colors.grey900} />}
                                                     onPress={() => {
                                                         setEditDasboard(dashboard.dashboardId);
                                                         setEditedDashboardLabel(dashboard.label);

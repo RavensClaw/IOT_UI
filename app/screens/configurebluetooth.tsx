@@ -87,7 +87,7 @@ const ConfigureBluetooth: React.FC = () => {
   const [possibleOutputStates, setPossibleOutputStates] = useState(initStatesArray);
 
   useEffect(() => {
-    
+
     if (dashboardId && widgetId) {
       getCurrentUser().then((user) => {
         const userId: any = user.userId;
@@ -661,7 +661,7 @@ const ConfigureBluetooth: React.FC = () => {
 
         {devicesDropdown && Object.keys(devicesDropdown).length > 0 && selectedDevice && <View style={{ flexDirection: "row", alignItems: "center", alignSelf: "center" }}>
           <Chip textStyle={{ fontSize: 12, fontWeight: "900", color: MD2Colors.white }}
-            style={{ marginLeft: 5, marginTop: 5, backgroundColor: MD2Colors.grey800 }} disabled={true}>INPUT STATE</Chip>
+            style={{ marginLeft: 5, marginTop: 5, backgroundColor: MD2Colors.pinkA200 }} disabled={true}>INPUT STATE</Chip>
           {<Dropdown
             //disable={!edit}
             style={[styles.dropdown, { width: 200 }]}
@@ -747,11 +747,14 @@ const ConfigureBluetooth: React.FC = () => {
               }}
             />
           </View>}
-          {!edit && devicesDropdown && Object.keys(devicesDropdown).length > 0 && selectedDevice && <IconButton mode="outlined" style={{ margin: "auto", marginTop: 10, marginRight: 20, marginBottom: 10 }} iconColor={MD2Colors.yellow700} size={15}
-            icon={"circle-edit-outline"}
-            onPress={() => {
-              setEdit(true);
-            }}></IconButton>}
+          {!edit && devicesDropdown && Object.keys(devicesDropdown).length > 0 && selectedDevice &&
+            <IconButton mode="outlined" style={{
+              margin: "auto", marginTop: 10, marginRight: 20, marginBottom: 10,
+            }} iconColor={MD2Colors.grey900} size={15}
+              icon={"application-edit"}
+              onPress={() => {
+                setEdit(true);
+              }}></IconButton>}
 
           {hasBluetoothError && <Chip mode="outlined"
             style={styles.errorMessageContainer}
@@ -1056,7 +1059,7 @@ const ConfigureBluetooth: React.FC = () => {
                 backgroundColor: MD2Colors.amber500
               }}
               onPress={async () => {
-              
+
                 let modifiedWidget = { ...widget };
                 if (selectedDevice) {
                   modifiedWidget.bluetoothDevice = selectedDevice;
