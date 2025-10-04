@@ -39,11 +39,10 @@ export const StackScreenHeader: React.FC<Props> = ({ title, showHeader = true, s
         options={{
           headerTitle: title ? title.toString() : "",
           headerTintColor: MD2Colors.white,
-          //headerStyle: { backgroundColor: MD2Colors.indigoA400  },
           headerStyle: { backgroundColor: MD2Colors.blueGrey900 },
           headerTitleStyle: {
             color: MD2Colors.white,
-            fontSize: 16
+            fontSize: 14
           },
           headerShown: showHeader,
           headerBackVisible: showBackButton,

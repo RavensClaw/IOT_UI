@@ -42,10 +42,10 @@ const Login = () => {
       {loading ? <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
         <ActivityIndicator animating={true} color={MD2Colors.blue500} size="large" />
       </View> :
-        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-          <View style={{ flexDirection: 'row' }}>
+        <View style={{ flex: 1, marginTop: 250, alignItems: "center" }}>
+          <View style={{ flexDirection: 'row', alignSelf: "center" }}>
             <Image source={iconFromAssets.logo} style={{ width: 150, height: 150, }}></Image>
-            <Text variant="headlineMedium" style={{ fontWeight: 600, color: MD2Colors.grey700, marginTop: 57, left: -30 }}>Connect</Text>
+            <Text variant="headlineMedium" style={{ fontWeight: 600, color: MD2Colors.grey700, marginTop: 57, left: -40 }}>Connect</Text>
           </View>
           <GoogleSignInButton setLoading={setLoading} />
         </View>}

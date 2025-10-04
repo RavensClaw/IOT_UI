@@ -16,6 +16,7 @@ import {
     queryGetMultipleDashboardsByDashboardIds
 } from "@/service/servicehook";
 import useCurrentUser from "../hooks/useCurrentUser";
+import { styles } from "@/assets/styles/styles";
 
 const Dashboards = () => {
 
@@ -309,7 +310,7 @@ const Dashboards = () => {
 
                             {addDashboardHasError && <Chip mode="outlined"
                                 style={{ margin: 5, borderColor: MD2Colors.red300, padding: 5 }}
-                                textStyle={{ color: MD2Colors.grey700, fontSize: 12 }}
+                                textStyle={styles.errorMessageText}
                                 icon={() => <Icon source='information-outline' size={20} color={MD2Colors.red400} />}>{addDashboardErrorMessage}</Chip>}
 
 
@@ -403,7 +404,7 @@ const Dashboards = () => {
                                                                             }}>
                                         {editDashboardHasError && <Chip mode="outlined"
                                             style={{ margin: 5, borderColor: MD2Colors.red300, padding: 5 }}
-                                            textStyle={{ color: MD2Colors.grey700, fontSize: 10, }}
+                                            textStyle={styles.errorMessageText}
                                             icon={() => <Icon source='information-outline' size={20} color={MD2Colors.red400} />}>{editDashboardErrorMessage}</Chip>}
                                         <View style={{ flexDirection: "row", width: "100%" }}>
                                             {editDasboard === dashboard.dashboardId ? <TextInput

@@ -1,12 +1,12 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { View, StyleSheet, ScrollView, SafeAreaView } from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, ScrollView, SafeAreaView } from "react-native";
 import { Dropdown } from "react-native-element-dropdown";
-import { List, Button, Chip, MD2Colors, Text, TextInput, MD3Colors, IconButton, Checkbox, ActivityIndicator, SegmentedButtons, Icon, Banner, Divider } from "react-native-paper";
+import { Button, Chip, MD2Colors, Text, TextInput, IconButton, ActivityIndicator, SegmentedButtons, Icon, Divider } from "react-native-paper";
 
 import ObjectID from "bson-objectid";
 import config from '../../constants/config.json'
 import WidgetModel from "@/models/WidgetModel";
-import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import ParamsModel from "@/models/ParamsModel";
 import HeadersList from "@/components/HeadersList";
 import QueryParamsList from "@/components/QueryParamsList";
@@ -23,13 +23,13 @@ const METHODS = [
     { label: "POST", value: 'POST' },
 ]
 
-const Configure = () => {
+const ConfigureApi = () => {
     const INIT_USERNAME = "";
     const [userId, setUserId] = useState(INIT_USERNAME);
     const [generalErrorVisible, setGeneralErrorVisible] = useState(false);
-    const [generalErrorMessage, setGeneralErrorMessage] = useState('');
+    const [generalErrorMessage, setGeneralErrorMessage] = useState<any>(null);
     const [apiErrorVisible, setApiErrorVisible] = useState(false);
-    const [apiErrorMessage, setApiErrorMessage] = useState('');
+    const [apiErrorMessage, setApiErrorMessage] = useState<any>(null);
     const [edit, setEdit] = useState(false);
     let initState: string = '';
     const [inputStateName, setInputStateName] = useState(initState);
@@ -45,11 +45,7 @@ const Configure = () => {
     }
 
     const INIT: any = {};
-
     const [selectedDashboard, setSelectedDashboard] = useState(INIT);
-    const [nonModifiableDashboard, setNonModifiableDashboard] = useState(INIT);
-    const [dashboardError, setDashboardError] = useState(INIT);
-
     const INIT_QUERY_KEY: any = Constants.serviceKeys.INIT_QUERY_KEY;
     const [callQueryGetDashBoardByDashBoardId, setCallQueryGetDashBoardByDashBoardId] = useState(INIT_QUERY_KEY);
     const dashboard = queryGetDashBoardByDashBoardId(callQueryGetDashBoardByDashBoardId, dashboardId ? dashboardId : '');
@@ -74,7 +70,6 @@ const Configure = () => {
 
     useEffect(() => {
         setLoadingPage(true);
-
         if (dashboardId && widgetId) {
             getCurrentUser().then((user) => {
                 const userId: any = user.userId;
@@ -134,16 +129,13 @@ const Configure = () => {
         }
     }, [generalErrorVisible]);
 
-    /*
-let paramsConstruction = '';
-            listQueryParamModelItems.map((paramItem: ListModel) => {
-                if (paramItem.name?.trim() !== '' && paramItem.value?.trim() !== '') {
-                    paramsConstruction = paramsConstruction + paramItem.name + "=" + paramItem.value + "&"
-                }
-            });
-    */
-
     useEffect(() => {
+
+        setApiErrorMessage(null);
+        setApiErrorVisible(false);
+        setGeneralErrorMessage(null);
+        setGeneralErrorVisible(false);
+
         if (inputStateName && inputStateName?.trim() != '') {
             const widgetToModify: WidgetModel = { ...widget };
             if (widgetToModify.inputStates) {
@@ -203,11 +195,6 @@ let paramsConstruction = '';
         }
     }, [inputStateName])
 
-
-    /*useEffect(() => {
-        
-    }, [widget])*/
-
     useEffect(() => {
         const widgetToModify: WidgetModel = { ...widget };
         if (widgetToModify.inputStates) {
@@ -237,8 +224,7 @@ let paramsConstruction = '';
     }, [responseOutput]);
 
     useEffect(() => {
-        if (!updateDashboardDone
-        ) {
+        if (!updateDashboardDone) {
             setCallQueryGetDashBoardByDashBoardId(Constants.serviceKeys.queryGetDashBoardByDashBoardId + dashboardId);
             setLoadingPage(false);
             setUpdateDashboardDone(false);
@@ -247,17 +233,17 @@ let paramsConstruction = '';
 
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: MD2Colors.grey200, width: "100%" }}>
-            <StackScreenHeader title={"Configure " + (widget.label ? widget.label : '')}></StackScreenHeader>
+            <StackScreenHeader title={"Configure Widget " + (widget.label ? widget.label : '')}></StackScreenHeader>
             <ScrollView style={{ backgroundColor: MD2Colors.grey200, marginBottom: 50 }}>
                 {loadingPage ? <ActivityIndicator style={{ marginTop: 50 }}></ActivityIndicator> :
                     <View style={{ alignSelf: "center", width: "100%" }}>
                         {generalErrorVisible && <Chip mode="outlined"
                             style={{ margin: 5, borderColor: MD2Colors.red300, padding: 5 }}
-                            textStyle={{ color: MD2Colors.grey700 }}
+                            textStyle={styles.errorMessageText}
                             icon={() => <Icon source='information-outline' size={20} color={MD2Colors.red400} />}>{generalErrorMessage}</Chip>}
                         <View style={{ flexDirection: "row", alignItems: "center", alignSelf: "center" }}>
                             <Chip textStyle={{ fontSize: 12, fontWeight: "900", color: MD2Colors.white }}
-                                style={{ marginLeft: 5, marginTop: 5, backgroundColor: MD2Colors.pinkA200 }} disabled={true}>INPUT STATE</Chip>
+                                style={{ marginLeft: 5, marginTop: 5, backgroundColor: MD2Colors.grey800 }} disabled={true}>INPUT STATE</Chip>
                             {<Dropdown
                                 //disable={!edit}
                                 style={[styles.dropdown, { width: 200 }]}
@@ -272,6 +258,7 @@ let paramsConstruction = '';
                                 placeholder="Select"
                                 value={inputStateName}
                                 onChange={item => {
+                                    setSelectedParentTab('');
                                     if (item.value && item.value.trim() !== 'CHECK_STATUS') {
                                         setOutputStateName(item.value);
                                     }
@@ -284,7 +271,7 @@ let paramsConstruction = '';
                             <View>
                                 {apiErrorVisible && <Chip mode="outlined"
                                     style={{ margin: 5, borderColor: MD2Colors.red300, padding: 5 }}
-                                    textStyle={{ color: MD2Colors.grey700 }}
+                                    textStyle={styles.errorMessageText}
                                     icon={() => <Icon source='information-outline' size={20} color={MD2Colors.red400} />}>{apiErrorMessage}</Chip>}
                                 {widget && widget.inputStates && widget.inputStates[inputStateName] && <View style={{ flexDirection: "row" }}>
                                     <Dropdown
@@ -321,98 +308,98 @@ let paramsConstruction = '';
                                             width: 100,
                                             margin: "auto",
                                             marginLeft: 5,
-                                            backgroundColor: MD2Colors.blue500
+                                            backgroundColor: edit ? MD2Colors.pinkA200 : MD2Colors.grey400
                                         }}
+                                        textColor={MD2Colors.white}
 
                                         onPress={() => {
+                                            //setSelectedParentTab('');
                                             setLoadingRequest(true);
                                             setApiErrorVisible(false);
-                                            setApiErrorMessage('');
+                                            setApiErrorMessage(null);
                                             let headers: any = {};
 
                                             if (widget &&
                                                 widget.inputStates &&
-                                                widget.inputStates[inputStateName]) {
-
-                                                if (widget.inputStates[inputStateName].method &&
-                                                    widget.inputStates[inputStateName].apiUrl
-                                                ) {
-                                                    if (widget.inputStates[inputStateName].headers) {
-                                                        widget.inputStates[inputStateName].headers.map((headerItem: ListModel) => {
-                                                            if (headerItem.name &&
-                                                                headerItem.name?.trim() !== "" &&
-                                                                headerItem.value &&
-                                                                headerItem.value?.trim() !== "") {
-                                                                headers[headerItem.name] = headerItem.value;
-                                                            }
-                                                        });
-                                                    }
-
-                                                    let options: any = {
-                                                        method: widget.inputStates[inputStateName].method,
-                                                        headers: headers
-                                                    }
-
-                                                    let apiURL = widget.inputStates[inputStateName].apiUrl;
-
-                                                    if (widget.inputStates[inputStateName].params) {
-                                                        let alreadyHasParams: boolean = false;
-                                                        if (apiURL?.indexOf("?") != -1) {
-                                                            alreadyHasParams = true;
+                                                widget.inputStates[inputStateName] &&
+                                                widget.inputStates[inputStateName].method &&
+                                                widget.inputStates[inputStateName].apiUrl) {
+                                                if (widget.inputStates[inputStateName].headers) {
+                                                    widget.inputStates[inputStateName].headers.map((headerItem: ListModel) => {
+                                                        if (headerItem.name &&
+                                                            headerItem.name?.trim() !== "" &&
+                                                            headerItem.value &&
+                                                            headerItem.value?.trim() !== "") {
+                                                            headers[headerItem.name] = headerItem.value;
                                                         }
-                                                        let toAppendUrl = '';
-                                                        widget.inputStates[inputStateName].params.map((paramItem: ListModel) => {
-                                                            if (paramItem.name &&
-                                                                paramItem.name?.trim() !== "" &&
-                                                                paramItem.value &&
-                                                                paramItem.value?.trim() !== "") {
-                                                                if (alreadyHasParams) {
-                                                                    toAppendUrl += "&" + paramItem.name + "=" + paramItem.value
-                                                                } else {
-                                                                    toAppendUrl += "?" + paramItem.name + "=" + paramItem.value
-                                                                    alreadyHasParams = true;
-                                                                }
-                                                            }
-                                                        });
-                                                        apiURL += toAppendUrl;
-                                                    }
-
-                                                    if (widget.inputStates[inputStateName].body) {
-                                                        options["body"] = JSON.stringify(widget.inputStates[inputStateName].body)
-                                                    }
-
-                                                    fetch(apiURL, options).then(async (response: any) => {
-                                                        const text = await response.text()
-                                                        try {
-                                                            const json = JSON.parse(text)
-                                                            setResponseOutput(JSON.stringify(json, null, 4));
-                                                        } catch (err) {
-                                                            setResponseOutput(JSON.stringify({"response": text}, null, 4));
-                                                        }
-
-                                                    }).catch((error) => {
-                                                        console.log(error)
-                                                        setApiErrorMessage(error.message);
-                                                        setApiErrorVisible(true);
-
-                                                    }).finally(() => {
-                                                        setLoadingRequest(false);
                                                     });
-
                                                 }
 
+                                                let options: any = {
+                                                    method: widget.inputStates[inputStateName].method,
+                                                    headers: headers
+                                                }
+
+                                                let apiURL = widget.inputStates[inputStateName].apiUrl;
+
+                                                if (widget.inputStates[inputStateName].params) {
+                                                    let alreadyHasParams: boolean = false;
+                                                    if (apiURL?.indexOf("?") != -1) {
+                                                        alreadyHasParams = true;
+                                                    }
+                                                    let toAppendUrl = '';
+                                                    widget.inputStates[inputStateName].params.map((paramItem: ListModel) => {
+                                                        if (paramItem.name &&
+                                                            paramItem.name?.trim() !== "" &&
+                                                            paramItem.value &&
+                                                            paramItem.value?.trim() !== "") {
+                                                            if (alreadyHasParams) {
+                                                                toAppendUrl += "&" + paramItem.name + "=" + paramItem.value
+                                                            } else {
+                                                                toAppendUrl += "?" + paramItem.name + "=" + paramItem.value
+                                                                alreadyHasParams = true;
+                                                            }
+                                                        }
+                                                    });
+                                                    apiURL += toAppendUrl;
+                                                }
+
+                                                if (widget.inputStates[inputStateName].body) {
+                                                    options["body"] = JSON.stringify(widget.inputStates[inputStateName].body)
+                                                }
+
+                                                fetch(apiURL, options).then(async (response: any) => {
+                                                    const text = await response.text()
+                                                    try {
+                                                        const json = JSON.parse(text)
+                                                        setResponseOutput(JSON.stringify(json, null, 4));
+                                                    } catch (err) {
+                                                        setResponseOutput(JSON.stringify({ "response": text }, null, 4));
+                                                    }
+                                                    setSelectedParentTab('r');
+
+                                                }).catch((error) => {
+                                                    setApiErrorMessage(error.message);
+                                                    setApiErrorVisible(true);
+
+                                                }).finally(() => {
+                                                    setLoadingRequest(false);
+                                                });
+
+                                            } else {
+                                                if (widget.inputStates && widget.inputStates[inputStateName]) {
+                                                    if (!widget.inputStates[inputStateName].method) {
+                                                        setApiErrorMessage('Please select method');
+                                                    } else if (!widget.inputStates[inputStateName].apiUrl) {
+                                                        setApiErrorMessage('API URL is required');
+                                                    }
+                                                }
+                                                else {
+                                                    setApiErrorMessage('Please select input state');
+                                                }
+                                                setApiErrorVisible(true);
+                                                setLoadingRequest(false);
                                             }
-
-                                            /*{
-                                                  'Accept': 'application/json',
-                                                  'Content-Type': 'application/json',
-                                                  'Origin': '',
-                                                }
-                                                  */
-
-
-
-
                                         }}>
                                         Send
                                     </Button>
@@ -422,14 +409,17 @@ let paramsConstruction = '';
                                             setEdit(true);
                                         }}></IconButton>}
                                 </View>}
-                                {widget && widget.inputStates && widget.inputStates[inputStateName] && <View style={{ height: 50 }}>
+                                {widget && widget.inputStates && widget.inputStates[inputStateName] && <View style={{ height: 50, margin: 5 }}>
                                     <TextInput
                                         disabled={!edit}
                                         label="API URL"
                                         value={widget.inputStates[inputStateName].apiUrl}
+                                        textColor={MD2Colors.black}
                                         style={{
                                             color: MD2Colors.black,
-                                            fontSize: 12, minWidth: 400, height: 50, margin: "auto", marginLeft: 5, marginRight: 5
+                                            fontSize: 12,
+                                            width: "100%",
+                                            backgroundColor: edit ? MD2Colors.white : MD2Colors.grey100,
                                         }}
                                         mode="outlined"
                                         onChangeText={apiUrlText => {
@@ -495,7 +485,7 @@ let paramsConstruction = '';
                                             },
                                             style: {
                                                 borderRadius: 2,
-                                                backgroundColor: selectedParentTab === 'i' ? MD2Colors.grey800 : MD2Colors.white
+                                                backgroundColor: selectedParentTab === 'i' ? MD2Colors.blue400 : MD2Colors.white
                                             },
                                             onPress: (() => {
                                                 setSelectedParentTab('i');
@@ -511,7 +501,7 @@ let paramsConstruction = '';
                                             },
                                             style: {
                                                 borderRadius: 2,
-                                                backgroundColor: selectedParentTab === 'r' ? MD2Colors.grey800 : MD2Colors.white
+                                                backgroundColor: selectedParentTab === 'r' ? MD2Colors.blue400 : MD2Colors.white
                                             },
                                             onPress: (() => {
                                                 setSelectedParentTab('r');
@@ -593,13 +583,20 @@ let paramsConstruction = '';
                                                         setWidget={setWidget} />}
                                             </View>
                                             }
-                                            {selectedChildTab === 'b' && <View style={{ alignSelf: "center", alignItems: "center", width: "100%", marginLeft: 5, marginRight: 5 }}>
+                                            {selectedChildTab === 'b' && <View style={{ alignSelf: "center", alignItems: "center", width: "100%", margin: 10 }}>
                                                 <TextInput
                                                     label="INPUT"
                                                     multiline={true}
                                                     disabled={!edit}
                                                     value={widget.inputStates ? widget.inputStates[inputStateName].body : ''}
-                                                    style={{ fontSize: 12, width: "95%", minHeight: 300 }}
+                                                    textColor={MD2Colors.black}
+                                                    style={{
+                                                        fontSize: 12,
+                                                        width: "98%",
+                                                        margin: 5,
+                                                        minHeight: 100,
+                                                        backgroundColor: edit ? MD2Colors.white : MD2Colors.grey100,
+                                                    }}
                                                     mode="outlined"
                                                     onChangeText={text => {
                                                         setBodyInput(text)
@@ -609,12 +606,20 @@ let paramsConstruction = '';
                                         </View>
                                     </View>}
 
-                                {selectedParentTab === 'r' && <View style={{ marginTop: 10, marginLeft: 5, marginRight: 5, maxHeight: 300, width: 200, }}>
-                                    <Text
-                                        style={{ fontSize: 12, width: "100%", color: MD2Colors.black, margin: 20 }}>
-                                        {widget && widget.inputStates && widget.inputStates[inputStateName] && widget.inputStates[inputStateName].wifiResponse}
-                                    </Text>
-                                </View>}
+                                {selectedParentTab === 'r' &&
+                                    (widget &&
+                                        widget.inputStates &&
+                                        widget.inputStates[inputStateName] &&
+                                        widget.inputStates[inputStateName].wifiResponse ? <View style={{ backgroundColor: MD2Colors.white, margin: 10, minHeight: 10, width: '100%', alignSelf: "center", alignItems: "center" }}>
+                                        <Text
+                                            style={{ fontSize: 12, width: "100%", color: MD2Colors.black }}>
+                                            {widget.inputStates[inputStateName].wifiResponse}
+                                        </Text>
+                                    </View> : <View style={{ margin: 10, minHeight: 10, width: '100%', alignSelf: "center", alignItems: "center" }}>
+                                        <Text style={{ fontSize: 12, width: "100%", color: MD2Colors.black, textAlign: "center", margin: 15 }}>
+                                            No Response
+                                        </Text>
+                                    </View>)}
 
                                 <Divider></Divider>
                                 {inputStateName !== '' && !loadingRequest && widget && widget.inputStates && widget?.inputStates[inputStateName] && widget?.inputStates[inputStateName].wifiResponse &&
@@ -775,5 +780,4 @@ let paramsConstruction = '';
         </SafeAreaView>);
 }
 
-export default Configure;
-
+export default ConfigureApi;

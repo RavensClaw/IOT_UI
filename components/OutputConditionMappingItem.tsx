@@ -374,6 +374,7 @@ console.log("{} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {
             readOnly={!edit}
             label="Value"
             value={outputConditionItem.value1}
+            textColor={MD2Colors.black}
             style={{ fontSize: 12, width: "90%", margin: "auto", backgroundColor: !edit ? MD2Colors.grey100 : MD2Colors.white }}
             mode="outlined"
             onChangeText={text => {
@@ -441,6 +442,7 @@ console.log("{} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {
                 readOnly={!edit}
                 label="Value"
                 value={outputConditionItem.value2}
+                textColor={MD2Colors.black}
                 style={{ fontSize: 12, width: "90%", margin: "auto", backgroundColor: !edit ? MD2Colors.grey100 : MD2Colors.white }}
                 mode="outlined"
                 onChangeText={text => {

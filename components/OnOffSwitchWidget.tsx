@@ -145,11 +145,11 @@ const OnOffSwitchWidget: React.FC<Props> = ({
                         {!edit && widgetCopy.connectionType === 'WIFI' && <View style={{marginTop: 12,marginLeft: 5}} ><Icon source='wifi' size={16} color={MD2Colors.grey800} /></View>}
                         {edit && (widgetCopy.connectionType === 'BLUETOOTH' || !widgetCopy.connectionType) && <IconButton mode='outlined' style={styles.widgetConfigureIcon} size={16} icon={() => <Icon source='bluetooth-settings' size={16} color={MD2Colors.blue600} />}
                             onPress={() => {
-                                router.push(`/screens/bluetoothscreen?widgetId=${widgetCopy.widgetId}&userId=${widgetCopy.userId}&dashboardId=${dashboard.dashboardId}`)
+                                router.push(`/screens/configurebluetooth?widgetId=${widgetCopy.widgetId}&userId=${widgetCopy.userId}&dashboardId=${dashboard.dashboardId}`)
                             }}></IconButton>}
                         {edit && (widgetCopy.connectionType === 'WIFI' || !widgetCopy.connectionType) && <IconButton mode='outlined' style={styles.widgetConfigureIcon} size={16} icon={() => <Icon source='wifi-settings' size={16} color={MD2Colors.grey900} />}
                             onPress={() => {
-                                router.push(`/screens/configure?widgetId=${widgetCopy.widgetId}&userId=${widgetCopy.userId}&dashboardId=${dashboard.dashboardId}`)
+                                router.push(`/screens/configureapi?widgetId=${widgetCopy.widgetId}&userId=${widgetCopy.userId}&dashboardId=${dashboard.dashboardId}`)
                             }}></IconButton>}
                         {edit && <IconButton mode='outlined' style={styles.widgetDeleteIcon} size={16} icon={() => <Icon source='delete' size={16} color={MD2Colors.grey900} />}
                             onPress={() => {

@@ -45,6 +45,7 @@ const QueryParamItem: React.FC<Props> = ({
         <TextInput
             label="NAME"
             value={name}
+            textColor={MD2Colors.black}
             style={{ fontSize: 12, minWidth: 140, maxWidth: 140 }}
             mode="outlined"
             onChangeText={text => {
@@ -75,6 +76,7 @@ const QueryParamItem: React.FC<Props> = ({
         <TextInput
             label="VALUE"
             value={value}
+            textColor={MD2Colors.black}
             style={{ fontSize: 12, minWidth: 140, maxWidth: 140, marginLeft: 10 }}
             mode="outlined"
             onChangeText={text => {

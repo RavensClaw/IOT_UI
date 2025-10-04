@@ -4,8 +4,6 @@ import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
-  PermissionsAndroid,
-  Platform,
   SafeAreaView,
   ScrollView
 } from 'react-native';
@@ -25,10 +23,7 @@ import OutputConditionsMappingList from '@/components/OutputConditionsMappingLis
 import ManageBluetooth from 'react-native-ble-manager';
 import BLEPermissionsManager from '../util/blepermissionsmanager';
 
-
-
-
-const BluetoothScreen: React.FC = () => {
+const ConfigureBluetooth: React.FC = () => {
   const [deviceMap, setDeviceMap] = useState<any>({});
   const [devices, setDevices] = useState<any[]>([]);
   const [devicesDropdown, setDevicesDropdown] = useState<any[]>([]);
@@ -55,10 +50,9 @@ const BluetoothScreen: React.FC = () => {
   const INIT_USERNAME = "";
   const [userId, setUserId] = useState(INIT_USERNAME);
   const [hasError, setHasError] = useState(false);
-  const [generalErrorVisible, setGeneralErrorVisible] = useState(false);
+  const [hasBluetoothError, setHasBluetoothError] = useState(false);
   const [generalErrorMessage, setGeneralErrorMessage] = useState<any>(null);
-  const [apiErrorVisible, setApiErrorVisible] = useState(false);
-  const [apiErrorMessage, setApiErrorMessage] = useState('');
+  const [bluetoothErrorMessage, setBluetoothErrorMessage] = useState<any>(null);;
   const [edit, setEdit] = useState(false);
   let initState: string = '';
   const [inputStateName, setInputStateName] = useState(initState);
@@ -78,30 +72,22 @@ const BluetoothScreen: React.FC = () => {
   const INIT: any = {};
 
   const [selectedDashboard, setSelectedDashboard] = useState(INIT);
-  const [nonModifiableDashboard, setNonModifiableDashboard] = useState(INIT);
-  const [dashboardError, setDashboardError] = useState(INIT);
-
   const INIT_QUERY_KEY: any = Constants.serviceKeys.INIT_QUERY_KEY;
   const [callQueryGetDashBoardByDashBoardId, setCallQueryGetDashBoardByDashBoardId] = useState(INIT_QUERY_KEY);
   const dashboard = queryGetDashBoardByDashBoardId(callQueryGetDashBoardByDashBoardId, dashboardId ? dashboardId : '');
-
   const [updateDashboardError, setUpdateDashboardError] = useState(INIT);
   const [updateDashboardDone, setUpdateDashboardDone] = useState(false);
   const { updateDashboard } = mutationUpdateDashboard(setUpdateDashboardError, setUpdateDashboardDone, userId);
 
 
   const [widget, setWidget] = useState(initWidget);
-  const [bodyInput, setBodyInput] = useState(initState);
   const [responseOutput, setResponseOutput] = useState(initState);
-  const [loadingPage, setLoadingPage] = useState(true);
-  const [loadingRequest, setLoadingRequest] = useState(false);
   const initStatesArray: any = []
   const [possibleInputStates, setPossibleInputStates] = useState(initStatesArray);
   const [possibleOutputStates, setPossibleOutputStates] = useState(initStatesArray);
 
   useEffect(() => {
-    setLoadingPage(true);
-
+    
     if (dashboardId && widgetId) {
       getCurrentUser().then((user) => {
         const userId: any = user.userId;
@@ -110,6 +96,20 @@ const BluetoothScreen: React.FC = () => {
       });
     }
   }, [])
+
+  useEffect(() => {
+    setGeneralErrorMessage(null);
+    setHasError(false);
+    setBluetoothErrorMessage(null);
+    setHasBluetoothError(false);
+    setLoading(false);
+    setIsConnectingDone(false);
+    setConnectButtonClicked(false);
+    setServicesDropdown([]);
+    setCharacteristicDropdown([]);
+    setSelectedService(null);
+    setSelectedCharacteristic(null);
+  }, [selectedDevice])
 
   useEffect(() => {
     if (dashboard.dashboard !== undefined) {
@@ -149,19 +149,12 @@ const BluetoothScreen: React.FC = () => {
         setPossibleOutputStates(outputStates);
       } else {
         setGeneralErrorMessage('Widget not found');
-        setGeneralErrorVisible(true);
+        setHasError(true);
       }
-      setLoadingPage(false);
       setSelectedDashboard(toModifyDashboard);
       setCallQueryGetDashBoardByDashBoardId(INIT_QUERY_KEY);
     }
   }, [dashboard]);
-
-  useEffect(() => {
-    if (generalErrorVisible) {
-      setLoadingPage(false);
-    }
-  }, [generalErrorVisible]);
 
   useEffect(() => {
     if (inputStateName && inputStateName?.trim() != '') {
@@ -253,7 +246,6 @@ const BluetoothScreen: React.FC = () => {
     if (!updateDashboardDone
     ) {
       setCallQueryGetDashBoardByDashBoardId(Constants.serviceKeys.queryGetDashBoardByDashBoardId + dashboardId);
-      setLoadingPage(false);
       setUpdateDashboardDone(false);
     }
   }, [updateDashboardDone]);
@@ -459,6 +451,8 @@ const BluetoothScreen: React.FC = () => {
   }, [selectedCharacteristic]);
 
   useEffect(() => {
+    setBluetoothErrorMessage('');
+    setHasBluetoothError(false);
 
     if (read && deviceMap &&
       selectedDevice &&
@@ -499,9 +493,9 @@ const BluetoothScreen: React.FC = () => {
           setRead(false);
           setReadLoading(false);
           log(`❌ Read error from ${characteristicsOptions.uuid}: ${e.message}`);
-          setHasError(true);
+          setHasBluetoothError(true);
           console.log(e);
-          setGeneralErrorMessage(`Read error from ${characteristicsOptions.uuid}: ${e.message}`);
+          setBluetoothErrorMessage(`Read error from ${characteristicsOptions.uuid}: ${e.message}`);
         }
       }
     } else {
@@ -512,7 +506,8 @@ const BluetoothScreen: React.FC = () => {
 
 
   useEffect(() => {
-
+    setBluetoothErrorMessage('');
+    setHasBluetoothError(false);
     if (
       widget &&
       widget.inputStates &&
@@ -555,9 +550,9 @@ const BluetoothScreen: React.FC = () => {
                 log(`📖 Write with response from ${characteristicsOptions.uuid}: ${decoded}`);
               }
             }).catch((error: any) => {
-              setHasError(true);
+              setHasBluetoothError(true);
               console.log(error);
-              setGeneralErrorMessage(`Read error from ${characteristicsOptions.uuid}: ${error.message}`);
+              setBluetoothErrorMessage(`Read error from ${characteristicsOptions.uuid}: ${error.message}`);
             }).finally(() => {
               setWrite(false);
             })
@@ -574,9 +569,9 @@ const BluetoothScreen: React.FC = () => {
             ).then((response: any) => {
               //response.value
             }).catch((error: any) => {
-              setHasError(true);
+              setHasBluetoothError(true);
               console.log(error);
-              setGeneralErrorMessage(`Read error from ${characteristicsOptions.uuid}: ${error.message}`);
+              setBluetoothErrorMessage(`Read error from ${characteristicsOptions.uuid}: ${error.message}`);
             }).finally(() => {
               setWrite(false);
               setWriteLoading(false);
@@ -599,8 +594,7 @@ const BluetoothScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: MD2Colors.grey200 }}>
-      <StackScreenHeader title={"Configure Bluetooth"}></StackScreenHeader>
-
+      <StackScreenHeader title={"Configure Widget " + (widget.label ? widget.label : '')}></StackScreenHeader>
       <ScrollView>
         <View style={{ marginTop: 20, margin: 10, padding: 10, borderRadius: 10, borderColor: MD2Colors.grey400, backgroundColor: MD2Colors.white, borderWidth: 1 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
@@ -667,7 +661,7 @@ const BluetoothScreen: React.FC = () => {
 
         {devicesDropdown && Object.keys(devicesDropdown).length > 0 && selectedDevice && <View style={{ flexDirection: "row", alignItems: "center", alignSelf: "center" }}>
           <Chip textStyle={{ fontSize: 12, fontWeight: "900", color: MD2Colors.white }}
-            style={{ marginLeft: 5, marginTop: 5, backgroundColor: MD2Colors.pinkA200 }} disabled={true}>INPUT STATE</Chip>
+            style={{ marginLeft: 5, marginTop: 5, backgroundColor: MD2Colors.grey800 }} disabled={true}>INPUT STATE</Chip>
           {<Dropdown
             //disable={!edit}
             style={[styles.dropdown, { width: 200 }]}
@@ -758,6 +752,12 @@ const BluetoothScreen: React.FC = () => {
             onPress={() => {
               setEdit(true);
             }}></IconButton>}
+
+          {hasBluetoothError && <Chip mode="outlined"
+            style={styles.errorMessageContainer}
+            textStyle={styles.errorMessageText}
+            icon={() => <Icon source='information-outline' size={20} color={MD2Colors.red400} />}>{bluetoothErrorMessage}</Chip>}
+
           {selectedDevice && inputStateName !== 'CHECK_STATUS' &&
             widget.inputStates &&
             widget.inputStates[inputStateName] &&
@@ -769,9 +769,8 @@ const BluetoothScreen: React.FC = () => {
             selectedCharacteristicsOption.value
             && <View style={{ backgroundColor: MD2Colors.white, margin: 10, padding: 10, borderRadius: 10, borderColor: MD2Colors.grey400, borderWidth: 1 }}>
               <TextInput
-                //disabled={!edit}
+                disabled={!edit}
                 label="Input"
-                readOnly={!edit}
                 value={
                   widget.inputStates[inputStateName].service &&
                     widget.inputStates[inputStateName].service[selectedService.value] &&
@@ -780,8 +779,10 @@ const BluetoothScreen: React.FC = () => {
                     widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value].input ?
                     widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value].input : ''
                 }
+                textColor={MD2Colors.black}
                 style={{
-                  color: MD2Colors.black,
+                  backgroundColor: edit ? MD2Colors.white : MD2Colors.grey100,
+                  width: "100%",
                   fontSize: 12, minWidth: 300, height: 50, marginLeft: 10, marginRight: 10
                 }}
                 mode="outlined"
@@ -852,7 +853,6 @@ const BluetoothScreen: React.FC = () => {
                   <ActivityIndicator animating={true} color={MD2Colors.green400} style={{ paddingLeft: 10, }} size="small" />
                 )}
               </View>
-
             </View>
           }
           {inputStateName === 'CHECK_STATUS' && readActionTypes && readActionTypes.length > 0 && <View style={{ backgroundColor: MD2Colors.white, margin: 10, padding: 10, borderRadius: 10, borderColor: MD2Colors.grey400, borderWidth: 1 }}>
@@ -909,7 +909,7 @@ const BluetoothScreen: React.FC = () => {
                   }}
                   textColor={MD2Colors.white}
                 >READ</Button>
-                {writeLoading && (
+                {readLoading && (
                   <ActivityIndicator animating={true} color={MD2Colors.green400} style={{ paddingLeft: 10, }} size="small" />
                 )}
               </View>}
@@ -933,7 +933,7 @@ const BluetoothScreen: React.FC = () => {
             </View>}
 
 
-          {inputStateName !== '' && !loadingRequest &&
+          {inputStateName !== '' &&
             widget &&
             widget.inputStates &&
             widget.inputStates[inputStateName] &&
@@ -992,7 +992,6 @@ const BluetoothScreen: React.FC = () => {
                 }></IconButton>}
             </View>}
           {inputStateName?.trim() !== '' &&
-            !loadingRequest &&
             widget.inputStates &&
             widget.inputStates[inputStateName] &&
             widget.inputStates[inputStateName]?.service &&
@@ -1020,7 +1019,6 @@ const BluetoothScreen: React.FC = () => {
 
             </ScrollView>}
           {(inputStateName?.trim() !== '' &&
-            !loadingRequest &&
             widget.inputStates &&
             selectedService &&
             selectedCharacteristic &&
@@ -1038,15 +1036,15 @@ const BluetoothScreen: React.FC = () => {
               <Text style={{ fontSize: 12, margin: 10 }}>No Conditions</Text>
             </View>}
 
-          {edit && !loadingRequest && <View style={{ flexDirection: "row", alignSelf: "center", margin: "auto", marginBottom: 20, marginTop: 20 }}>
+          {edit && <View style={{ flexDirection: "row", alignSelf: "center", margin: "auto", marginBottom: 20, marginTop: 20 }}>
             <Divider></Divider>
             <Chip icon={() => <Icon source="cancel" size={20} color={MD2Colors.red400} />} mode="outlined"
               style={{
                 marginLeft: 5,
               }}
               onPress={() => {
-                setApiErrorVisible(false);
-                setApiErrorMessage('');
+                setHasBluetoothError(false);
+                setBluetoothErrorMessage('');
                 setEdit(false)
               }}>
               Cancel
@@ -1058,8 +1056,7 @@ const BluetoothScreen: React.FC = () => {
                 backgroundColor: MD2Colors.amber500
               }}
               onPress={async () => {
-                setLoadingPage(true);
-
+              
                 let modifiedWidget = { ...widget };
                 if (selectedDevice) {
                   modifiedWidget.bluetoothDevice = selectedDevice;
@@ -1075,7 +1072,6 @@ const BluetoothScreen: React.FC = () => {
 
                     });
                 }
-                setLoadingPage(false);
                 setEdit(false);
               }}>
               Save
@@ -1087,4 +1083,4 @@ const BluetoothScreen: React.FC = () => {
   );
 };
 
-export default BluetoothScreen;
+export default ConfigureBluetooth;
