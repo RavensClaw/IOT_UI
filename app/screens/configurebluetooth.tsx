@@ -7,7 +7,7 @@ import {
   SafeAreaView,
   ScrollView
 } from 'react-native';
-import { BleManager } from "react-native-ble-plx";
+import { BleManager, Device } from "react-native-ble-plx";
 import { Dropdown } from 'react-native-element-dropdown';
 import { ActivityIndicator, Button, Chip, Divider, Icon, IconButton, MD2Colors, TextInput } from 'react-native-paper';
 import { Buffer } from "buffer";
@@ -22,6 +22,7 @@ import { getCurrentUser } from 'aws-amplify/auth';
 import OutputConditionsMappingList from '@/components/OutputConditionsMappingList';
 import ManageBluetooth from 'react-native-ble-manager';
 import BLEPermissionsManager from '../util/blepermissionsmanager';
+import bleManager from '../util/blemanagerutil';
 
 const ConfigureBluetooth: React.FC = () => {
   const [deviceMap, setDeviceMap] = useState<any>({});
@@ -38,14 +39,13 @@ const ConfigureBluetooth: React.FC = () => {
   const [readActionTypes, setReadActionTypes] = useState<any[]>([]);
   const [writeActionTypes, setWriteActionTypes] = useState<any[]>([]);
   const [selectedCharacteristicsOption, setSelectedCharacteristicsOption] = useState<any>(null);
-  const [connected, setConnected] = useState<any>(null);
+
   const [read, setRead] = useState<boolean>(false);
   const [readLoading, setReadLoading] = useState<boolean>(false);
   const [write, setWrite] = useState<boolean>(false);
   const [writeLoading, setWriteLoading] = useState<boolean>(false);
+  const [showDeviceScan, setShowDeviceScan] = useState<boolean>(true);
   const [logs, setLogs] = useState<string[]>([]);
-
-  let manager = new BleManager();
 
   const INIT_USERNAME = "";
   const [userId, setUserId] = useState(INIT_USERNAME);
@@ -79,12 +79,34 @@ const ConfigureBluetooth: React.FC = () => {
   const [updateDashboardDone, setUpdateDashboardDone] = useState(false);
   const { updateDashboard } = mutationUpdateDashboard(setUpdateDashboardError, setUpdateDashboardDone, userId);
 
-
+  const [startScan, setStartScan] = useState(false);
+  const [connectToDevice, setConnectToDevice] = useState(false);
   const [widget, setWidget] = useState(initWidget);
   const [responseOutput, setResponseOutput] = useState(initState);
   const initStatesArray: any = []
   const [possibleInputStates, setPossibleInputStates] = useState(initStatesArray);
   const [possibleOutputStates, setPossibleOutputStates] = useState(initStatesArray);
+const [isDeviceConnected, setIsDeviceConnected] = useState<boolean>(false);
+
+useEffect(() => {
+  const checkConnection = async () => {
+    if (selectedDevice?.device?.id) {
+      try {
+        const connected = await bleManager.isDeviceConnected(selectedDevice.device.id);
+        console.log("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
+        console.log("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
+        console.log("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
+        console.log("Is Device Connected: " + connected);
+        setIsDeviceConnected(connected);
+      } catch {
+        setIsDeviceConnected(false);
+      }
+    } else {
+      setIsDeviceConnected(false);
+    }
+  };
+  checkConnection();
+}, [selectedDevice, connectToDevice]);
 
   useEffect(() => {
 
@@ -97,19 +119,6 @@ const ConfigureBluetooth: React.FC = () => {
     }
   }, [])
 
-  useEffect(() => {
-    setGeneralErrorMessage(null);
-    setHasError(false);
-    setBluetoothErrorMessage(null);
-    setHasBluetoothError(false);
-    setLoading(false);
-    setIsConnectingDone(false);
-    setConnectButtonClicked(false);
-    setServicesDropdown([]);
-    setCharacteristicDropdown([]);
-    setSelectedService(null);
-    setSelectedCharacteristic(null);
-  }, [selectedDevice])
 
   useEffect(() => {
     if (dashboard.dashboard !== undefined) {
@@ -123,22 +132,47 @@ const ConfigureBluetooth: React.FC = () => {
         }
 
         let keys = Object.keys(jsonWidgets);
+        let servicesDropdownTemp: any[] = [];
+
         for (let i = 0; i < keys.length; i++) {
           if (keys[i] === widgetId) {
             let modifyWidget = jsonWidgets[keys[i]];
             modifyWidget.connectionType = "BLUETOOTH";
             setWidget(modifyWidget);
-            if (modifyWidget.bluetoothDevice) {
-              setSelectedDevice(modifyWidget.bluetoothDevice)
+            if (modifyWidget.bluetoothDevice && modifyWidget.bluetoothDevice.id) {
+              let deviceTemp: any = {};
+              deviceTemp[modifyWidget.bluetoothDevice.id] = {};
+              if (modifyWidget.bluetoothDevice.services) {
+                Object.keys(modifyWidget.bluetoothDevice.services).forEach((key: any) => {
+                  servicesDropdownTemp.push({ label: key ? key : "Service", value: key });
+                  deviceTemp[modifyWidget.bluetoothDevice.id][key] = {}
+                  deviceTemp[modifyWidget.bluetoothDevice.id][key] = deviceTemp[modifyWidget.bluetoothDevice.id][key];
+                  Object.keys(modifyWidget.bluetoothDevice.services[key]).forEach((charKey: any) => {
+                    deviceTemp[modifyWidget.bluetoothDevice.id][key][charKey] = modifyWidget.bluetoothDevice.services[key][charKey]
+                    Object.keys(modifyWidget.bluetoothDevice.services[key][charKey]).forEach((optionKey: any) => {
+                      deviceTemp[modifyWidget.bluetoothDevice.id][key][charKey][optionKey] = modifyWidget.bluetoothDevice.services[key][charKey][optionKey]
+                    });
+                  });
+                });
+                setDeviceMap({ ...deviceTemp });
+                setSelectedDevice(modifyWidget.bluetoothDevice);
+                setDevicesDropdown([{ label: modifyWidget.bluetoothDevice.name, value: modifyWidget.bluetoothDevice.id }]);
+                setShowDeviceScan(false);
+                setServicesDropdown(servicesDropdownTemp);
+              }
+              widgetFound = true;
+              break;
             }
-
-            widgetFound = true;
-            break;
           }
+
         }
+        console.log(servicesDropdownTemp)
+
       }
 
       if (widgetFound) {
+        console.log("widgetFound >>>>>> " + widgetFound)
+        console.log(selectedDevice)
         setPossibleInputStates(config[widget.widgetType].possible_states);
         let outputStates: any = [];
         config[widget.widgetType]?.possible_states?.map((state) => {
@@ -251,136 +285,122 @@ const ConfigureBluetooth: React.FC = () => {
   }, [updateDashboardDone]);
 
 
+  useEffect(() => {
+    if (startScan) {
+      ManageBluetooth.enableBluetooth().then(async () => {
+        setHasError(false);
+
+        const hasPermissions = await BLEPermissionsManager.ensureBLEPermissions();
+
+        if (!hasPermissions) {
+          log("❌ Permission denied. Please enable Bluetooth & Location.");
+          setHasError(true);
+          setGeneralErrorMessage('Please enable Bluetooth & Location.');
+          return;
+        } else {
+
+
+          setDevices([]);
+          setLoading(true);
+          bleManager.startDeviceScan(null, null, (error, device) => {
+            if (error) {
+              log("❌ Scan error: " + error.message);
+              setHasError(true);
+              setGeneralErrorMessage(error.message);
+              setLoading(false);
+              return;
+            }
+            if (device && device.name) {
+              setDevicesDropdown((existing: any) => {
+                const exists = existing.find((d: any) => d.value === device.id);
+                if (exists) return existing;
+                return [
+                  ...existing,
+                  { label: device.name, value: device.id }
+                ];
+              });
+
+              setDevices((existing: any) => {
+                return {
+                  ...existing,
+                  [device.id]: {
+                    id: device.id,
+                    name: device.name,
+                    device: device
+                  }
+                };
+              });
+            }
+          }).catch((e) => {
+            setHasError(true);
+            console.log(e);
+            setGeneralErrorMessage(e.message);
+          })
+
+        }
+      }).catch((error) => {
+        // Failure code
+        setHasError(true);
+        console.log(error);
+        setGeneralErrorMessage('Bluetooth is not enabled');
+      });
+    }
+  }, [startScan]);
+
+
 
   useEffect(() => {
-    return () => {
-      manager.destroy();
-    };
-  }, []);
+    if (connectToDevice) {
+      bleManager.stopDeviceScan();
+      setHasError(false);
+      setGeneralErrorMessage(null);
+      ManageBluetooth.enableBluetooth().then(async () => {
+        setIsConnectingDone(false);
+        setConnectButtonClicked(true);
+        try {
+          let deviceMapTemp: any = {}
+          setLoading(false);
+          const isConnected = await bleManager.isDeviceConnected(selectedDevice.id);
+          let connectedDevice: Device = selectedDevice;
+          if (!isConnected) {
+            log(`🔗 Connecting to ${selectedDevice.name}...${selectedDevice.id}`);
+            connectedDevice = await bleManager.connectToDevice(selectedDevice.id, {
+              timeout: Constants.BLUETOOTH_CONNECTION_TIMEOUT_IN_MS
+            });
+            console.log("Connected >>>> " + connectedDevice)
+          }
+          await bleManager.discoverAllServicesAndCharacteristicsForDevice(connectedDevice.id);
+          deviceMapTemp[connectedDevice.id] = {}
+          const services = await bleManager.servicesForDevice(connectedDevice.id);
+          for (const service of services) {
+            deviceMapTemp[connectedDevice.id][service.uuid] = {}
+            const characteristics = await service.characteristics();
+            for (const char of characteristics) {
+              deviceMapTemp[connectedDevice.id][service.uuid][char.uuid] = char
+            }
+          }
+          setDeviceMap(deviceMapTemp);
+        } catch (e: any) {
+          setHasError(true);
+          setGeneralErrorMessage(selectedDevice.name + " " + e.message);
+          log("❌ Connection error: " + e.message);
+        } finally {
+          setConnectToDevice(false);
+          setConnectButtonClicked(false);
+        }
+      }).catch((error) => {
+        // Failure code
+        setHasError(true);
+        console.log(error);
+        setGeneralErrorMessage('Bluetooth is not enabled');
+        setConnectToDevice(false);
+      });
+    }
+  }, [connectToDevice]);
 
   const log = (msg: any) => {
     console.log(msg);
     setLogs((prev) => [...prev, msg]);
-  };
-
-
-
-  const startScan = () => {
-    if (!manager) {
-      manager = new BleManager();
-    } //enableBluetooth();
-    ManageBluetooth.enableBluetooth().then(async () => {
-      setHasError(false);
-
-      const hasPermissions = await BLEPermissionsManager.ensureBLEPermissions();
-
-      if (!hasPermissions) {
-        log("❌ Permission denied. Please enable Bluetooth & Location.");
-        setHasError(true);
-        setGeneralErrorMessage('Please enable Bluetooth & Location.');
-        return;
-      } else {
-
-
-        setDevices([]);
-        setLoading(true);
-        manager.startDeviceScan(null, null, (error, device) => {
-          if (error) {
-            log("❌ Scan error: " + error.message);
-            setHasError(true);
-            setGeneralErrorMessage(error.message);
-            setLoading(false);
-            return;
-          }
-          if (device && device.name) {
-            setDevicesDropdown((existing: any) => {
-              const exists = existing.find((d: any) => d.value === device.id);
-              if (exists) return existing;
-              return [
-                ...existing,
-                { label: device.name, value: device.id }
-              ];
-            });
-
-            setDevices((existing: any) => {
-              return {
-                ...existing,
-                [device.id]: {
-                  id: device.id,
-                  name: device.name,
-                  device: device
-                }
-              };
-            });
-          }
-        }).catch((e) => {
-          setHasError(true);
-          console.log(e);
-          setGeneralErrorMessage(e.message);
-        })
-
-      }
-    }).catch((error) => {
-      // Failure code
-      setHasError(true);
-      console.log(error);
-      setGeneralErrorMessage('Bluetooth is not enabled');
-    });
-  };
-
-  const connectToDevice = async (device: any) => {
-    if (!manager) {
-      manager = new BleManager();
-    }
-
-    setHasError(false);
-    setGeneralErrorMessage(null);
-    ManageBluetooth.enableBluetooth().then(async () => {
-      setIsConnectingDone(false);
-      setConnectButtonClicked(true);
-      try {
-        let deviceMapTemp: any = {}
-        setLoading(false);
-        manager.stopDeviceScan();
-        log(`🔗 Connecting to ${device.name}...${device.id}`);
-        const connected = await manager.connectToDevice(device.id, {
-          timeout: Constants.BLUETOOTH_CONNECTION_TIMEOUT_IN_MS
-        });
-        await connected.discoverAllServicesAndCharacteristics();
-        setConnected(connected);
-        log(`✅ Connected to ${connected.name}`);
-        deviceMapTemp[connected.id] = {}
-        const services = await connected.services();
-        for (const service of services) {
-          deviceMapTemp[connected.id][service.uuid] = {}
-          log(service);
-          log(`🔹 Service: ${service.uuid}`);
-          const characteristics = await service.characteristics();
-          for (const char of characteristics) {
-            log(char);
-            deviceMapTemp[connected.id][service.uuid][char.uuid] = char
-            log(
-              `   ↳ Char: ${char.uuid} [read:${char.isReadable} write:${char.isWritableWithResponse} notify:${char.isNotifiable}]`
-            );
-          }
-        }
-        setDeviceMap({
-          ...deviceMap,
-          ...deviceMapTemp
-        });
-      } catch (e: any) {
-        setHasError(true);
-        setGeneralErrorMessage(connected.name + " " + e.message);
-        log("❌ Connection error: " + e.message);
-      } finally {
-        setConnectButtonClicked(false);
-      }
-    }).catch((error) => {
-      // Failure code
-      setHasError(true);
-      console.log(error);
-      setGeneralErrorMessage('Bluetooth is not enabled');
-    });
   };
 
   useEffect(() => {
@@ -443,8 +463,6 @@ const ConfigureBluetooth: React.FC = () => {
           enabledActionTypes.push({ label: key, value: key });
         }
       });
-
-
       setReadActionTypes(enabledActionTypes.filter((type: any) => type.label.startsWith('isReadable')));
       setWriteActionTypes(enabledActionTypes.filter((type: any) => type.label.startsWith('isWritable')));
     }
@@ -464,10 +482,10 @@ const ConfigureBluetooth: React.FC = () => {
       const characteristicsOptions = deviceMap[selectedDevice.device.id][selectedService.value][selectedCharacteristic.value]
       if (characteristicsOptions && characteristicsOptions.isReadable) {
         try {
-          if (!connected.isConnected()) {
-            connected.connect();
+          if (!bleManager?.isDeviceConnected(selectedDevice.device.id)) {
+            bleManager?.connectToDevice(selectedDevice.device.id);
           }
-          connected.readCharacteristicForService(
+          bleManager?.readCharacteristicForDevice(selectedDevice.device.id,
             characteristicsOptions.serviceUUID,
             characteristicsOptions.uuid
           ).then((readValue: any) => {
@@ -513,7 +531,8 @@ const ConfigureBluetooth: React.FC = () => {
       widget.inputStates &&
       widget.inputStates[inputStateName] &&
       widget.inputStates[inputStateName].service &&
-      write && deviceMap &&
+      write &&
+      deviceMap &&
       selectedService &&
       selectedService.value &&
       selectedCharacteristicsOption &&
@@ -530,10 +549,10 @@ const ConfigureBluetooth: React.FC = () => {
         const input = widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value].input;
         if (input) {
           if (characteristicsOptions.isWritableWithResponse) {
-            if (!connected.isConnected()) {
-              connected.connect();
+            if (!bleManager?.isDeviceConnected(selectedDevice.device.id)) {
+              bleManager?.connectToDevice(selectedDevice.device.id);
             }
-            connected.writeCharacteristicWithResponseForService(
+            bleManager?.writeCharacteristicWithResponseForDevice(selectedDevice.device.id,
               characteristicsOptions.serviceUUID,
               characteristicsOptions.uuid,
               btoa(input)
@@ -559,10 +578,10 @@ const ConfigureBluetooth: React.FC = () => {
 
 
           } else if (characteristicsOptions.isWritableWithResponse) {
-            if (!connected.isConnected()) {
-              connected.connect();
+            if (!bleManager?.isDeviceConnected(selectedDevice.device.id)) {
+              bleManager?.connectToDevice(selectedDevice.device.id);
             }
-            connected.writeCharacteristicWithoutResponseForService(
+            bleManager?.writeCharacteristicWithoutResponseForDevice(selectedDevice.device.id,
               characteristicsOptions.serviceUUID,
               characteristicsOptions.uuid,
               btoa(input)
@@ -597,12 +616,14 @@ const ConfigureBluetooth: React.FC = () => {
       <StackScreenHeader title={"Configure Widget " + (widget.label ? widget.label : '')}></StackScreenHeader>
       <ScrollView>
         <View style={{ marginTop: 20, margin: 10, padding: 10, borderRadius: 10, borderColor: MD2Colors.grey400, backgroundColor: MD2Colors.white, borderWidth: 1 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
+          {(!selectedDevice || (selectedDevice && showDeviceScan)) && <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
             {loading && (
               <ActivityIndicator animating={true} color={MD2Colors.grey800} style={{ paddingRight: 10, }} size="small" />
             )}
             <Button icon={() => <Icon color={MD2Colors.white} source="magnify-scan" size={20} />}
-              onPress={startScan} mode='outlined' style={{
+              onPress={() => {
+                setStartScan(true);
+              }} mode='outlined' style={{
                 borderRadius: 5,
                 backgroundColor: MD2Colors.grey800,
                 borderWidth: 0,
@@ -612,11 +633,12 @@ const ConfigureBluetooth: React.FC = () => {
             >Scan for Devices
             </Button>
             {loading && <IconButton mode='outlined' style={{ borderRadius: 5 }} icon={() => <Icon color={MD2Colors.red500} source="stop" size={28} />} onPress={() => {
-              manager.stopDeviceScan().finally(() => {
+              bleManager && bleManager.stopDeviceScan().finally(() => {
+                setStartScan(false);
                 setLoading(false);
               });
             }}></IconButton>}
-          </View>
+          </View>}
 
           {devicesDropdown && Object.keys(devicesDropdown).length > 0 &&
             <Dropdown
@@ -633,13 +655,24 @@ const ConfigureBluetooth: React.FC = () => {
               placeholder="Select Device"
               value={selectedDevice && selectedDevice.device && selectedDevice.device.id ? selectedDevice.device.id : ''}
               onChange={item => {
+                setGeneralErrorMessage(null);
+                setHasError(false);
+                setBluetoothErrorMessage(null);
+                setHasBluetoothError(false);
+                setLoading(false);
+                setIsConnectingDone(false);
+                setConnectButtonClicked(false);
+                setServicesDropdown([]);
+                setCharacteristicDropdown([]);
+                setSelectedService(null);
+                setSelectedCharacteristic(null);
                 setSelectedDevice(devices[item.value]);
               }}
             />}
 
-          {devicesDropdown && Object.keys(devicesDropdown).length > 0 && selectedDevice && <View style={{ flexDirection: 'row', alignSelf: "center", alignItems: "center" }}><Button
+          {devicesDropdown && !isDeviceConnected && Object.keys(devicesDropdown).length > 0 && selectedDevice && <View style={{ flexDirection: 'row', alignSelf: "center", alignItems: "center" }}><Button
             icon={() => <Icon color={MD2Colors.white} source="bluetooth-connect" size={20} />}
-            onPress={() => connectToDevice(selectedDevice)} mode='outlined' style={{
+            onPress={() => setConnectToDevice(true)} mode='outlined' style={{
               borderRadius: 5,
               backgroundColor: MD2Colors.blue500,
               borderWidth: 0,
@@ -658,6 +691,19 @@ const ConfigureBluetooth: React.FC = () => {
           style={styles.errorMessageContainer}
           textStyle={styles.errorMessageText}
           icon={() => <Icon source='information-outline' size={20} color={MD2Colors.red400} />}>{generalErrorMessage}</Chip>}
+
+<Chip
+  textStyle={{ fontSize: 12, color:MD2Colors.grey800}}
+  mode='outlined'
+  style={{ width:180,marginLeft: 15, marginTop: 5,backgroundColor:MD2Colors.white ,borderColor: isDeviceConnected ? MD2Colors.green500 : MD2Colors.red500 }}
+  disabled={true}
+>
+  <Icon source='bluetooth' size={16} color={MD2Colors.blue600}/> Device Connected: {
+    selectedDevice?.device?.id
+      ? (isDeviceConnected ? "Yes" : "No")
+      : "No device selected"
+  }
+</Chip>
 
         {devicesDropdown && Object.keys(devicesDropdown).length > 0 && selectedDevice && <View style={{ flexDirection: "row", alignItems: "center", alignSelf: "center" }}>
           <Chip textStyle={{ fontSize: 12, fontWeight: "900", color: MD2Colors.white }}
@@ -683,404 +729,401 @@ const ConfigureBluetooth: React.FC = () => {
             }}
           />}
         </View>}
+        {widget.inputStates &&
+          widget.inputStates[inputStateName] &&
+          <View>
+            <View style={{ marginBottom: 100 }}>
+              {servicesDropdown && Object.keys(servicesDropdown).length > 0 && <View style={{ backgroundColor: MD2Colors.white, margin: 10, padding: 10, borderRadius: 10, borderColor: MD2Colors.grey400, borderWidth: 1 }}>
+                <Text style={{ marginLeft: 20, fontSize: 12, fontWeight: 500 }}>Service</Text>
+                <Dropdown
+                  //disable={!edit}
+                  style={[styles.dropdown, { width: "90%" }]}
+                  placeholderStyle={styles.placeholderStyle}
+                  selectedTextStyle={styles.selectedTextStyle}
+                  iconStyle={styles.iconStyle}
+                  itemTextStyle={styles.selectedTextStyle}
+                  data={servicesDropdown}
+                  maxHeight={300}
+                  labelField="label"
+                  valueField="value"
+                  placeholder="Select"
+                  value={selectedService ? selectedService.value : ''}
+                  onChange={item => {
+                    setSelectedService(item);
+                  }}
+                />
+              </View>}
 
-        <View style={{ marginBottom: 100 }}>
-          {servicesDropdown && Object.keys(servicesDropdown).length > 0 && <View style={{ backgroundColor: MD2Colors.white, margin: 10, padding: 10, borderRadius: 10, borderColor: MD2Colors.grey400, borderWidth: 1 }}>
-            <Text style={{ marginLeft: 20, fontSize: 12, fontWeight: 500 }}>Service</Text>
-            <Dropdown
-              //disable={!edit}
-              style={[styles.dropdown, { width: "90%" }]}
-              placeholderStyle={styles.placeholderStyle}
-              selectedTextStyle={styles.selectedTextStyle}
-              iconStyle={styles.iconStyle}
-              itemTextStyle={styles.selectedTextStyle}
-              data={servicesDropdown}
-              maxHeight={300}
-              labelField="label"
-              valueField="value"
-              placeholder="Select"
-              value={selectedService ? selectedService.value : ''}
-              onChange={item => {
-                setSelectedService(item);
-              }}
-            />
-          </View>}
+              {characteristicDropdown && Object.keys(characteristicDropdown).length > 0 && <View style={{ backgroundColor: MD2Colors.white, margin: 10, padding: 10, borderRadius: 10, borderColor: MD2Colors.grey400, borderWidth: 1 }}>
+                <Text style={{ marginLeft: 20, fontSize: 12, fontWeight: 500 }}>Characteristics</Text>
+                <Dropdown
+                  //disable={!edit}
+                  style={[styles.dropdown, { width: "90%" }]}
+                  placeholderStyle={styles.placeholderStyle}
+                  selectedTextStyle={styles.selectedTextStyle}
+                  iconStyle={styles.iconStyle}
+                  itemTextStyle={styles.selectedTextStyle}
+                  data={characteristicDropdown}
+                  maxHeight={300}
+                  labelField="label"
+                  valueField="value"
+                  placeholder="Select"
+                  value={selectedCharacteristic ? selectedCharacteristic.value : ''}
+                  onChange={item => {
+                    setSelectedCharacteristic(item);
+                  }}
+                />
+              </View>}
 
-          {characteristicDropdown && Object.keys(characteristicDropdown).length > 0 && <View style={{ backgroundColor: MD2Colors.white, margin: 10, padding: 10, borderRadius: 10, borderColor: MD2Colors.grey400, borderWidth: 1 }}>
-            <Text style={{ marginLeft: 20, fontSize: 12, fontWeight: 500 }}>Characteristics</Text>
-            <Dropdown
-              //disable={!edit}
-              style={[styles.dropdown, { width: "90%" }]}
-              placeholderStyle={styles.placeholderStyle}
-              selectedTextStyle={styles.selectedTextStyle}
-              iconStyle={styles.iconStyle}
-              itemTextStyle={styles.selectedTextStyle}
-              data={characteristicDropdown}
-              maxHeight={300}
-              labelField="label"
-              valueField="value"
-              placeholder="Select"
-              value={selectedCharacteristic ? selectedCharacteristic.value : ''}
-              onChange={item => {
-                setSelectedCharacteristic(item);
-              }}
-            />
-          </View>}
+              {inputStateName !== 'CHECK_STATUS' && writeActionTypes && writeActionTypes.length > 0 && <View style={{ backgroundColor: MD2Colors.white, margin: 10, padding: 10, borderRadius: 10, borderColor: MD2Colors.grey400, borderWidth: 1 }}>
+                <Text style={{ marginLeft: 20, fontSize: 12, fontWeight: 500 }}>Write Action Type</Text>
+                <Dropdown
+                  //disable={!edit}
+                  style={[styles.dropdown, { width: "90%" }]}
+                  placeholderStyle={styles.placeholderStyle}
+                  selectedTextStyle={styles.selectedTextStyle}
+                  iconStyle={styles.iconStyle}
+                  itemTextStyle={styles.selectedTextStyle}
+                  data={writeActionTypes}
+                  maxHeight={300}
+                  labelField="label"
+                  valueField="value"
+                  placeholder="Select"
+                  value={selectedCharacteristicsOption ? selectedCharacteristicsOption.value : ''}
+                  onChange={item => {
+                    setSelectedCharacteristicsOption(item);
+                  }}
+                />
+              </View>}
+              {!edit && devicesDropdown && Object.keys(devicesDropdown).length > 0 && selectedDevice &&
+                <IconButton mode="outlined" style={{
+                  margin: "auto", marginTop: 10, marginRight: 20, marginBottom: 10,
+                }} iconColor={MD2Colors.grey900} size={15}
+                  icon={"application-edit"}
+                  onPress={() => {
+                    setEdit(true);
+                  }}></IconButton>}
 
-          {inputStateName !== 'CHECK_STATUS' && writeActionTypes && writeActionTypes.length > 0 && <View style={{ backgroundColor: MD2Colors.white, margin: 10, padding: 10, borderRadius: 10, borderColor: MD2Colors.grey400, borderWidth: 1 }}>
-            <Text style={{ marginLeft: 20, fontSize: 12, fontWeight: 500 }}>Write Action Type</Text>
-            <Dropdown
-              //disable={!edit}
-              style={[styles.dropdown, { width: "90%" }]}
-              placeholderStyle={styles.placeholderStyle}
-              selectedTextStyle={styles.selectedTextStyle}
-              iconStyle={styles.iconStyle}
-              itemTextStyle={styles.selectedTextStyle}
-              data={writeActionTypes}
-              maxHeight={300}
-              labelField="label"
-              valueField="value"
-              placeholder="Select"
-              value={selectedCharacteristicsOption ? selectedCharacteristicsOption.value : ''}
-              onChange={item => {
-                setSelectedCharacteristicsOption(item);
-              }}
-            />
-          </View>}
-          {!edit && devicesDropdown && Object.keys(devicesDropdown).length > 0 && selectedDevice &&
-            <IconButton mode="outlined" style={{
-              margin: "auto", marginTop: 10, marginRight: 20, marginBottom: 10,
-            }} iconColor={MD2Colors.grey900} size={15}
-              icon={"application-edit"}
-              onPress={() => {
-                setEdit(true);
-              }}></IconButton>}
+              {hasBluetoothError && <Chip mode="outlined"
+                style={styles.errorMessageContainer}
+                textStyle={styles.errorMessageText}
+                icon={() => <Icon source='information-outline' size={20} color={MD2Colors.red400} />}>{bluetoothErrorMessage}</Chip>}
 
-          {hasBluetoothError && <Chip mode="outlined"
-            style={styles.errorMessageContainer}
-            textStyle={styles.errorMessageText}
-            icon={() => <Icon source='information-outline' size={20} color={MD2Colors.red400} />}>{bluetoothErrorMessage}</Chip>}
+              {selectedDevice && inputStateName !== 'CHECK_STATUS' &&
+                selectedService &&
+                selectedService.value &&
+                selectedCharacteristic &&
+                selectedCharacteristic.value &&
+                selectedCharacteristicsOption &&
+                selectedCharacteristicsOption.value
+                && <View style={{ backgroundColor: MD2Colors.white, margin: 10, padding: 10, borderRadius: 10, borderColor: MD2Colors.grey400, borderWidth: 1 }}>
+                  <TextInput
+                    disabled={!edit}
+                    label="Input"
+                    value={
+                      widget.inputStates[inputStateName].service &&
+                        widget.inputStates[inputStateName].service[selectedService.value] &&
+                        widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value] &&
+                        widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value] &&
+                        widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value].input ?
+                        widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value].input : ''
+                    }
+                    textColor={MD2Colors.black}
+                    style={{
+                      backgroundColor: edit ? MD2Colors.white : MD2Colors.grey100,
+                      width: "100%",
+                      fontSize: 12, minWidth: 300, height: 50, marginLeft: 10, marginRight: 10
+                    }}
+                    mode="outlined"
+                    onChangeText={inputText => {
+                      const widgetToModify: WidgetModel = { ...widget };
+                      if (widgetToModify.inputStates && inputStateName) {
+                        const inputStates = Object.keys(widgetToModify.inputStates);
+                        for (let i = 0; i < inputStates.length; i++) {
+                          if (widgetToModify.inputStates[inputStates[i]].stateName === inputStateName) {
+                            if (widgetToModify.inputStates[inputStateName].service && widgetToModify.inputStates[inputStateName].service[selectedService.value]) {
+                              if (widgetToModify.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value]) {
+                                if (widgetToModify.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value]) {
+                                  widgetToModify.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value].input = inputText;
+                                } else {
+                                  widgetToModify.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value] = {
+                                    [selectedCharacteristicsOption.value]: {
+                                      outputState: {},
+                                      input: inputText
+                                    }
+                                  }
 
-          {selectedDevice && inputStateName !== 'CHECK_STATUS' &&
-            widget.inputStates &&
-            widget.inputStates[inputStateName] &&
-            selectedService &&
-            selectedService.value &&
-            selectedCharacteristic &&
-            selectedCharacteristic.value &&
-            selectedCharacteristicsOption &&
-            selectedCharacteristicsOption.value
-            && <View style={{ backgroundColor: MD2Colors.white, margin: 10, padding: 10, borderRadius: 10, borderColor: MD2Colors.grey400, borderWidth: 1 }}>
-              <TextInput
-                disabled={!edit}
-                label="Input"
-                value={
-                  widget.inputStates[inputStateName].service &&
-                    widget.inputStates[inputStateName].service[selectedService.value] &&
-                    widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value] &&
-                    widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value] &&
-                    widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value].input ?
-                    widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value].input : ''
-                }
-                textColor={MD2Colors.black}
-                style={{
-                  backgroundColor: edit ? MD2Colors.white : MD2Colors.grey100,
-                  width: "100%",
-                  fontSize: 12, minWidth: 300, height: 50, marginLeft: 10, marginRight: 10
-                }}
-                mode="outlined"
-                onChangeText={inputText => {
-                  const widgetToModify: WidgetModel = { ...widget };
-                  if (widgetToModify.inputStates && inputStateName) {
-                    const inputStates = Object.keys(widgetToModify.inputStates);
-                    for (let i = 0; i < inputStates.length; i++) {
-                      if (widgetToModify.inputStates[inputStates[i]].stateName === inputStateName) {
-                        if (widgetToModify.inputStates[inputStateName].service && widgetToModify.inputStates[inputStateName].service[selectedService.value]) {
-                          if (widgetToModify.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value]) {
-                            if (widgetToModify.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value]) {
-                              widgetToModify.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value].input = inputText;
+                                }
+                              } else {
+                                widgetToModify.inputStates[inputStateName].service[selectedService.value] = {
+                                  [selectedCharacteristic.value]: {
+                                    [selectedCharacteristicsOption.value]: {
+                                      outputState: {},
+                                      input: inputText
+                                    }
+                                  }
+                                }
+                              }
                             } else {
-                              widgetToModify.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value] = {
-                                [selectedCharacteristicsOption.value]: {
-                                  outputState: {},
-                                  input: inputText
+                              widgetToModify.inputStates[inputStateName].service = {
+                                [selectedService.value]: {
+                                  [selectedCharacteristic.value]: {
+                                    [selectedCharacteristicsOption.value]: {
+                                      outputState: {},
+                                      input: inputText
+                                    }
+                                  }
                                 }
                               }
-
                             }
-                          } else {
-                            widgetToModify.inputStates[inputStateName].service[selectedService.value] = {
-                              [selectedCharacteristic.value]: {
-                                [selectedCharacteristicsOption.value]: {
-                                  outputState: {},
-                                  input: inputText
-                                }
-                              }
+                            break;
+                          }
+                        }
+                        setWidget(widgetToModify);
+                      }
+                    }}
+                  />
+                  <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
+                    <Button
+                      disabled={!edit && !isDeviceConnected}
+                      onPress={() => {
+                        setWriteLoading(true);
+                        setWrite(true)
+                      }} mode='outlined' style={{
+                        borderRadius: 5,
+                        marginTop: 10,
+                        backgroundColor: MD2Colors.green400,
+                        borderWidth: 0,
+                        alignSelf: 'center',
+                      }}
+                      textColor={MD2Colors.white}
+                    >WRITE</Button>
+                    {writeLoading && (
+                      <ActivityIndicator animating={true} color={MD2Colors.green400} style={{ paddingLeft: 10, }} size="small" />
+                    )}
+                  </View>
+                </View>
+              }
+              {inputStateName === 'CHECK_STATUS' && readActionTypes && readActionTypes.length > 0 && <View style={{ backgroundColor: MD2Colors.white, margin: 10, padding: 10, borderRadius: 10, borderColor: MD2Colors.grey400, borderWidth: 1 }}>
+                <Text style={{ marginLeft: 20, fontSize: 12, fontWeight: 500 }}>Read Action Type</Text>
+                <Dropdown
+                  //disable={!edit}
+                  style={[styles.dropdown, { width: "90%" }]}
+                  placeholderStyle={styles.placeholderStyle}
+                  selectedTextStyle={styles.selectedTextStyle}
+                  iconStyle={styles.iconStyle}
+                  itemTextStyle={styles.selectedTextStyle}
+                  data={readActionTypes}
+                  maxHeight={300}
+                  labelField="label"
+                  valueField="value"
+                  placeholder="Select"
+                  value={selectedCharacteristicsOption ? selectedCharacteristicsOption.value : ''}
+                  onChange={item => {
+                    setSelectedCharacteristicsOption(item);
+                  }}
+                />
+              </View>}
+              {inputStateName === 'CHECK_STATUS' && selectedDevice && <View style={{ flexDirection: 'row', alignSelf: "center" }}>
+                <Dropdown
+                  //disable={!edit}
+                  //style={[styles.dropdown, { width: 200, backgroundColor: !edit ? MD2Colors.grey200 : MD2Colors.white }]}
+                  style={[styles.dropdown, { width: 200, backgroundColor: MD2Colors.white }]}
+                  placeholderStyle={styles.placeholderStyle}
+                  selectedTextStyle={styles.selectedTextStyle}
+                  iconStyle={styles.iconStyle}
+                  itemTextStyle={styles.selectedTextStyle}
+                  data={possibleOutputStates}
+                  maxHeight={300}
+                  labelField="label"
+                  valueField="value"
+                  placeholder="Select For State"
+                  value={outputStateName}
+                  onChange={item => {
+                    setOutputStateName(item.value);
+                  }}
+                />
+
+                {selectedDevice &&
+                  <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
+                    <Button
+                      disabled={!edit && !isDeviceConnected}
+                      onPress={() => {
+                        setRead(true);
+                        setReadLoading(true);
+                      }} mode='outlined' style={{
+                        borderRadius: 5,
+                        backgroundColor: MD2Colors.green400,
+                        borderWidth: 0,
+                        alignSelf: 'center',
+                      }}
+                      textColor={MD2Colors.white}
+                    >READ</Button>
+                    {readLoading && (
+                      <ActivityIndicator animating={true} color={MD2Colors.green400} style={{ paddingLeft: 10, }} size="small" />
+                    )}
+                  </View>}
+              </View>}
+
+              <Divider></Divider>
+
+              {inputStateName &&
+                outputStateName &&
+                widget.inputStates[inputStateName].service &&
+                selectedService &&
+                selectedCharacteristic &&
+                selectedCharacteristicsOption &&
+                widget.inputStates[inputStateName].service[selectedService.value] &&
+                widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value] &&
+                widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value] &&
+                widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value]?.bluetoothResponse && <View style={{ backgroundColor: MD2Colors.white, margin: 10, padding: 10, borderRadius: 10, borderColor: MD2Colors.grey400, borderWidth: 1 }}>
+                  <Text>{widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value]?.bluetoothResponse}</Text>
+                </View>}
+
+
+              {inputStateName !== '' &&
+                widget &&
+                widget.inputStates[inputStateName].service &&
+                selectedService &&
+                selectedCharacteristic &&
+                selectedCharacteristicsOption &&
+                outputStateName &&
+                widget.inputStates[inputStateName].service[selectedService.value] &&
+                widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value] &&
+                widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value] &&
+                widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value]?.bluetoothResponse && <View style={{ width: "100%", alignSelf: "center", margin: "auto", flexDirection: "row" }}>
+                  <Text style={{ fontSize: 12, fontWeight: 700, marginRight: "auto", marginTop: 15, margin: 5 }}>Output Condition</Text>
+                  {<IconButton style={{ marginLeft: "auto" }} iconColor={MD2Colors.grey800} size={20}
+                    icon={"plus"}
+                    disabled={!edit}
+                    onPress={() => {
+                      let modifiedWidget = { ...widget };
+                      if (modifiedWidget.inputStates &&
+                        modifiedWidget.inputStates[inputStateName] &&
+                        modifiedWidget.inputStates[inputStateName].service
+                      ) {
+
+                        if (modifiedWidget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value].outputState) {
+                          modifiedWidget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value].outputState = {
+                            ...modifiedWidget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value].outputState,
+                            [outputStateName]: {
+                              conditions: [{
+                                id: new ObjectID().toHexString(),
+                                key: "",
+                                condition: "",
+                                value1: "",
+                                value2: "",
+                              }]
                             }
                           }
                         } else {
-                          widgetToModify.inputStates[inputStateName].service = {
-                            [selectedService.value]: {
-                              [selectedCharacteristic.value]: {
-                                [selectedCharacteristicsOption.value]: {
-                                  outputState: {},
-                                  input: inputText
-                                }
+                          modifiedWidget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value] = {
+                            outputState: {
+                              [outputStateName]: {
+                                conditions: [{
+                                  id: new ObjectID().toHexString(),
+                                  key: "",
+                                  condition: "",
+                                  value1: "",
+                                  value2: "",
+                                }]
                               }
                             }
                           }
                         }
-                        break;
+                        console.log(JSON.stringify(modifiedWidget))
+                        setWidget(modifiedWidget);
                       }
                     }
-                    setWidget(widgetToModify);
-                  }
-                }}
-              />
-              <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
-                <Button
+                    }></IconButton>}
+                </View>}
+              {inputStateName?.trim() !== '' &&
+                widget.inputStates[inputStateName]?.service &&
+                selectedService &&
+                selectedCharacteristic &&
+                selectedCharacteristicsOption &&
+                outputStateName &&
+                widget.inputStates[inputStateName]?.service[selectedService.value] &&
+                widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value] &&
+                widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value] &&
+                widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value].outputState[outputStateName] &&
+                widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value]?.bluetoothResponse &&
+                widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value].outputState[outputStateName].conditions && <ScrollView style={{ maxHeight: 300 }}>
+                  <View style={{ width: "100%", alignSelf: "center" }}>
+                    <OutputConditionsMappingList
+                      edit={edit}
+                      inputStateName={inputStateName}
+                      outputStateName={outputStateName}
+                      selectedServiceType={selectedService.value}
+                      selectedCharacteristicType={selectedCharacteristic.value}
+                      selectedCharacteristicsOptionType={selectedCharacteristicsOption.value}
+                      widget={widget}
+                      setWidget={setWidget} />
+                  </View>
+
+                </ScrollView>}
+              {(inputStateName?.trim() !== '' &&
+                selectedService &&
+                selectedCharacteristic &&
+                selectedCharacteristicsOption &&
+                outputStateName &&
+                widget.inputStates[inputStateName].service &&
+                widget.inputStates[inputStateName].service[selectedService] &&
+                widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value] &&
+                (
+                  !widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value].outputState[outputStateName] ||
+                  !widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value].outputState[outputStateName].conditions ||
+                  widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value].outputState[outputStateName].conditions?.length === 0))
+                && <View style={{ alignSelf: "center", alignContent: "center" }}>
+                  <Text style={{ fontSize: 12, margin: 10 }}>No Conditions</Text>
+                </View>}
+
+              {edit && <View style={{ flexDirection: "row", alignSelf: "center", margin: "auto", marginBottom: 20, marginTop: 20 }}>
+                <Divider></Divider>
+                <Chip icon={() => <Icon source="cancel" size={20} color={MD2Colors.red400} />} mode="outlined"
+                  style={{
+                    marginLeft: 5,
+                  }}
+                  onPress={() => {
+                    setHasBluetoothError(false);
+                    setBluetoothErrorMessage('');
+                    setEdit(false)
+                  }}>
+                  Cancel
+                </Chip>
+                <Chip icon={() => <Icon source="content-save" size={20} color={MD2Colors.grey800} />} mode="flat"
                   disabled={!edit}
-                  onPress={() => {
-                    setWriteLoading(true);
-                    setWrite(true)
-                  }} mode='outlined' style={{
-                    borderRadius: 5,
-                    marginTop: 10,
-                    backgroundColor: MD2Colors.green400,
-                    borderWidth: 0,
-                    alignSelf: 'center',
+                  style={{
+                    marginLeft: 5,
+                    backgroundColor: MD2Colors.amber500
                   }}
-                  textColor={MD2Colors.white}
-                >WRITE</Button>
-                {writeLoading && (
-                  <ActivityIndicator animating={true} color={MD2Colors.green400} style={{ paddingLeft: 10, }} size="small" />
-                )}
-              </View>
-            </View>
-          }
-          {inputStateName === 'CHECK_STATUS' && readActionTypes && readActionTypes.length > 0 && <View style={{ backgroundColor: MD2Colors.white, margin: 10, padding: 10, borderRadius: 10, borderColor: MD2Colors.grey400, borderWidth: 1 }}>
-            <Text style={{ marginLeft: 20, fontSize: 12, fontWeight: 500 }}>Read Action Type</Text>
-            <Dropdown
-              //disable={!edit}
-              style={[styles.dropdown, { width: "90%" }]}
-              placeholderStyle={styles.placeholderStyle}
-              selectedTextStyle={styles.selectedTextStyle}
-              iconStyle={styles.iconStyle}
-              itemTextStyle={styles.selectedTextStyle}
-              data={readActionTypes}
-              maxHeight={300}
-              labelField="label"
-              valueField="value"
-              placeholder="Select"
-              value={selectedCharacteristicsOption ? selectedCharacteristicsOption.value : ''}
-              onChange={item => {
-                setSelectedCharacteristicsOption(item);
-              }}
-            />
-          </View>}
-          {inputStateName === 'CHECK_STATUS' && selectedDevice && <View style={{ flexDirection: 'row', alignSelf: "center" }}>
-            <Dropdown
-              //disable={!edit}
-              //style={[styles.dropdown, { width: 200, backgroundColor: !edit ? MD2Colors.grey200 : MD2Colors.white }]}
-              style={[styles.dropdown, { width: 200, backgroundColor: MD2Colors.white }]}
-              placeholderStyle={styles.placeholderStyle}
-              selectedTextStyle={styles.selectedTextStyle}
-              iconStyle={styles.iconStyle}
-              itemTextStyle={styles.selectedTextStyle}
-              data={possibleOutputStates}
-              maxHeight={300}
-              labelField="label"
-              valueField="value"
-              placeholder="Select For State"
-              value={outputStateName}
-              onChange={item => {
-                setOutputStateName(item.value);
-              }}
-            />
+                  onPress={async () => {
 
-            {selectedDevice &&
-              <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
-                <Button
-                  onPress={() => {
-                    setRead(true);
-                    setReadLoading(true);
-                  }} mode='outlined' style={{
-                    borderRadius: 5,
-                    backgroundColor: MD2Colors.green400,
-                    borderWidth: 0,
-                    alignSelf: 'center',
-                  }}
-                  textColor={MD2Colors.white}
-                >READ</Button>
-                {readLoading && (
-                  <ActivityIndicator animating={true} color={MD2Colors.green400} style={{ paddingLeft: 10, }} size="small" />
-                )}
-              </View>}
-          </View>}
-
-          <Divider></Divider>
-
-          {inputStateName &&
-            outputStateName &&
-            widget.inputStates &&
-            widget.inputStates[inputStateName] &&
-            widget.inputStates[inputStateName].service &&
-            selectedService &&
-            selectedCharacteristic &&
-            selectedCharacteristicsOption &&
-            widget.inputStates[inputStateName].service[selectedService.value] &&
-            widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value] &&
-            widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value] &&
-            widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value]?.bluetoothResponse && <View style={{ backgroundColor: MD2Colors.white, margin: 10, padding: 10, borderRadius: 10, borderColor: MD2Colors.grey400, borderWidth: 1 }}>
-              <Text>{widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value]?.bluetoothResponse}</Text>
-            </View>}
-
-
-          {inputStateName !== '' &&
-            widget &&
-            widget.inputStates &&
-            widget.inputStates[inputStateName] &&
-            widget.inputStates[inputStateName].service &&
-            selectedService &&
-            selectedCharacteristic &&
-            selectedCharacteristicsOption &&
-            outputStateName &&
-            widget.inputStates[inputStateName].service[selectedService.value] &&
-            widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value] &&
-            widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value] &&
-            widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value]?.bluetoothResponse && <View style={{ width: "100%", alignSelf: "center", margin: "auto", flexDirection: "row" }}>
-              <Text style={{ fontSize: 12, fontWeight: 700, marginRight: "auto", marginTop: 15, margin: 5 }}>Output Condition</Text>
-              {<IconButton style={{ marginLeft: "auto" }} iconColor={MD2Colors.grey800} size={20}
-                icon={"plus"}
-                disabled={!edit}
-                onPress={() => {
-                  let modifiedWidget = { ...widget };
-                  if (modifiedWidget.inputStates &&
-                    modifiedWidget.inputStates[inputStateName] &&
-                    modifiedWidget.inputStates[inputStateName].service
-                  ) {
-
-                    if (modifiedWidget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value].outputState) {
-                      modifiedWidget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value].outputState = {
-                        ...modifiedWidget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value].outputState,
-                        [outputStateName]: {
-                          conditions: [{
-                            id: new ObjectID().toHexString(),
-                            key: "",
-                            condition: "",
-                            value1: "",
-                            value2: "",
-                          }]
-                        }
-                      }
-                    } else {
-                      modifiedWidget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value] = {
-                        outputState: {
-                          [outputStateName]: {
-                            conditions: [{
-                              id: new ObjectID().toHexString(),
-                              key: "",
-                              condition: "",
-                              value1: "",
-                              value2: "",
-                            }]
-                          }
-                        }
-                      }
+                    let modifiedWidget = { ...widget };
+                    if (selectedDevice) {
+                      modifiedWidget.bluetoothDevice = {
+                        ...selectedDevice,
+                        services: deviceMap[selectedDevice.device.id],
+                      };
                     }
-                    console.log(JSON.stringify(modifiedWidget))
-                    setWidget(modifiedWidget);
-                  }
-                }
-                }></IconButton>}
-            </View>}
-          {inputStateName?.trim() !== '' &&
-            widget.inputStates &&
-            widget.inputStates[inputStateName] &&
-            widget.inputStates[inputStateName]?.service &&
-            selectedService &&
-            selectedCharacteristic &&
-            selectedCharacteristicsOption &&
-            outputStateName &&
-            widget.inputStates[inputStateName]?.service[selectedService.value] &&
-            widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value] &&
-            widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value] &&
-            widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value].outputState[outputStateName] &&
-            widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value]?.bluetoothResponse &&
-            widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value].outputState[outputStateName].conditions && <ScrollView style={{ maxHeight: 300 }}>
-              <View style={{ width: "100%", alignSelf: "center" }}>
-                <OutputConditionsMappingList
-                  edit={edit}
-                  inputStateName={inputStateName}
-                  outputStateName={outputStateName}
-                  selectedServiceType={selectedService.value}
-                  selectedCharacteristicType={selectedCharacteristic.value}
-                  selectedCharacteristicsOptionType={selectedCharacteristicsOption.value}
-                  widget={widget}
-                  setWidget={setWidget} />
-              </View>
+                    if (selectedDashboard.widgets) {
+                      updateDashboard.mutate(
+                        {
+                          ...selectedDashboard,
+                          widgets: {
+                            ...selectedDashboard.widgets,
+                            [modifiedWidget.widgetId]: modifiedWidget
+                          }
 
-            </ScrollView>}
-          {(inputStateName?.trim() !== '' &&
-            widget.inputStates &&
-            selectedService &&
-            selectedCharacteristic &&
-            selectedCharacteristicsOption &&
-            outputStateName &&
-            widget.inputStates[inputStateName] &&
-            widget.inputStates[inputStateName].service &&
-            widget.inputStates[inputStateName].service[selectedService] &&
-            widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value] &&
-            (
-              !widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value].outputState[outputStateName] ||
-              !widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value].outputState[outputStateName].conditions ||
-              widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value].outputState[outputStateName].conditions?.length === 0))
-            && <View style={{ alignSelf: "center", alignContent: "center" }}>
-              <Text style={{ fontSize: 12, margin: 10 }}>No Conditions</Text>
-            </View>}
-
-          {edit && <View style={{ flexDirection: "row", alignSelf: "center", margin: "auto", marginBottom: 20, marginTop: 20 }}>
-            <Divider></Divider>
-            <Chip icon={() => <Icon source="cancel" size={20} color={MD2Colors.red400} />} mode="outlined"
-              style={{
-                marginLeft: 5,
-              }}
-              onPress={() => {
-                setHasBluetoothError(false);
-                setBluetoothErrorMessage('');
-                setEdit(false)
-              }}>
-              Cancel
-            </Chip>
-            <Chip icon={() => <Icon source="content-save" size={20} color={MD2Colors.grey800} />} mode="flat"
-              disabled={!edit}
-              style={{
-                marginLeft: 5,
-                backgroundColor: MD2Colors.amber500
-              }}
-              onPress={async () => {
-
-                let modifiedWidget = { ...widget };
-                if (selectedDevice) {
-                  modifiedWidget.bluetoothDevice = selectedDevice;
-                }
-                if (selectedDashboard.widgets) {
-                  updateDashboard.mutate(
-                    {
-                      ...selectedDashboard,
-                      widgets: {
-                        ...selectedDashboard.widgets,
-                        [modifiedWidget.widgetId]: modifiedWidget
-                      }
-
-                    });
-                }
-                setEdit(false);
-              }}>
-              Save
-            </Chip>
+                        });
+                    }
+                    setEdit(false);
+                  }}>
+                  Save
+                </Chip>
+              </View>}
+            </View>
           </View>}
-        </View>
       </ScrollView>
     </SafeAreaView>
   );
