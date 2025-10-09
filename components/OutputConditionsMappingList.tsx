@@ -90,7 +90,7 @@ const OutputConditionsMappingList: React.FC<Props> = ({
             widget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType][selectedCharacteristicsOptionType] &&
             widget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType][selectedCharacteristicsOptionType]?.bluetoothResponse) {
             let populateDropDown: any = populateResponseArray(widget.inputStates[inputStateName].service[selectedServiceType][selectedCharacteristicType][selectedCharacteristicsOptionType]?.bluetoothResponse);
-            console.log(":::::::::::::::::::::::::::::::::::::::::::::::");
+         //   console.log(":::::::::::::::::::::::::::::::::::::::::::::::");
             setResponseDropDown(populateDropDown);
         }
     }, [widget])
@@ -106,7 +106,7 @@ const OutputConditionsMappingList: React.FC<Props> = ({
             selectedCharacteristicsOptionType &&
             widget.inputStates[inputStateName]?.service[selectedServiceType][selectedCharacteristicType][selectedCharacteristicsOptionType] &&
             widget.inputStates[inputStateName]?.service[selectedServiceType][selectedCharacteristicType][selectedCharacteristicsOptionType].outputState[outputStateName]?.conditions?.map((item: ConditionModel, index: number) => {
-                console.log(item)
+       //         console.log(item)
                 return <OutputConditionMappingItem
                     responseDropDown={responseDropDown}
                     inputStateName={inputStateName}

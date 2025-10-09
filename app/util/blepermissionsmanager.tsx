@@ -56,6 +56,7 @@ class BLEPermissionsManager {
     }
 
     static async requestAndroidBLEPermissions() {
+        
         const androidVersion = typeof Platform.Version === 'string'
             ? parseInt(Platform.Version, 10)
             : Platform.Version;
@@ -70,7 +71,8 @@ class BLEPermissionsManager {
                 ];
 
                 const granted = await PermissionsAndroid.requestMultiple(permissions);
-            return (
+                console.log("Granted Permissions: ", granted);
+                return (
                 granted["android.permission.BLUETOOTH_SCAN"] === PermissionsAndroid.RESULTS.GRANTED &&
                 granted["android.permission.BLUETOOTH_CONNECT"] === PermissionsAndroid.RESULTS.GRANTED &&
                 granted["android.permission.ACCESS_FINE_LOCATION"] === PermissionsAndroid.RESULTS.GRANTED
@@ -171,27 +173,3 @@ class BLEPermissionsManager {
 }
 
 export default BLEPermissionsManager;
-
-// Usage example in a component:
-/*
-import BLEPermissionsManager from './BLEPermissionsManager';
-
-const MyBLEComponent = () => {
-  const initializeBLE = async () => {
-    const hasPermissions = await BLEPermissionsManager.ensureBLEPermissions();
-    
-    if (hasPermissions) {
-      // Start BLE operations
-      console.log('BLE permissions granted, starting BLE operations...');
-    } else {
-      console.log('BLE permissions denied');
-    }
-  };
-
-  return (
-    <View>
-      <Button title="Initialize BLE" onPress={initializeBLE} />
-    </View>
-  );
-};
-*/

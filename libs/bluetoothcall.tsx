@@ -294,5 +294,4 @@ export const makeBluetoothCall = async (
         setErrorMessage("❌ Permission denied. Please enable Bluetooth & Location.");
         setActionRequest(false);
     }
-
 }

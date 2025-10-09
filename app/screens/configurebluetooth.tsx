@@ -93,10 +93,6 @@ const ConfigureBluetooth: React.FC = () => {
       if (selectedDevice?.device?.id) {
         try {
           const connected = await bleManager.isDeviceConnected(selectedDevice.device.id);
-          console.log("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-          console.log("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-          console.log("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-          console.log("Is Device Connected: " + connected);
           setIsDeviceConnected(connected);
         } catch {
           setIsDeviceConnected(false);
@@ -172,13 +168,9 @@ const ConfigureBluetooth: React.FC = () => {
           }
 
         }
-        console.log(servicesDropdownTemp)
-
       }
 
       if (widgetFound) {
-        console.log("widgetFound >>>>>> " + widgetFound)
-        console.log(selectedDevice)
         setPossibleInputStates(config[widget.widgetType].possible_states);
         let outputStates: any = [];
         config[widget.widgetType]?.possible_states?.map((state) => {
@@ -373,7 +365,16 @@ const ConfigureBluetooth: React.FC = () => {
             connectedDevice = await bleManager.connectToDevice(selectedDevice.id, {
               timeout: Constants.BLUETOOTH_CONNECTION_TIMEOUT_IN_MS
             });
-            console.log("Connected >>>> " + connectedDevice)
+
+            // Monitor disconnection
+            connectedDevice.onDisconnected((error, dev) => {
+              console.log(`❌ Disconnected from ${dev?.id}`);
+              if (error) {
+                console.log("Reason: " + error.message);
+              }
+              setIsDeviceConnected(false);
+            });
+
           }
           await bleManager.discoverAllServicesAndCharacteristicsForDevice(connectedDevice.id);
           deviceMapTemp[connectedDevice.id] = {}
@@ -388,8 +389,12 @@ const ConfigureBluetooth: React.FC = () => {
           setDeviceMap(deviceMapTemp);
         } catch (e: any) {
           setHasError(true);
-          setGeneralErrorMessage(selectedDevice.name + " " + e.message);
-          log("❌ Connection error: " + e.message);
+          const errorMsg =
+            (e?.message ? e.message : "") +
+            (e?.reason ? ` Reason: ${e.reason}` : "") +
+            (!e?.message && !e?.reason ? " Unknown error occurred." : "");
+          setGeneralErrorMessage(selectedDevice.name + " " + errorMsg);
+          log("❌ Connection error: " + errorMsg);
         } finally {
           setConnectToDevice(false);
           setConnectButtonClicked(false);
@@ -411,7 +416,6 @@ const ConfigureBluetooth: React.FC = () => {
 
   useEffect(() => {
     if (!isConnectingDone && deviceMap && Object.keys(deviceMap).length > 0) {
-      console.log("Device Map Updated:", deviceMap);
       setIsConnectingDone(true);
     }
   }, [deviceMap]);
@@ -477,16 +481,17 @@ const ConfigureBluetooth: React.FC = () => {
   useEffect(() => {
     setBluetoothErrorMessage('');
     setHasBluetoothError(false);
-    bleManager?.isDeviceConnected(selectedDevice.device.id).then(async (connected) => {
-      if (!connected) {
-        await bleManager?.connectToDevice(selectedDevice.device.id);
-      }
-      if (read && deviceMap &&
-        selectedDevice &&
-        selectedDevice.device &&
-        selectedDevice.device.id &&
-        selectedCharacteristic &&
-        selectedCharacteristic.value) {
+    if (read && deviceMap &&
+      selectedDevice &&
+      selectedDevice.device &&
+      selectedDevice.device.id &&
+      selectedCharacteristic &&
+      selectedCharacteristic.value) {
+
+      bleManager?.isDeviceConnected(selectedDevice.device.id).then(async (connected) => {
+        if (!connected) {
+          await bleManager?.connectToDevice(selectedDevice.device.id);
+        }
 
         const characteristicsOptions = deviceMap[selectedDevice.device.id][selectedService.value][selectedCharacteristic.value]
         if (characteristicsOptions && characteristicsOptions.isReadable) {
@@ -525,47 +530,50 @@ const ConfigureBluetooth: React.FC = () => {
             setBluetoothErrorMessage(`Read error from ${characteristicsOptions.uuid}: ${e.message}`);
           }
         }
-      } else {
-        setRead(false);
-        setReadLoading(false);
-      }
-    }).catch((e) => {
-      setBluetoothErrorMessage(e.message);
-      setHasBluetoothError(true);
-      setIsDeviceConnected(false);
-    });
+
+      }).catch((e) => {
+        setBluetoothErrorMessage(e.message);
+        setHasBluetoothError(true);
+        setIsDeviceConnected(false);
+      });
+    } else {
+      setRead(false);
+      setReadLoading(false);
+    }
+
   }, [read]);
 
 
   useEffect(() => {
     setBluetoothErrorMessage('');
     setHasBluetoothError(false);
+    if (
+      widget &&
+      widget.inputStates &&
+      widget.inputStates[inputStateName] &&
+      widget.inputStates[inputStateName].service &&
+      write &&
+      deviceMap &&
+      selectedService &&
+      selectedService.value &&
+      selectedCharacteristicsOption &&
+      selectedCharacteristicsOption.value &&
+      selectedDevice &&
+      selectedDevice.device &&
+      selectedDevice.device.id &&
+      selectedCharacteristic &&
+      selectedCharacteristic.value) {
+      const input = widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value].input;
+      bleManager?.isDeviceConnected(selectedDevice.device.id).then(async (connected) => {
+        if (!connected) {
+          await bleManager?.connectToDevice(selectedDevice.device.id);
+        }
 
-    bleManager?.isDeviceConnected(selectedDevice.device.id).then(async (connected) => {
-      if (!connected) {
-        await bleManager?.connectToDevice(selectedDevice.device.id);
-      }
-      if (
-        widget &&
-        widget.inputStates &&
-        widget.inputStates[inputStateName] &&
-        widget.inputStates[inputStateName].service &&
-        write &&
-        deviceMap &&
-        selectedService &&
-        selectedService.value &&
-        selectedCharacteristicsOption &&
-        selectedCharacteristicsOption.value &&
-        selectedDevice &&
-        selectedDevice.device &&
-        selectedDevice.device.id &&
-        selectedCharacteristic &&
-        selectedCharacteristic.value) {
         const characteristicsOptions = deviceMap[selectedDevice.device.id][selectedService.value][selectedCharacteristic.value]
         if (characteristicsOptions &&
           (characteristicsOptions.isWritableWithResponse ||
             characteristicsOptions.isWritableWithoutResponse)) {
-          const input = widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value].input;
+
           if (input) {
             if (characteristicsOptions.isWritableWithResponse) {
               bleManager?.writeCharacteristicWithResponseForDevice(selectedDevice.device.id,
@@ -620,16 +628,16 @@ const ConfigureBluetooth: React.FC = () => {
           setWrite(false);
           setWriteLoading(false);
         }
-      } else {
-        setWrite(false);
-        setWriteLoading(false);
-      }
-    }).catch((e) => {
-      setBluetoothErrorMessage(e.message);
-      setHasBluetoothError(true);
-      setIsDeviceConnected(false);
-    });
 
+      }).catch((e) => {
+        setBluetoothErrorMessage(e.message);
+        setHasBluetoothError(true);
+        setIsDeviceConnected(false);
+      });
+    } else {
+      setWrite(false);
+      setWriteLoading(false);
+    }
 
 
   }, [write]);
@@ -693,7 +701,6 @@ const ConfigureBluetooth: React.FC = () => {
                   setCharacteristicDropdown([]);
                   setSelectedService(null);
                   setSelectedCharacteristic(null);
-                  console.log
                   setSelectedDevice(devices[item.value]);
                 }
               }}
@@ -701,7 +708,17 @@ const ConfigureBluetooth: React.FC = () => {
 
           {devicesDropdown && !isDeviceConnected && Object.keys(devicesDropdown).length > 0 && selectedDevice && <View style={{ flexDirection: 'row', alignSelf: "center", alignItems: "center" }}><Button
             icon={() => <Icon color={MD2Colors.white} source="bluetooth-connect" size={20} />}
-            onPress={() => setConnectToDevice(true)} mode='outlined' style={{
+            onPress={async () => {
+              const hasPermissions = await BLEPermissionsManager.ensureBLEPermissions();
+              if (!hasPermissions) {
+                log("❌ Permission denied. Please enable Bluetooth & Location.");
+                setHasError(true);
+                setGeneralErrorMessage('Please enable Bluetooth & Location.');
+                return;
+              } else {
+                setConnectToDevice(true)
+              }
+            }} mode='outlined' style={{
               borderRadius: 5,
               backgroundColor: MD2Colors.blue500,
               borderWidth: 0,
@@ -727,7 +744,7 @@ const ConfigureBluetooth: React.FC = () => {
           style={{ width: 180, marginLeft: 15, marginTop: 5, backgroundColor: MD2Colors.white, borderColor: isDeviceConnected ? MD2Colors.green500 : MD2Colors.red500 }}
           disabled={true}
         >
-          <Icon source='bluetooth' size={16} color={MD2Colors.blue600} /> Device Connected: {
+          <Icon source='bluetooth' size={16} color={isDeviceConnected ? MD2Colors.blue600 : MD2Colors.grey600} /> Device Connected: {
             selectedDevice?.device?.id
               ? (isDeviceConnected ? "Yes" : "No")
               : "No device selected"
@@ -1060,7 +1077,6 @@ const ConfigureBluetooth: React.FC = () => {
                             }
                           }
                         }
-                        console.log(JSON.stringify(modifiedWidget))
                         setWidget(modifiedWidget);
                       }
                     }
