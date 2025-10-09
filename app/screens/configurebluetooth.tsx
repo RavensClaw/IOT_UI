@@ -7,7 +7,7 @@ import {
   SafeAreaView,
   ScrollView
 } from 'react-native';
-import { BleManager, Device } from "react-native-ble-plx";
+import { Device } from "react-native-ble-plx";
 import { Dropdown } from 'react-native-element-dropdown';
 import { ActivityIndicator, Button, Chip, Divider, Icon, IconButton, MD2Colors, TextInput } from 'react-native-paper';
 import { Buffer } from "buffer";
@@ -86,27 +86,27 @@ const ConfigureBluetooth: React.FC = () => {
   const initStatesArray: any = []
   const [possibleInputStates, setPossibleInputStates] = useState(initStatesArray);
   const [possibleOutputStates, setPossibleOutputStates] = useState(initStatesArray);
-const [isDeviceConnected, setIsDeviceConnected] = useState<boolean>(false);
+  const [isDeviceConnected, setIsDeviceConnected] = useState<boolean>(false);
 
-useEffect(() => {
-  const checkConnection = async () => {
-    if (selectedDevice?.device?.id) {
-      try {
-        const connected = await bleManager.isDeviceConnected(selectedDevice.device.id);
-        console.log("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-        console.log("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-        console.log("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-        console.log("Is Device Connected: " + connected);
-        setIsDeviceConnected(connected);
-      } catch {
+  useEffect(() => {
+    const checkConnection = async () => {
+      if (selectedDevice?.device?.id) {
+        try {
+          const connected = await bleManager.isDeviceConnected(selectedDevice.device.id);
+          console.log("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
+          console.log("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
+          console.log("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
+          console.log("Is Device Connected: " + connected);
+          setIsDeviceConnected(connected);
+        } catch {
+          setIsDeviceConnected(false);
+        }
+      } else {
         setIsDeviceConnected(false);
       }
-    } else {
-      setIsDeviceConnected(false);
-    }
-  };
-  checkConnection();
-}, [selectedDevice, connectToDevice]);
+    };
+    checkConnection();
+  }, [selectedDevice, connectToDevice]);
 
   useEffect(() => {
 
@@ -156,6 +156,12 @@ useEffect(() => {
                 });
                 setDeviceMap({ ...deviceTemp });
                 setSelectedDevice(modifyWidget.bluetoothDevice);
+                setDevices((existing: any) => {
+                  return {
+                    ...existing,
+                    [modifyWidget.bluetoothDevice.id]: modifyWidget.bluetoothDevice
+                  };
+                });
                 setDevicesDropdown([{ label: modifyWidget.bluetoothDevice.name, value: modifyWidget.bluetoothDevice.id }]);
                 setShowDeviceScan(false);
                 setServicesDropdown(servicesDropdownTemp);
@@ -471,130 +477,144 @@ useEffect(() => {
   useEffect(() => {
     setBluetoothErrorMessage('');
     setHasBluetoothError(false);
+    bleManager?.isDeviceConnected(selectedDevice.device.id).then(async (connected) => {
+      if (!connected) {
+        await bleManager?.connectToDevice(selectedDevice.device.id);
+      }
+      if (read && deviceMap &&
+        selectedDevice &&
+        selectedDevice.device &&
+        selectedDevice.device.id &&
+        selectedCharacteristic &&
+        selectedCharacteristic.value) {
 
-    if (read && deviceMap &&
-      selectedDevice &&
-      selectedDevice.device &&
-      selectedDevice.device.id &&
-      selectedCharacteristic &&
-      selectedCharacteristic.value) {
-
-      const characteristicsOptions = deviceMap[selectedDevice.device.id][selectedService.value][selectedCharacteristic.value]
-      if (characteristicsOptions && characteristicsOptions.isReadable) {
-        try {
-          if (!bleManager?.isDeviceConnected(selectedDevice.device.id)) {
-            bleManager?.connectToDevice(selectedDevice.device.id);
-          }
-          bleManager?.readCharacteristicForDevice(selectedDevice.device.id,
-            characteristicsOptions.serviceUUID,
-            characteristicsOptions.uuid
-          ).then((readValue: any) => {
-            if (readValue?.value) {
-              console.log("*********************************************")
-              console.log(readValue?.value)
-              console.log("*********************************************")
-
-              const decoded = Buffer.from(readValue.value, "base64").toString("utf-8");
-              try {
-                const json = JSON.parse(decoded);
-                setResponseOutput(JSON.stringify(json, null, 4));
-              } catch (err) {
-                setResponseOutput(JSON.stringify({ "response": decoded }, null, 4));
-              }
-              log(`📖 Read from ${characteristicsOptions.uuid}: ${decoded}`);
+        const characteristicsOptions = deviceMap[selectedDevice.device.id][selectedService.value][selectedCharacteristic.value]
+        if (characteristicsOptions && characteristicsOptions.isReadable) {
+          try {
+            if (!bleManager?.isDeviceConnected(selectedDevice.device.id)) {
+              bleManager?.connectToDevice(selectedDevice.device.id);
             }
-          }).finally(() => {
+            bleManager?.readCharacteristicForDevice(selectedDevice.device.id,
+              characteristicsOptions.serviceUUID,
+              characteristicsOptions.uuid
+            ).then((readValue: any) => {
+              if (readValue?.value) {
+                console.log("*********************************************")
+                console.log(readValue?.value)
+                console.log("*********************************************")
+
+                const decoded = Buffer.from(readValue.value, "base64").toString("utf-8");
+                try {
+                  const json = JSON.parse(decoded);
+                  setResponseOutput(JSON.stringify(json, null, 4));
+                } catch (err) {
+                  setResponseOutput(JSON.stringify({ "response": decoded }, null, 4));
+                }
+                log(`📖 Read from ${characteristicsOptions.uuid}: ${decoded}`);
+              }
+            }).finally(() => {
+              setRead(false);
+              setReadLoading(false);
+            });
+          } catch (e: any) {
             setRead(false);
             setReadLoading(false);
-          });
-        } catch (e: any) {
-          setRead(false);
-          setReadLoading(false);
-          log(`❌ Read error from ${characteristicsOptions.uuid}: ${e.message}`);
-          setHasBluetoothError(true);
-          console.log(e);
-          setBluetoothErrorMessage(`Read error from ${characteristicsOptions.uuid}: ${e.message}`);
+            log(`❌ Read error from ${characteristicsOptions.uuid}: ${e.message}`);
+            setHasBluetoothError(true);
+            console.log(e);
+            setBluetoothErrorMessage(`Read error from ${characteristicsOptions.uuid}: ${e.message}`);
+          }
         }
+      } else {
+        setRead(false);
+        setReadLoading(false);
       }
-    } else {
-      setRead(false);
-      setReadLoading(false);
-    }
+    }).catch((e) => {
+      setBluetoothErrorMessage(e.message);
+      setHasBluetoothError(true);
+      setIsDeviceConnected(false);
+    });
   }, [read]);
 
 
   useEffect(() => {
     setBluetoothErrorMessage('');
     setHasBluetoothError(false);
-    if (
-      widget &&
-      widget.inputStates &&
-      widget.inputStates[inputStateName] &&
-      widget.inputStates[inputStateName].service &&
-      write &&
-      deviceMap &&
-      selectedService &&
-      selectedService.value &&
-      selectedCharacteristicsOption &&
-      selectedCharacteristicsOption.value &&
-      selectedDevice &&
-      selectedDevice.device &&
-      selectedDevice.device.id &&
-      selectedCharacteristic &&
-      selectedCharacteristic.value) {
-      const characteristicsOptions = deviceMap[selectedDevice.device.id][selectedService.value][selectedCharacteristic.value]
-      if (characteristicsOptions &&
-        (characteristicsOptions.isWritableWithResponse ||
-          characteristicsOptions.isWritableWithoutResponse)) {
-        const input = widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value].input;
-        if (input) {
-          if (characteristicsOptions.isWritableWithResponse) {
-            if (!bleManager?.isDeviceConnected(selectedDevice.device.id)) {
-              bleManager?.connectToDevice(selectedDevice.device.id);
-            }
-            bleManager?.writeCharacteristicWithResponseForDevice(selectedDevice.device.id,
-              characteristicsOptions.serviceUUID,
-              characteristicsOptions.uuid,
-              btoa(input)
-            ).then((response: any) => {
-              if (response?.value) {
-                let decoded = '';
-                try {
-                  decoded = Buffer.from(response?.value, "base64").toString("utf-8");
-                  const json = JSON.parse(decoded);
-                  setResponseOutput(JSON.stringify(json, null, 4));
-                } catch (err) {
-                  setResponseOutput(JSON.stringify({ "response": decoded }, null, 4));
+
+    bleManager?.isDeviceConnected(selectedDevice.device.id).then(async (connected) => {
+      if (!connected) {
+        await bleManager?.connectToDevice(selectedDevice.device.id);
+      }
+      if (
+        widget &&
+        widget.inputStates &&
+        widget.inputStates[inputStateName] &&
+        widget.inputStates[inputStateName].service &&
+        write &&
+        deviceMap &&
+        selectedService &&
+        selectedService.value &&
+        selectedCharacteristicsOption &&
+        selectedCharacteristicsOption.value &&
+        selectedDevice &&
+        selectedDevice.device &&
+        selectedDevice.device.id &&
+        selectedCharacteristic &&
+        selectedCharacteristic.value) {
+        const characteristicsOptions = deviceMap[selectedDevice.device.id][selectedService.value][selectedCharacteristic.value]
+        if (characteristicsOptions &&
+          (characteristicsOptions.isWritableWithResponse ||
+            characteristicsOptions.isWritableWithoutResponse)) {
+          const input = widget.inputStates[inputStateName].service[selectedService.value][selectedCharacteristic.value][selectedCharacteristicsOption.value].input;
+          if (input) {
+            if (characteristicsOptions.isWritableWithResponse) {
+              bleManager?.writeCharacteristicWithResponseForDevice(selectedDevice.device.id,
+                characteristicsOptions.serviceUUID,
+                characteristicsOptions.uuid,
+                btoa(input)
+              ).then((response: any) => {
+                if (response?.value) {
+                  let decoded = '';
+                  try {
+                    decoded = Buffer.from(response?.value, "base64").toString("utf-8");
+                    const json = JSON.parse(decoded);
+                    setResponseOutput(JSON.stringify(json, null, 4));
+                  } catch (err) {
+                    setResponseOutput(JSON.stringify({ "response": decoded }, null, 4));
+                  }
+                  log(`📖 Write with response from ${characteristicsOptions.uuid}: ${decoded}`);
                 }
-                log(`📖 Write with response from ${characteristicsOptions.uuid}: ${decoded}`);
+              }).catch((error: any) => {
+                setHasBluetoothError(true);
+                console.log(error);
+                setBluetoothErrorMessage(`Read error from ${characteristicsOptions.uuid}: ${error.message}`);
+              }).finally(() => {
+                setWrite(false);
+              })
+
+
+            } else if (characteristicsOptions.isWritableWithResponse) {
+              if (!bleManager?.isDeviceConnected(selectedDevice.device.id)) {
+                bleManager?.connectToDevice(selectedDevice.device.id);
               }
-            }).catch((error: any) => {
-              setHasBluetoothError(true);
-              console.log(error);
-              setBluetoothErrorMessage(`Read error from ${characteristicsOptions.uuid}: ${error.message}`);
-            }).finally(() => {
-              setWrite(false);
-            })
-
-
-          } else if (characteristicsOptions.isWritableWithResponse) {
-            if (!bleManager?.isDeviceConnected(selectedDevice.device.id)) {
-              bleManager?.connectToDevice(selectedDevice.device.id);
+              bleManager?.writeCharacteristicWithoutResponseForDevice(selectedDevice.device.id,
+                characteristicsOptions.serviceUUID,
+                characteristicsOptions.uuid,
+                btoa(input)
+              ).then(() => {
+                setResponseOutput(JSON.stringify({ executed: true }, null, 4));
+              }).catch((error: any) => {
+                setHasBluetoothError(true);
+                console.log(error);
+                setBluetoothErrorMessage(`Read error from ${characteristicsOptions.uuid}: ${error.message}`);
+              }).finally(() => {
+                setWrite(false);
+                setWriteLoading(false);
+              })
             }
-            bleManager?.writeCharacteristicWithoutResponseForDevice(selectedDevice.device.id,
-              characteristicsOptions.serviceUUID,
-              characteristicsOptions.uuid,
-              btoa(input)
-            ).then((response: any) => {
-              //response.value
-            }).catch((error: any) => {
-              setHasBluetoothError(true);
-              console.log(error);
-              setBluetoothErrorMessage(`Read error from ${characteristicsOptions.uuid}: ${error.message}`);
-            }).finally(() => {
-              setWrite(false);
-              setWriteLoading(false);
-            })
+          } else {
+            setWrite(false);
+            setWriteLoading(false);
           }
         } else {
           setWrite(false);
@@ -604,10 +624,14 @@ useEffect(() => {
         setWrite(false);
         setWriteLoading(false);
       }
-    } else {
-      setWrite(false);
-      setWriteLoading(false);
-    }
+    }).catch((e) => {
+      setBluetoothErrorMessage(e.message);
+      setHasBluetoothError(true);
+      setIsDeviceConnected(false);
+    });
+
+
+
   }, [write]);
 
 
@@ -655,18 +679,23 @@ useEffect(() => {
               placeholder="Select Device"
               value={selectedDevice && selectedDevice.device && selectedDevice.device.id ? selectedDevice.device.id : ''}
               onChange={item => {
-                setGeneralErrorMessage(null);
-                setHasError(false);
-                setBluetoothErrorMessage(null);
-                setHasBluetoothError(false);
-                setLoading(false);
-                setIsConnectingDone(false);
-                setConnectButtonClicked(false);
-                setServicesDropdown([]);
-                setCharacteristicDropdown([]);
-                setSelectedService(null);
-                setSelectedCharacteristic(null);
-                setSelectedDevice(devices[item.value]);
+                if (selectedDevice.device && selectedDevice.device.id === item.value) {
+                  return;
+                } else {
+                  setGeneralErrorMessage(null);
+                  setHasError(false);
+                  setBluetoothErrorMessage(null);
+                  setHasBluetoothError(false);
+                  setLoading(false);
+                  setIsConnectingDone(false);
+                  setConnectButtonClicked(false);
+                  setServicesDropdown([]);
+                  setCharacteristicDropdown([]);
+                  setSelectedService(null);
+                  setSelectedCharacteristic(null);
+                  console.log
+                  setSelectedDevice(devices[item.value]);
+                }
               }}
             />}
 
@@ -692,18 +721,18 @@ useEffect(() => {
           textStyle={styles.errorMessageText}
           icon={() => <Icon source='information-outline' size={20} color={MD2Colors.red400} />}>{generalErrorMessage}</Chip>}
 
-<Chip
-  textStyle={{ fontSize: 12, color:MD2Colors.grey800}}
-  mode='outlined'
-  style={{ width:180,marginLeft: 15, marginTop: 5,backgroundColor:MD2Colors.white ,borderColor: isDeviceConnected ? MD2Colors.green500 : MD2Colors.red500 }}
-  disabled={true}
->
-  <Icon source='bluetooth' size={16} color={MD2Colors.blue600}/> Device Connected: {
-    selectedDevice?.device?.id
-      ? (isDeviceConnected ? "Yes" : "No")
-      : "No device selected"
-  }
-</Chip>
+        <Chip
+          textStyle={{ fontSize: 12, color: MD2Colors.grey800 }}
+          mode='outlined'
+          style={{ width: 180, marginLeft: 15, marginTop: 5, backgroundColor: MD2Colors.white, borderColor: isDeviceConnected ? MD2Colors.green500 : MD2Colors.red500 }}
+          disabled={true}
+        >
+          <Icon source='bluetooth' size={16} color={MD2Colors.blue600} /> Device Connected: {
+            selectedDevice?.device?.id
+              ? (isDeviceConnected ? "Yes" : "No")
+              : "No device selected"
+          }
+        </Chip>
 
         {devicesDropdown && Object.keys(devicesDropdown).length > 0 && selectedDevice && <View style={{ flexDirection: "row", alignItems: "center", alignSelf: "center" }}>
           <Chip textStyle={{ fontSize: 12, fontWeight: "900", color: MD2Colors.white }}

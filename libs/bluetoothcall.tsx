@@ -1,10 +1,9 @@
-import { BleManager } from "react-native-ble-plx";
 import InputStateModel from "../models/InputStateModel";
 import WidgetModel from "@/models/WidgetModel";
 import { OutputState } from "@/models/OutputStateModel";
 import { Buffer } from "buffer";
 import ManageBluetooth from 'react-native-ble-manager';
-
+import bleManager from '../app/util/blemanagerutil';
 import { Constants } from "@/constants/constants";
 import BLEPermissionsManager from "@/app/util/blepermissionsmanager";
 
@@ -25,8 +24,6 @@ export const makeBluetoothCall = async (
     if (permissions) {
 
         ManageBluetooth.enableBluetooth().then(async () => {
-
-            const bleManager = new BleManager();
 
             if (bleManager && widget && widget.bluetoothDevice && widget.bluetoothDevice.device) {
 
@@ -60,12 +57,12 @@ export const makeBluetoothCall = async (
                         let hasResponse = false;
                         console.log(widget.bluetoothDevice.device.id)
                         console.log("BEFORE CONNECT");
-                        const connected = await bleManager.connectToDevice(widget.bluetoothDevice.device.id, {
+                        await bleManager.connectToDevice(widget.bluetoothDevice.device.id, {
                             timeout: Constants.BLUETOOTH_CONNECTION_TIMEOUT_IN_MS
                         });
                         console.log("AFTER CONNECT");
                         // Important: discover services/characteristics
-                        await connected.discoverAllServicesAndCharacteristics();
+                        await bleManager.discoverAllServicesAndCharacteristicsForDevice(widget.bluetoothDevice.device.id);
 
                         // Monitor disconnection
                         /*connected.onDisconnected((error, dev) => {
@@ -76,19 +73,23 @@ export const makeBluetoothCall = async (
                         });*/
 
                         if (characteristicsOptions === 'isReadable') {
-                            bleResponse = await connected.readCharacteristicForService(
+                            bleResponse = await bleManager.readCharacteristicForDevice(
+                                widget.bluetoothDevice.device.id,
                                 serviceIdKey,
-                                characteristics);
+                                characteristics
+                             )
                             hasResponse = true;
                         } else if (characteristicsOptions === 'isWritableWithResponse') {
                             console.log("INSIDE isWritableWithResponse");
-                            bleResponse = await connected.writeCharacteristicWithResponseForService(
+                            bleResponse = await bleManager.writeCharacteristicWithResponseForDevice(
+                                widget.bluetoothDevice.device.id,
                                 serviceIdKey,
                                 characteristics,
                                 btoa(input ? input : ''))
                             hasResponse = true;
                         } else if (characteristicsOptions === 'isWritableWithoutResponse') {
-                            bleResponse = await connected.writeCharacteristicWithoutResponseForService(
+                            await bleManager.writeCharacteristicWithoutResponseForDevice(
+                                widget.bluetoothDevice.device.id,
                                 serviceIdKey,
                                 characteristics,
                                 btoa(input ? input : ''))
