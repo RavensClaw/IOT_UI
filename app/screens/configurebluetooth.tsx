@@ -162,12 +162,12 @@ const ConfigureBluetooth: React.FC = () => {
                 setShowDeviceScan(false);
                 setServicesDropdown(servicesDropdownTemp);
               }
-              widgetFound = true;
-              break;
-            }
-          }
 
-        }
+            }
+            widgetFound = true;
+            break;
+          }
+   }
       }
 
       if (widgetFound) {
@@ -738,18 +738,14 @@ const ConfigureBluetooth: React.FC = () => {
           textStyle={styles.errorMessageText}
           icon={() => <Icon source='information-outline' size={20} color={MD2Colors.red400} />}>{generalErrorMessage}</Chip>}
 
-        <Chip
+        {selectedDevice?.device?.id && <Chip
           textStyle={{ fontSize: 12, color: MD2Colors.grey800 }}
           mode='outlined'
           style={{ width: 180, marginLeft: 15, marginTop: 5, backgroundColor: MD2Colors.white, borderColor: isDeviceConnected ? MD2Colors.green500 : MD2Colors.red500 }}
           disabled={true}
         >
-          <Icon source='bluetooth' size={16} color={isDeviceConnected ? MD2Colors.blue600 : MD2Colors.grey600} /> Device Connected: {
-            selectedDevice?.device?.id
-              ? (isDeviceConnected ? "Yes" : "No")
-              : "No device selected"
-          }
-        </Chip>
+          <Icon source='bluetooth' size={16} color={isDeviceConnected ? MD2Colors.blue600 : MD2Colors.grey600} /> Device Connected: {isDeviceConnected ? "Yes" : "No"}
+        </Chip>}
 
         {devicesDropdown && Object.keys(devicesDropdown).length > 0 && selectedDevice && <View style={{ flexDirection: "row", alignItems: "center", alignSelf: "center" }}>
           <Chip textStyle={{ fontSize: 12, fontWeight: "900", color: MD2Colors.white }}

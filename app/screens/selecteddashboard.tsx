@@ -1,5 +1,5 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { Dimensions, SafeAreaView, View, Text, FlatList } from "react-native";
+import { Dimensions, SafeAreaView, View, Text, FlatList, ScrollView } from "react-native";
 import { ActivityIndicator, Button, Chip, Divider, FAB, Icon, IconButton, List, MD2Colors, Modal, Portal, Props } from "react-native-paper";
 import { ReactNode, useCallback, useEffect, useState } from "react";
 import ObjectID from "bson-objectid";
@@ -13,6 +13,7 @@ import { Constants } from "@/constants/constants";
 import { mutationDeleteDashboardByDashboardId, mutationUpdateDashboard, queryGetDashBoardByDashBoardId, queryGetDashBoardsAccessByUserId, queryGetMultipleDashboardsByDashboardIds } from "@/service/servicehook";
 import { Dropdown } from "react-native-element-dropdown";
 import { styles } from "@/assets/styles/styles";
+
 
 const elementsList = [
     {
@@ -217,10 +218,11 @@ const SelectedDashBoard: React.FC<Props> = () => {
                 <View style={{ width: "100%" }}>
                     <View style={{ flexDirection: "row" }}>
                         {dashboards && dashboards.length > 0 && <Dropdown
-                            style={[styles.dropdown, { width: "90%", margin: "auto", marginTop: 25,
+                            style={[styles.dropdown, {
+                                width: "90%", margin: "auto", marginTop: 25,
                                 borderColor: MD2Colors.tealA200,
-                                borderWidth:1
-                             }]}
+                                borderWidth: 1
+                            }]}
                             placeholderStyle={styles.placeholderStyle}
                             selectedTextStyle={styles.selectedTextStyle}
                             iconStyle={styles.iconStyle}
@@ -255,7 +257,8 @@ const SelectedDashBoard: React.FC<Props> = () => {
                             backgroundColor: MD2Colors.white,
                             borderRadius: 5,
                             padding: 5,
-                            maxHeight: "90%"
+                            height: "80%",
+                            width: "90%"
                         }}>
 
                             <View style={{ alignItems: "center", flexDirection: "row", marginBottom: 20, margin: "auto", width: "95%" }}>
@@ -279,12 +282,12 @@ const SelectedDashBoard: React.FC<Props> = () => {
                             </View>
 
                             <Divider />
-
                             <FlatList
                                 key={Math.random()}
                                 scrollEnabled={true}
                                 data={elementsList}
-                                style={{ maxHeight: 430, }}
+                                style={{ flex: 1 }}
+                                contentContainerStyle={{ paddingBottom: 20 }}
                                 renderItem={({ item }) => <View style={{ alignSelf: "center" }}>
                                     <Text style={{ marginTop: 5, marginLeft: 20, fontWeight: 500 }}>{item.title}</Text>
                                     <View style={{ flexDirection: "row", alignItems: "center" }}>
@@ -341,47 +344,59 @@ const SelectedDashBoard: React.FC<Props> = () => {
                     </Portal>
 
 
-                    <View style={{ alignSelf: "center", marginTop: 10, width: "100%" }}>
+                    <ScrollView style={{ alignSelf: "center", marginTop: 10, width: "100%", maxHeight: Dimensions.get('window').height - 265 }}>
 
-                        <View style={{ width: "100%" }}>
-                            {selectedDashboard && selectedDashboard.widgets && Object.keys(selectedDashboard.widgets)?.map((widgetId) => {
-                                <Text>{widgetId}</Text>
-                                if (selectedDashboard.widgets[widgetId].widgetType === "OnOffButton") {
-                                    return <OnOffButtonWidget key={widgetId}
-                                        widget={selectedDashboard.widgets[widgetId]}
-                                        dashboard={selectedDashboard}
-                                        updateDashboard={updateDashboard}
-                                        updateDashboardDone={updateDashboardDone}></OnOffButtonWidget>
-                                } else if (selectedDashboard.widgets[widgetId].widgetType === "PushButton") {
-                                    return <PushButtonWidget key={widgetId}
-                                        widget={selectedDashboard.widgets[widgetId]}
-                                        dashboard={selectedDashboard}
-                                        updateDashboard={updateDashboard}
-                                        updateDashboardDone={updateDashboardDone}></PushButtonWidget>
-                                } else if (selectedDashboard.widgets[widgetId].widgetType === "OnOffSwitch") {
-                                    return <OnOffSwitchWidget key={widgetId}
-                                        widget={selectedDashboard.widgets[widgetId]}
-                                        dashboard={selectedDashboard}
-                                        updateDashboard={updateDashboard}
-                                        updateDashboardDone={updateDashboardDone}></OnOffSwitchWidget>
-                                }
-                            })}
-                        </View>
-                    </View>
+                        {selectedDashboard && selectedDashboard.widgets && Object.keys(selectedDashboard.widgets)?.map((widgetId) => {
+                            <Text>{widgetId}</Text>
+                            if (selectedDashboard.widgets[widgetId].widgetType === "OnOffButton") {
+                                return <OnOffButtonWidget key={widgetId}
+                                    widget={selectedDashboard.widgets[widgetId]}
+                                    dashboard={selectedDashboard}
+                                    updateDashboard={updateDashboard}
+                                    updateDashboardDone={updateDashboardDone}></OnOffButtonWidget>
+                            } else if (selectedDashboard.widgets[widgetId].widgetType === "PushButton") {
+                                return <PushButtonWidget key={widgetId}
+                                    widget={selectedDashboard.widgets[widgetId]}
+                                    dashboard={selectedDashboard}
+                                    updateDashboard={updateDashboard}
+                                    updateDashboardDone={updateDashboardDone}></PushButtonWidget>
+                            } else if (selectedDashboard.widgets[widgetId].widgetType === "OnOffSwitch") {
+                                return <OnOffSwitchWidget key={widgetId}
+                                    widget={selectedDashboard.widgets[widgetId]}
+                                    dashboard={selectedDashboard}
+                                    updateDashboard={updateDashboard}
+                                    updateDashboardDone={updateDashboardDone}></OnOffSwitchWidget>
+                            }
+                        })}
+                    </ScrollView>
                 </View>}
-            {selectedDashboard && selectedDashboard.widgets && Object.keys(selectedDashboard.widgets)?.length > 0 && <FAB
 
-                icon={() => <Icon source='plus' size={25} color={MD2Colors.white} />}
-                size={'medium'}
-                style={{
+            {selectedDashboard && selectedDashboard.widgets && Object.keys(selectedDashboard.widgets)?.length > 0 &&
+                <View style={{
+                    alignSelf: "center",
+                    alignItems: 'center',
+                    width: '100%',
+                    height: 60,
                     position: 'absolute',
-                    margin: 16,
-                    right: 10,
-                    bottom: 70,
-                    backgroundColor: MD2Colors.redA200
-                }}
-                onPress={() => setVisible(true)}
-            />}
+                    marginBottom: 10,
+                    bottom: 30,
+
+                }}>
+                    <Divider />
+                    <IconButton
+                        icon="plus"
+                        iconColor={MD2Colors.white}
+                        mode="outlined"
+                        style={{
+                            borderColor: MD2Colors.redA200,
+                            backgroundColor: MD2Colors.redA200
+                        }}
+                        size={20}
+                        onPress={() => setVisible(true)}
+                    />
+                </View>}
+
+
         </SafeAreaView>
     );
 };

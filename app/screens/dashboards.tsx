@@ -1,5 +1,5 @@
 import { useFocusEffect, useRouter } from "expo-router";
-import { SafeAreaView, View, Text, TouchableOpacity } from "react-native";
+import { SafeAreaView, View, Text, TouchableOpacity, ScrollView, Dimensions } from "react-native";
 import { ActivityIndicator, Chip, Dialog, Divider, FAB, Icon, IconButton, BottomNavigation, MD2Colors, Modal, Portal, TextInput } from "react-native-paper";
 import { use, useCallback, useEffect, useState } from "react";
 import { StackScreenHeader } from "@/components/StackScreenHeader";
@@ -389,7 +389,7 @@ const Dashboards = () => {
                                 setVisible(true);
                             }}>Add Dashboard</Chip></View>}
 
-                    <View style={{ alignSelf: "center", marginTop: 10, width: "100%" }}>
+                    <ScrollView style={{ alignSelf: "center", marginTop: 10, width: "100%", maxHeight: Dimensions.get('window').height - 265 }}>
                         <View style={{ width: "100%", }}>
                             {dashboards && dashboards?.length > 0 && dashboards?.map((dashboard: any) => {
                                 return <TouchableOpacity key={dashboard.dashboardId} style={{ backgroundColor: MD2Colors.white, margin: 10, padding: 10, borderRadius: 10, borderColor: MD2Colors.grey400, borderWidth: 1 }}
@@ -401,7 +401,7 @@ const Dashboards = () => {
                                         }); // Remove the braces in params
                                     }}>
                                     <View style={{
-                                                                            }}>
+                                    }}>
                                         {editDashboardHasError && <Chip mode="outlined"
                                             style={{ margin: 5, borderColor: MD2Colors.red300, padding: 5 }}
                                             textStyle={styles.errorMessageText}
@@ -563,20 +563,32 @@ const Dashboards = () => {
 
                             })}
                         </View>
-                    </View>
+                    </ScrollView>
                 </View>}
-            {dashboards && dashboards?.length > 0 && <FAB
-                icon={() => <Icon source='plus' size={25} color={MD2Colors.white} />}
-                size={'medium'}
-                style={{
+            {dashboards && dashboards?.length > 0 &&
+                <View style={{
+                    alignSelf: "center",
+                    alignItems: 'center',
+                    width: '100%',
+                    height: 60,
                     position: 'absolute',
-                    margin: 16,
-                    right: 10,
-                    bottom: 70,
-                    backgroundColor: MD2Colors.indigoA200
-                }}
-                onPress={() => setVisible(true)}
-            />}
+                    marginBottom: 10,
+                    bottom: 30,
+
+                }}>
+                    <Divider />
+                    <IconButton
+                        icon="plus"
+                        iconColor={MD2Colors.white}
+                        mode="outlined"
+                        style={{
+                            borderColor: MD2Colors.indigoA200,
+                            backgroundColor: MD2Colors.indigoA200
+                        }}
+                        size={20}
+                        onPress={() => setVisible(true)}
+                    />
+                </View>}
 
         </SafeAreaView>
     );
