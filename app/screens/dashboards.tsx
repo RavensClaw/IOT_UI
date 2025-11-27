@@ -577,6 +577,7 @@ const Dashboards = () => {
 
                 }}>
                     <Divider />
+                    <View style={{ marginTop: 5, backgroundColor: MD2Colors.white, width: "100%", alignItems: "center", borderWidth:1, borderTopColor:MD2Colors.grey300  }}>
                     <IconButton
                         icon="plus"
                         iconColor={MD2Colors.white}
@@ -588,6 +589,7 @@ const Dashboards = () => {
                         size={20}
                         onPress={() => setVisible(true)}
                     />
+                    </View>
                 </View>}
 
         </SafeAreaView>

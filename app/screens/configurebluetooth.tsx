@@ -455,6 +455,9 @@ const ConfigureBluetooth: React.FC = () => {
         characteristicsDropdownTemp.push({ label: key, value: key });
       });
       setCharacteristicDropdown(characteristicsDropdownTemp);
+      setReadActionTypes([]);
+      setWriteActionTypes([]);
+      setSelectedCharacteristicsOption(null);
     }
   }, [selectedService]);
 
@@ -475,6 +478,7 @@ const ConfigureBluetooth: React.FC = () => {
       });
       setReadActionTypes(enabledActionTypes.filter((type: any) => type.label.startsWith('isReadable')));
       setWriteActionTypes(enabledActionTypes.filter((type: any) => type.label.startsWith('isWritable')));
+      setSelectedCharacteristicsOption(null);
     }
   }, [selectedCharacteristic]);
 
@@ -687,7 +691,9 @@ const ConfigureBluetooth: React.FC = () => {
               placeholder="Select Device"
               value={selectedDevice && selectedDevice.device && selectedDevice.device.id ? selectedDevice.device.id : ''}
               onChange={item => {
-                if (selectedDevice.device && selectedDevice.device.id === item.value) {
+                console.log("Selected device changed");
+                console.log(item);
+                if (selectedDevice && selectedDevice.device && selectedDevice.device.id === item.value) {
                   return;
                 } else {
                   setGeneralErrorMessage(null);
@@ -701,6 +707,11 @@ const ConfigureBluetooth: React.FC = () => {
                   setCharacteristicDropdown([]);
                   setSelectedService(null);
                   setSelectedCharacteristic(null);
+                  console.log(":::::::::::::::::::::::::::::::::::::::")
+console.log(item.value)
+console.log(devices)
+                  console.log(":::::::::::::::::::::::::::::::::::::::")
+                  
                   setSelectedDevice(devices[item.value]);
                 }
               }}
@@ -837,15 +848,7 @@ const ConfigureBluetooth: React.FC = () => {
                   }}
                 />
               </View>}
-              {!edit && devicesDropdown && Object.keys(devicesDropdown).length > 0 && selectedDevice &&
-                <IconButton mode="outlined" style={{
-                  margin: "auto", marginTop: 10, marginRight: 20, marginBottom: 10,
-                }} iconColor={MD2Colors.grey900} size={15}
-                  icon={"application-edit"}
-                  onPress={() => {
-                    setEdit(true);
-                  }}></IconButton>}
-
+              
               {hasBluetoothError && <Chip mode="outlined"
                 style={styles.errorMessageContainer}
                 textStyle={styles.errorMessageText}
@@ -859,6 +862,15 @@ const ConfigureBluetooth: React.FC = () => {
                 selectedCharacteristicsOption &&
                 selectedCharacteristicsOption.value
                 && <View style={{ backgroundColor: MD2Colors.white, margin: 10, padding: 10, borderRadius: 10, borderColor: MD2Colors.grey400, borderWidth: 1 }}>
+              {!edit && devicesDropdown && Object.keys(devicesDropdown).length > 0 && selectedDevice &&
+                <IconButton mode="outlined" style={{
+                  margin: "auto", marginTop: 10, marginRight: 20, marginBottom: 10,
+                }} iconColor={MD2Colors.grey900} size={15}
+                  icon={"application-edit"}
+                  onPress={() => {
+                    setEdit(true);
+                  }}></IconButton>}
+
                   <TextInput
                     disabled={!edit}
                     label="Input"
@@ -874,7 +886,7 @@ const ConfigureBluetooth: React.FC = () => {
                     style={{
                       backgroundColor: edit ? MD2Colors.white : MD2Colors.grey100,
                       width: "100%",
-                      fontSize: 12, minWidth: 300, height: 50, marginLeft: 10, marginRight: 10
+                      fontSize: 12, minWidth: 300, height: 50, margin:'auto'
                     }}
                     mode="outlined"
                     onChangeText={inputText => {

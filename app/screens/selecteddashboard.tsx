@@ -212,7 +212,7 @@ const SelectedDashBoard: React.FC<Props> = () => {
 
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: MD2Colors.grey200 }}>
-            <StackScreenHeader title={"Dashboard"} showBackButton={false}></StackScreenHeader>
+            <StackScreenHeader title={"Selected Dashboard"} showBackButton={false}></StackScreenHeader>
             {loading ? <ActivityIndicator style={{ margin: 'auto' }} size={"large"}></ActivityIndicator> :
 
                 <View style={{ width: "100%" }}>
@@ -383,6 +383,7 @@ const SelectedDashBoard: React.FC<Props> = () => {
 
                 }}>
                     <Divider />
+                    <View style={{ marginTop: 5, backgroundColor: MD2Colors.white, width: "100%", alignItems: "center", borderWidth:1, borderTopColor:MD2Colors.grey300  }}>
                     <IconButton
                         icon="plus"
                         iconColor={MD2Colors.white}
@@ -394,6 +395,7 @@ const SelectedDashBoard: React.FC<Props> = () => {
                         size={20}
                         onPress={() => setVisible(true)}
                     />
+                    </View>
                 </View>}
 
 
