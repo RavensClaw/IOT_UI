@@ -6,9 +6,10 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
     View, Text,
+    Pressable,
 } from 'react-native';
 import { ActivityIndicator, Button, Chip, Dialog, Icon, IconButton, MD2Colors, Portal, Switch, TextInput } from 'react-native-paper';
-import { makeBluetoothCall } from '@/libs/bluetoothcall';
+import { makeBluetoothCall, checkBluetoothConnection, connectToBluetoothDevice } from '@/libs/bluetoothcall';
 
 export type Props = {
     widget: WidgetModel;
@@ -33,6 +34,9 @@ const PushButtonWidget: React.FC<Props> = ({
     const [edit, setEdit] = useState(false);
     const [loadingRequest, setLoadingRequest] = useState(true);
     const [actionRequest, setActionRequest] = useState(true);
+    const [isPressed, setIsPressed] = useState(false);
+    const [isConnected, setIsConnected] = useState(false);
+    const [isConnecting, setIsConnecting] = useState(false);
     const [widgetCopy, setWidget] = useState(widget);
     const [hasError, setHasError] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
@@ -71,7 +75,61 @@ const PushButtonWidget: React.FC<Props> = ({
             setLoadingRequest(false);
             setActionRequest(false);
         }
+
+        // Check Bluetooth connection status
+        if (widget.connectionType === "BLUETOOTH" && widget.bluetoothDevice?.device?.id) {
+            checkConnectionStatus();
+        }
     }, []));
+
+    const checkConnectionStatus = async () => {
+        try {
+            if (!widget.bluetoothDevice?.device?.id) {
+                setIsConnected(false);
+                return;
+            }
+
+            const deviceId = widget.bluetoothDevice.device.id;
+            const connected = await checkBluetoothConnection(deviceId);
+            setIsConnected(connected);
+        } catch (err) {
+            console.log("Error checking connection:", err);
+            setIsConnected(false);
+        }
+    };
+
+    const handleConnectDevice = async () => {
+        try {
+            if (!widget.bluetoothDevice?.device?.id) {
+                setHasError(true);
+                setErrorMessage("Device not configured. Please configure Bluetooth device.");
+                return;
+            }
+
+            setIsConnecting(true);
+            setHasError(false);
+            const deviceId = widget.bluetoothDevice.device.id;
+
+            const connected = await connectToBluetoothDevice(deviceId);
+            
+            if (connected) {
+                console.log("Connected to device:", deviceId);
+                setIsConnected(true);
+                setErrorMessage('');
+            } else {
+                setHasError(true);
+                setErrorMessage("Failed to connect to device. Please try again.");
+                setIsConnected(false);
+            }
+            
+            setIsConnecting(false);
+        } catch (err: any) {
+            console.log("Error in handleConnectDevice:", err);
+            setIsConnecting(false);
+            setHasError(true);
+            setErrorMessage("Error connecting to device");
+        }
+    };
 
 
     useEffect(() => {
@@ -167,24 +225,41 @@ const PushButtonWidget: React.FC<Props> = ({
                     textStyle={styles.errorMessageText}
                     icon={() => <Icon source='information-outline' size={20} color={MD2Colors.red400} />}>{errorMessage}</Chip>}
 
-
-                {actionRequest ? <ActivityIndicator style={{ marginTop: 50 }}></ActivityIndicator> :
-                    <View style={{ flexDirection: "row" }}>
+                {widget.connectionType === "BLUETOOTH" && !isConnected && !loadingRequest ? (
+                    <View style={{ flexDirection: "row", marginTop: 20 }}>
                         <View style={{ margin: 'auto' }}>
-                            <Button mode='elevated'
+                            <Button 
+                                mode='elevated'
                                 style={{
                                     borderRadius: 5,
-                                    backgroundColor: inputState === 'PRESSIN' ? MD2Colors.green400 : inputState === 'PRESSOUT' ? MD2Colors.red300 : MD2Colors.grey300
+                                    backgroundColor: MD2Colors.blue400,
+                                    paddingVertical: 1
                                 }}
-
                                 textColor={MD2Colors.white}
+                                loading={isConnecting}
+                                disabled={isConnecting}
+                                onPress={handleConnectDevice}
+                                icon={() => <Icon source='bluetooth-connect' size={20} color={MD2Colors.white} />}>
+                                {isConnecting ? 'Connecting...' : 'Connect Device'}
+                            </Button>
+                        </View>
+                    </View>
+                ) : (
+                    <View style={{ flexDirection: "row" }}>
+                        <View style={{ margin: 'auto' }}>
+                            {loadingRequest ? (
+                                <ActivityIndicator style={{ marginTop: 50 }}></ActivityIndicator>
+                            ) : (
+                            <Pressable 
                                 onPressIn={() => {
-                                    setActionRequest(true);
+                                    console.log('Pressed In');
+                                    setIsPressed(true);
                                     setHasError(false);
                                     if (widget.inputStates && widget.inputStates['PRESSIN'] &&
                                         (widget.connectionType === "WIFI" && widget.inputStates['PRESSIN'].apiUrl ||
                                             widget.connectionType === "BLUETOOTH"
                                         )) {
+                                        setActionRequest(true);
                                         const statePRESSIN = widget.inputStates['PRESSIN'];
                                         if (widget.connectionType === "BLUETOOTH") {
                                             makeBluetoothCall(
@@ -209,20 +284,20 @@ const PushButtonWidget: React.FC<Props> = ({
                                                 "");
                                         }
                                     } else {
-                                        setActionRequest(false);
                                         setOutputState('ERROR');
                                         setHasError(true);
                                         setErrorMessage('Please configure PRESSIN state');
                                     }
-
                                 }}
                                 onPressOut={() => {
-                                    setActionRequest(true);
+                                    console.log('Press Out');
+                                    setIsPressed(false);
                                     setHasError(false);
                                     if (widget.inputStates && widget.inputStates['PRESSOUT'] &&
                                         (widget.connectionType === "WIFI" && widget.inputStates['PRESSOUT'].apiUrl ||
                                             widget.connectionType === "BLUETOOTH"
                                         )) {
+                                        setActionRequest(true);
                                         const statePRESSOUT = widget.inputStates['PRESSOUT'];
                                         if (widget.connectionType === "BLUETOOTH") {
                                             makeBluetoothCall(
@@ -247,13 +322,23 @@ const PushButtonWidget: React.FC<Props> = ({
                                                 "");
                                         }
                                     } else {
-                                        setActionRequest(false);
                                         setOutputState('ERROR');
                                         setHasError(true);
                                         setErrorMessage('Please configure PRESSOUT state');
                                     }
                                 }}
-                                disabled={dashboard ? false : true}>{inputState ? inputState : "PRESS IN/PRESS OUT"}</Button>
+                            >
+                                <Button mode='elevated'
+                                    style={{
+                                        borderRadius: 5,
+                                        backgroundColor: inputState === 'PRESSIN' ? MD2Colors.green400 : inputState === 'PRESSOUT' ? MD2Colors.red300 : MD2Colors.grey300
+                                    }}
+                                    textColor={MD2Colors.white}
+                                    disabled={dashboard ? false : true}>
+                                    {inputState ? inputState : "PRESS IN/PRESS OUT"}
+                                </Button>
+                            </Pressable>
+                            )}
                         </View>
                         <View style={styles.onOffIconContainer}>
                             <Text style={styles.onOffText}>{outputState}</Text>
@@ -263,7 +348,8 @@ const PushButtonWidget: React.FC<Props> = ({
                                 } />
                             </View>
                         </View>
-                    </View>}
+                    </View>
+                )}
                 {edit && <View style={styles.saveCancelContainer}>
                     <Chip icon={() => <Icon source="cancel" size={14} color={MD2Colors.red400} />} mode="outlined"
                         style={{

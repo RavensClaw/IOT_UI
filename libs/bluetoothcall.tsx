@@ -7,6 +7,305 @@ import bleManager from '../app/util/blemanagerutil';
 import { Constants } from "@/constants/constants";
 import BLEPermissionsManager from "@/app/util/blepermissionsmanager";
 
+const MAX_RETRY_ATTEMPTS = 3;
+const RETRY_DELAY_MS = 1000;
+
+// Helper function for delays
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Helper function to cleanup BLE connection
+const cleanupBLEConnection = async (deviceId: string, subscription: any) => {
+    try {
+        if (subscription) {
+            subscription.remove();
+        }
+    } catch (err) {
+        console.log("Error removing subscription:", err);
+    }
+
+    try {
+        await bleManager.cancelDeviceConnection(deviceId);
+    } catch (err) {
+        console.log("Error canceling connection:", err);
+    }
+};
+
+// Export function to check if a Bluetooth device is connected
+export const checkBluetoothConnection = async (deviceId: string): Promise<boolean> => {
+    try {
+        if (!deviceId) {
+            console.log("Device ID is missing");
+            return false;
+        }
+
+        try {
+            // Check if device is connected
+            const isConnected = await bleManager.isDeviceConnected(deviceId);
+            console.log(`Device ${deviceId} connection status: ${isConnected}`);
+            return isConnected;
+        } catch (err) {
+            console.log("Error checking device connection:", err);
+            return false;
+        }
+    } catch (err) {
+        console.log("Error in checkBluetoothConnection:", err);
+        return false;
+    }
+};
+
+// Export function to connect to a Bluetooth device
+export const connectToBluetoothDevice = async (deviceId: string): Promise<boolean> => {
+    try {
+        if (!deviceId) {
+            console.log("Device ID is missing");
+            return false;
+        }
+
+        console.log(`Attempting to connect to device: ${deviceId}`);
+        
+        try {
+            await bleManager.connectToDevice(deviceId, {
+                timeout: Constants.BLUETOOTH_CONNECTION_TIMEOUT_IN_MS
+            });
+            console.log(`✓ Successfully connected to device: ${deviceId}`);
+            
+            // Wait for connection to stabilize
+            await sleep(500);
+            
+            // Try to discover services
+            try {
+                await bleManager.discoverAllServicesAndCharacteristicsForDevice(deviceId);
+                console.log(`✓ Services discovered for device: ${deviceId}`);
+            } catch (discoverErr: any) {
+                console.log(`⚠️ Service discovery failed (may be cached): ${discoverErr.message}`);
+                // Continue anyway as services might be cached
+            }
+            
+            return true;
+        } catch (err: any) {
+            console.log(`❌ Failed to connect to device: ${err.message}`);
+            return false;
+        }
+    } catch (err) {
+        console.log("Error in connectToBluetoothDevice:", err);
+        return false;
+    }
+};
+
+// Helper function to evaluate a single condition
+const evaluateCondition = (
+    condition: string,
+    responseValue: any,
+    value1: any,
+    value2?: any
+): boolean => {
+    switch (condition) {
+        case "LessThan":
+            return responseValue < value1;
+        case "LessEqualsTO":
+            return responseValue <= value1;
+        case "GreaterThan":
+            return responseValue > value1;
+        case "GreaterThanEqualsTO":
+            return responseValue >= value1;
+        case "Equals":
+            return responseValue === value1;
+        case "Contains":
+            if (Array.isArray(responseValue)) {
+                return responseValue.includes(value1);
+            } else if (typeof responseValue === "object") {
+                return JSON.stringify(responseValue).indexOf(value1) !== -1;
+            } else if (typeof responseValue === "string") {
+                return responseValue.indexOf(value1) !== -1;
+            }
+            return false;
+        case "DoesNotContains":
+            if (Array.isArray(responseValue)) {
+                return !responseValue.includes(value1);
+            } else if (typeof responseValue === "object") {
+                return JSON.stringify(responseValue).indexOf(value1) === -1;
+            } else if (typeof responseValue === "string") {
+                return responseValue.indexOf(value1) === -1;
+            }
+            return false;
+        case "Between":
+            return value2 && responseValue > value1 && responseValue < value2;
+        default:
+            return false;
+    }
+};
+
+// Helper function to check if all conditions for a state are satisfied
+const areConditionsSatisfied = (
+    conditions: any[],
+    responseData: any
+): boolean => {
+    if (!conditions || conditions.length === 0) {
+        return true; // No conditions means always satisfied
+    }
+
+    for (const condition of conditions) {
+        const { key, value1, value2, condition: conditionType } = condition;
+        const responseValue = responseData[key];
+
+        if (value1 && !evaluateCondition(conditionType, responseValue, value1, value2)) {
+            return false;
+        }
+    }
+
+    return true;
+};
+
+// Helper function to map error messages based on error details
+const getErrorMessageFromError = (error: any): string => {
+    const errorMessage = (error.message || error.reason || "").toLowerCase();
+
+    if (errorMessage.includes("disconnected") || errorMessage.includes("147") || errorMessage.includes("gatt")) {
+        return "Device disconnected after multiple retries. Please check device connection and try again.";
+    } else if (errorMessage.includes("timeout")) {
+        return "Connection timeout. Device may be out of range or unresponsive.";
+    } else if (errorMessage.includes("write")) {
+        return "Failed to write to device. Please check device compatibility.";
+    } else if (errorMessage.includes("read")) {
+        return "Failed to read from device. Please try again.";
+    } else {
+        return "Bluetooth operation failed. Please reconnect and try again.";
+    }
+};
+
+// Helper function to extract service details from widget state
+const extractServiceDetails = (state: InputStateModel): {
+    serviceIdKey: string | null;
+    characteristics: string | null;
+    characteristicsOptions: string | null;
+} => {
+    let serviceIdKey = null;
+    let characteristics = null;
+    let characteristicsOptions = null;
+
+    if (state.service) {
+        const serviceKeys = Object.keys(state.service);
+        if (serviceKeys.length > 0) {
+            serviceIdKey = serviceKeys[0];
+            const characteristicKeys = Object.keys(state.service[serviceIdKey]);
+            if (characteristicKeys.length > 0) {
+                characteristics = characteristicKeys[0];
+                const optionKeys = Object.keys(state.service[serviceIdKey][characteristics]);
+                if (optionKeys.length > 0) {
+                    characteristicsOptions = optionKeys[0];
+                }
+            }
+        }
+    }
+
+    return { serviceIdKey, characteristics, characteristicsOptions };
+};
+
+// Helper function to perform BLE read/write operation with retry logic
+const performBLEOperation = async (
+    deviceId: string,
+    serviceIdKey: string,
+    characteristics: string,
+    characteristicsOptions: string,
+    input: string
+): Promise<any> => {
+    let lastError: any = null;
+
+    for (let attempt = 1; attempt <= MAX_RETRY_ATTEMPTS; attempt++) {
+        let isConnected = false;
+        
+        try {
+            console.log(`\n=== Attempt ${attempt}/${MAX_RETRY_ATTEMPTS} ===`);
+
+            // Always try to disconnect first to ensure clean state
+            if (attempt > 1) {
+                try {
+                    await bleManager.cancelDeviceConnection(deviceId);
+                    await sleep(500); // Wait before reconnecting
+                } catch (err) {
+                    console.log("Disconnect before retry:", err);
+                }
+            }
+
+            // Connect with longer timeout
+            try {
+                console.log(`Connecting to device: ${deviceId}`);
+                await bleManager.connectToDevice(deviceId, {
+                    timeout: Constants.BLUETOOTH_CONNECTION_TIMEOUT_IN_MS
+                });
+                isConnected = true;
+                console.log("✓ Connected successfully");
+                
+                // Wait a bit for connection to stabilize
+                await sleep(500);
+            } catch (connectErr: any) {
+                console.log("❌ Connection failed:", connectErr.message);
+                isConnected = false;
+                throw connectErr;
+            }
+
+            // Discover services
+            try {
+                console.log("Discovering services...");
+                await bleManager.discoverAllServicesAndCharacteristicsForDevice(deviceId);
+                console.log("✓ Services discovered");
+            } catch (discoverErr: any) {
+                console.log("⚠️  Service discovery failed:", discoverErr.message);
+                // For cached services, this might fail - that's okay
+            }
+
+            // Small delay before operation
+            await sleep(200);
+
+            // Perform the operation
+            console.log(`Performing ${characteristicsOptions} operation...`);
+            let bleResponse = null;
+
+            if (characteristicsOptions === 'isReadable') {
+                bleResponse = await bleManager.readCharacteristicForDevice(
+                    deviceId,
+                    serviceIdKey,
+                    characteristics
+                );
+                console.log("✓ Read successful");
+            } else if (characteristicsOptions === 'isWritableWithResponse') {
+                bleResponse = await bleManager.writeCharacteristicWithResponseForDevice(
+                    deviceId,
+                    serviceIdKey,
+                    characteristics,
+                    btoa(input ? input : '')
+                );
+                console.log("✓ Write with response successful");
+            } else if (characteristicsOptions === 'isWritableWithoutResponse') {
+                await bleManager.writeCharacteristicWithoutResponseForDevice(
+                    deviceId,
+                    serviceIdKey,
+                    characteristics,
+                    btoa(input ? input : '')
+                );
+                console.log("✓ Write without response successful");
+            }
+
+            console.log("=== Operation completed successfully ===\n");
+            return { success: true, data: bleResponse };
+
+        } catch (error: any) {
+            lastError = error;
+            console.log(`❌ Attempt ${attempt} failed:`, error.message);
+
+            if (attempt < MAX_RETRY_ATTEMPTS) {
+                const waitTime = RETRY_DELAY_MS * attempt;
+                console.log(`Waiting ${waitTime}ms before retry...`);
+                await sleep(waitTime);
+            }
+        }
+    }
+
+    // All retries failed
+    console.log(`\n❌ All ${MAX_RETRY_ATTEMPTS} attempts failed`);
+    throw lastError;
+};
+
 export const makeBluetoothCall = async (
     widget: WidgetModel,
     state: InputStateModel,
@@ -49,52 +348,49 @@ export const makeBluetoothCall = async (
                     }
                 }
                 if (state.service && serviceIdKey && characteristics && characteristicsOptions) {
-                    //const bluetoothResponse = state.service[serviceIdKey][characteristics][characteristicsOptions].bluetoothResponse;
                     const input = state.service[serviceIdKey][characteristics][characteristicsOptions].input;
-                    //const outputState = state.service[serviceIdKey][characteristics][characteristicsOptions].outputState;
+                    
+                    // Safety check for device ID
+                    if (!widget?.bluetoothDevice?.device?.id) {
+                        console.error("Device ID is missing or null");
+                        setHasError(true);
+                        setErrorMessage("Device information is missing. Please reconnect the device.");
+                        setActionRequest(false);
+                        return;
+                    }
+                    
+                    const deviceId = widget.bluetoothDevice.device.id;
+                    let subscription: any = null;
+                    
                     try {
-                        let bleResponse = null;
-                        let hasResponse = false;
-                        console.log(widget.bluetoothDevice.device.id)
-                        console.log("BEFORE CONNECT");
-                        await bleManager.connectToDevice(widget.bluetoothDevice.device.id, {
-                            timeout: Constants.BLUETOOTH_CONNECTION_TIMEOUT_IN_MS
-                        });
-                        console.log("AFTER CONNECT");
-                        // Important: discover services/characteristics
-                        await bleManager.discoverAllServicesAndCharacteristicsForDevice(widget.bluetoothDevice.device.id);
-
-                        // Monitor disconnection
-                        /*connected.onDisconnected((error, dev) => {
-                        console.log(`❌ Disconnected from ${dev?.id}`);
-                        if (error) {
-                                console.log("Reason: " + error.message);
+                        console.log(`Starting BLE operation for device: ${deviceId}`);
+                        
+                        // Setup disconnection listener
+                        const handleDisconnect = (device: any) => {
+                            if (device?.id) {
+                                console.log(`⚠️  Device ${device.id} was disconnected during operation`);
+                            } else {
+                                console.log(`⚠️  Device was disconnected during operation`);
                             }
-                        });*/
+                            // Don't set error here as the operation might complete successfully
+                        };
 
-                        if (characteristicsOptions === 'isReadable') {
-                            bleResponse = await bleManager.readCharacteristicForDevice(
-                                widget.bluetoothDevice.device.id,
-                                serviceIdKey,
-                                characteristics
-                             )
-                            hasResponse = true;
-                        } else if (characteristicsOptions === 'isWritableWithResponse') {
-                            console.log("INSIDE isWritableWithResponse");
-                            bleResponse = await bleManager.writeCharacteristicWithResponseForDevice(
-                                widget.bluetoothDevice.device.id,
-                                serviceIdKey,
-                                characteristics,
-                                btoa(input ? input : ''))
-                            hasResponse = true;
-                        } else if (characteristicsOptions === 'isWritableWithoutResponse') {
-                            await bleManager.writeCharacteristicWithoutResponseForDevice(
-                                widget.bluetoothDevice.device.id,
-                                serviceIdKey,
-                                characteristics,
-                                btoa(input ? input : ''))
-                        }
-                        if (hasResponse) {
+                        subscription = bleManager.onDeviceDisconnected(deviceId, handleDisconnect);
+
+                        // Perform operation with retry logic
+                        const result = await performBLEOperation(
+                            deviceId,
+                            serviceIdKey,
+                            characteristics,
+                            characteristicsOptions,
+                            input || ''
+                        );
+
+                        const bleResponse = result.data;
+                        let hasResponse = result.data !== undefined && result.data !== null;
+                        
+                        if (hasResponse && characteristicsOptions === 'isReadable') {
+                            // Only isReadable has responses
                             if (bleResponse?.value) {
                                 console.log("*********************************************")
                                 console.log(bleResponse?.value)
@@ -259,13 +555,39 @@ export const makeBluetoothCall = async (
                                 }
                             }
                         } else {
-                            console.log("Without response")
+                            console.log("Write operation completed successfully")
+                            setActionRequest(false);
                         }
+
+                        // Clean disconnect after successful operation
+                        await cleanupBLEConnection(deviceId, subscription);
+
                     } catch (e: any) {
-                        console.log(e)
-                        console.log(e.reason)
-                        setHasError(true);
-                        setErrorMessage("Unable to connect. Please try again.");
+                        console.log("❌ BLE Call Error:", e)
+                        console.log("Error reason:", e.reason || e.message)
+                        
+                        // Clean up subscription and connection in case of error
+                        await cleanupBLEConnection(deviceId, subscription);
+                        
+                        // Specific error handling for disconnection
+                        const errorMessage = (e.message || e.reason || "").toLowerCase();
+                        if (errorMessage.includes("disconnected") || errorMessage.includes("147") || errorMessage.includes("gatt")) {
+                            setHasError(true);
+                            setErrorMessage("Device disconnected after multiple retries. Please check device connection and try again.");
+                        } else if (errorMessage.includes("timeout")) {
+                            setHasError(true);
+                            setErrorMessage("Connection timeout. Device may be out of range or unresponsive.");
+                        } else if (errorMessage.includes("write")) {
+                            setHasError(true);
+                            setErrorMessage("Failed to write to device. Please check device compatibility.");
+                        } else if (errorMessage.includes("read")) {
+                            setHasError(true);
+                            setErrorMessage("Failed to read from device. Please try again.");
+                        } else {
+                            setHasError(true);
+                            setErrorMessage("Bluetooth operation failed. Please reconnect and try again.");
+                        }
+                        
                         setActionRequest(false);
                     }
                 } else {
@@ -283,10 +605,9 @@ export const makeBluetoothCall = async (
             }
         }).catch((error) => {
             console.log("ERROR HERE 1");
-            // Failure code
             setHasError(true);
             console.log(error);
-            setErrorMessage("no bleManager found");
+            setErrorMessage("Bluetooth is not available");
             setActionRequest(false);
         });
     } else {

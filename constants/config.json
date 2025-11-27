@@ -2,8 +2,7 @@
     "PushButton":{
         "possible_states": [
              { "label": "PRESSIN", "value": "PRESSIN" },
-             { "label": "PRESSOUT", "value": "PRESSOUT" },
-             { "label": "CHECK_STATUS", "value": "CHECK_STATUS" }
+             { "label": "PRESSOUT", "value": "PRESSOUT" }
         ]
     },
     "OnOffButton":{
