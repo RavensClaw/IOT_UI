@@ -92,6 +92,20 @@ export const connectToBluetoothDevice = async (deviceId: string): Promise<boolea
     }
 };
 
+// Helper function to check if a value contains a substring/element
+const containsValue = (value: any, searchValue: any): boolean => {
+    if (Array.isArray(value)) {
+        return value.includes(searchValue);
+    }
+    if (typeof value === "object") {
+        return JSON.stringify(value).indexOf(searchValue) !== -1;
+    }
+    if (typeof value === "string") {
+        return value.indexOf(searchValue) !== -1;
+    }
+    return false;
+};
+
 // Helper function to evaluate a single condition
 const evaluateCondition = (
     condition: string,
@@ -111,49 +125,14 @@ const evaluateCondition = (
         case "Equals":
             return responseValue === value1;
         case "Contains":
-            if (Array.isArray(responseValue)) {
-                return responseValue.includes(value1);
-            } else if (typeof responseValue === "object") {
-                return JSON.stringify(responseValue).indexOf(value1) !== -1;
-            } else if (typeof responseValue === "string") {
-                return responseValue.indexOf(value1) !== -1;
-            }
-            return false;
+            return containsValue(responseValue, value1);
         case "DoesNotContains":
-            if (Array.isArray(responseValue)) {
-                return !responseValue.includes(value1);
-            } else if (typeof responseValue === "object") {
-                return JSON.stringify(responseValue).indexOf(value1) === -1;
-            } else if (typeof responseValue === "string") {
-                return responseValue.indexOf(value1) === -1;
-            }
-            return false;
+            return !containsValue(responseValue, value1);
         case "Between":
-            return value2 && responseValue > value1 && responseValue < value2;
+            return value2 !== undefined && responseValue > value1 && responseValue < value2;
         default:
             return false;
     }
-};
-
-// Helper function to check if all conditions for a state are satisfied
-const areConditionsSatisfied = (
-    conditions: any[],
-    responseData: any
-): boolean => {
-    if (!conditions || conditions.length === 0) {
-        return true; // No conditions means always satisfied
-    }
-
-    for (const condition of conditions) {
-        const { key, value1, value2, condition: conditionType } = condition;
-        const responseValue = responseData[key];
-
-        if (value1 && !evaluateCondition(conditionType, responseValue, value1, value2)) {
-            return false;
-        }
-    }
-
-    return true;
 };
 
 // Helper function to map error messages based on error details
@@ -199,6 +178,27 @@ const extractServiceDetails = (state: InputStateModel): {
     }
 
     return { serviceIdKey, characteristics, characteristicsOptions };
+};
+
+// Helper function to evaluate conditions for a given output state
+const evaluateOutputConditions = (
+    conditions: any[],
+    responseData: any
+): boolean => {
+    if (!conditions || conditions.length === 0) {
+        return true; // No conditions means state satisfied
+    }
+
+    for (const condition of conditions) {
+        const { key, value1, value2, condition: conditionType } = condition;
+        const responseValue = responseData[key];
+
+        if (value1 && evaluateCondition(conditionType, responseValue, value1, value2)) {
+            return true; // Return true on first matching condition
+        }
+    }
+
+    return false;
 };
 
 // Helper function to perform BLE read/write operation with retry logic
@@ -333,20 +333,8 @@ export const makeBluetoothCall = async (
                     outputState1 = state.stateName;
                 }
 
-                let serviceIdKey = null;
-                let characteristics = null;
-                let characteristicsOptions = null;
-                if (state.service) {
-                    if (Object.keys(state.service).length > 0) {
-                        serviceIdKey = Object.keys(state.service)[0];
-                        if (Object.keys(state.service[serviceIdKey]).length > 0) {
-                            characteristics = Object.keys(state.service[serviceIdKey])[0]
-                            if (Object.keys(state.service[serviceIdKey][characteristics]).length > 0) {
-                                characteristicsOptions = Object.keys(state.service[serviceIdKey][characteristics])[0]
-                            }
-                        }
-                    }
-                }
+                const { serviceIdKey, characteristics, characteristicsOptions } = extractServiceDetails(state);
+                
                 if (state.service && serviceIdKey && characteristics && characteristicsOptions) {
                     const input = state.service[serviceIdKey][characteristics][characteristicsOptions].input;
                     
@@ -406,145 +394,28 @@ export const makeBluetoothCall = async (
                                     responseData = { "response": decoded }
                                 }
 
-                                let state1ConditionStatified = false;
-                                let state2ConditionStatified = false;
-
-                                let outputConditions: any = [];
                                 if (state.service && state.service[serviceIdKey][characteristics][characteristicsOptions]) {
                                     const outputState: OutputState = state.service[serviceIdKey][characteristics][characteristicsOptions].outputState;
-                                    if (state.service[serviceIdKey][characteristics][characteristicsOptions].outputState[outputState1] &&
-                                        outputState[outputState1].conditions) {
-                                        outputConditions = outputState[outputState1].conditions;
-                                        console.log(outputConditions)
-                                        if (outputConditions && outputConditions.length > 0) {
-                                            for (let i = 0; i < outputConditions?.length; i++) {
-                                                const key = outputConditions[i].key;
-                                                const value1 = outputConditions[i].value1;
-                                                const value2 = outputConditions[i].value2;
-                                                const responseValue = responseData[key];
+                                    
+                                    // Check state1 conditions
+                                    const state1Conditions = outputState[outputState1]?.conditions;
+                                    const state1ConditionSatisfied = evaluateOutputConditions(state1Conditions || [], responseData);
 
-                                                if (value1) {
-                                                    if (outputConditions[i].condition === "LessThan") {
-                                                        if (responseValue < value1) {
-                                                            state1ConditionStatified = true;
-                                                        }
-                                                    } else if (outputConditions[i].condition === "LessEqualsTO") {
-                                                        if (responseValue <= value1) {
-                                                            state1ConditionStatified = true;
-                                                        }
-                                                    } else if (outputConditions[i].condition === "GreaterThan") {
-                                                        if (responseValue > value1) {
-                                                            state1ConditionStatified = true;
-                                                        }
-                                                    } else if (outputConditions[i].condition === "GreaterThanEqualsTO") {
-                                                        if (responseValue >= value1) {
-                                                            state1ConditionStatified = true;
-                                                        }
-                                                    } else if (outputConditions[i].condition === "Equals") {
-                                                        if (responseValue == value1) {
-                                                            state1ConditionStatified = true;
-                                                        }
-                                                    } else if (outputConditions[i].condition === "Contains") {
-                                                        if (Array.isArray(responseValue) && responseValue.includes(value1)) {
-                                                            state1ConditionStatified = true;
-                                                        } else if (typeof responseValue == "object" && JSON.stringify(responseValue).indexOf(value1) !== -1) {
-                                                            state1ConditionStatified = true;
-                                                        } else if (typeof responseValue == "string" && responseValue.indexOf(value1) !== -1) {
-                                                            state1ConditionStatified = true;
-                                                        }
-                                                    } else if (outputConditions[i].condition === "DoesNotContains") {
-                                                        if (Array.isArray(responseValue) && !responseValue.includes(value1)) {
-                                                            state1ConditionStatified = true;
-                                                        } else if (typeof responseValue == "object" && JSON.stringify(responseValue).indexOf(value1) === -1) {
-                                                            state1ConditionStatified = true;
-                                                        } else if (typeof responseValue == "string" && responseValue.indexOf(value1) === -1) {
-                                                            state1ConditionStatified = true;
-                                                        }
-                                                    } else if (outputConditions[i].condition === "Between" && value2) {
-                                                        if (responseValue > value1 && responseValue < value2) {
-                                                            state1ConditionStatified = true;
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        } else {
-                                            state1ConditionStatified = true;
-                                        }
-
+                                    // Check state2 conditions if status check and state1 not satisfied
+                                    let state2ConditionSatisfied = false;
+                                    if (isStatusCheck && !state1ConditionSatisfied) {
+                                        const state2Conditions = outputState[outputState2]?.conditions;
+                                        state2ConditionSatisfied = evaluateOutputConditions(state2Conditions || [], responseData);
                                     }
 
-                                    if (isStatusCheck && !state1ConditionStatified) {
-
-                                        if (outputState[outputState2] &&
-                                            outputState[outputState2].conditions) {
-
-                                            outputConditions = outputState[outputState2].conditions;
-
-                                            if (outputConditions && outputConditions.length > 0) {
-                                                for (let i = 0; i < outputConditions?.length; i++) {
-                                                    const key = outputConditions[i].key;
-                                                    const value1 = outputConditions[i].value1;
-                                                    const value2 = outputConditions[i].value2;
-                                                    const responseValue = responseData[key];
-
-                                                    if (value1) {
-                                                        if (outputConditions[i].condition === "LessThan") {
-                                                            if (responseValue < value1) {
-                                                                state2ConditionStatified = true;
-                                                            }
-                                                        } else if (outputConditions[i].condition === "LessEqualsTO") {
-                                                            if (responseValue <= value1) {
-                                                                state2ConditionStatified = true;
-                                                            }
-                                                        } else if (outputConditions[i].condition === "GreaterThan") {
-                                                            if (responseValue > value1) {
-                                                                state2ConditionStatified = true;
-                                                            }
-                                                        } else if (outputConditions[i].condition === "GreaterThanEqualsTO") {
-                                                            if (responseValue >= value1) {
-                                                                state2ConditionStatified = true;
-                                                            }
-                                                        } else if (outputConditions[i].condition === "Equals") {
-                                                            if (responseValue == value1) {
-                                                                state2ConditionStatified = true;
-                                                            }
-                                                        } else if (outputConditions[i].condition === "Contains") {
-                                                            if (Array.isArray(responseValue) && responseValue.includes(value1)) {
-                                                                state2ConditionStatified = true;
-                                                            } else if (typeof responseValue == "object" && JSON.stringify(responseValue).indexOf(value1) !== -1) {
-                                                                state2ConditionStatified = true;
-                                                            } else if (typeof responseValue == "string" && responseValue.indexOf(value1) !== -1) {
-                                                                state2ConditionStatified = true;
-                                                            }
-                                                        } else if (outputConditions[i].condition === "DoesNotContains") {
-                                                            if (Array.isArray(responseValue) && !responseValue.includes(value1)) {
-                                                                state2ConditionStatified = true;
-                                                            } else if (typeof responseValue == "object" && JSON.stringify(responseValue).indexOf(value1) === -1) {
-                                                                state2ConditionStatified = true;
-                                                            } else if (typeof responseValue == "string" && responseValue.indexOf(value1) === -1) {
-                                                                state2ConditionStatified = true;
-                                                            }
-                                                        } else if (outputConditions[i].condition === "Between" && value2) {
-                                                            if (responseValue > value1 && responseValue < value2) {
-                                                                state2ConditionStatified = true;
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            } else {
-                                                state2ConditionStatified = true;
-                                            }
-                                        }
-
-                                    }
-                                    if (state1ConditionStatified) {
+                                    // Set output state based on condition results
+                                    if (state1ConditionSatisfied) {
                                         setInputState(outputState1);
                                         setOutputState(outputState1);
-                                    } else if (isStatusCheck && state2ConditionStatified) {
+                                    } else if (isStatusCheck && state2ConditionSatisfied) {
                                         setInputState(outputState2);
                                         setOutputState(outputState2);
                                     }
-                                    setActionRequest(false);
                                 } else {
                                     if (!isStatusCheck) {
                                         setInputState(outputState1);
@@ -569,25 +440,9 @@ export const makeBluetoothCall = async (
                         // Clean up subscription and connection in case of error
                         await cleanupBLEConnection(deviceId, subscription);
                         
-                        // Specific error handling for disconnection
-                        const errorMessage = (e.message || e.reason || "").toLowerCase();
-                        if (errorMessage.includes("disconnected") || errorMessage.includes("147") || errorMessage.includes("gatt")) {
-                            setHasError(true);
-                            setErrorMessage("Device disconnected after multiple retries. Please check device connection and try again.");
-                        } else if (errorMessage.includes("timeout")) {
-                            setHasError(true);
-                            setErrorMessage("Connection timeout. Device may be out of range or unresponsive.");
-                        } else if (errorMessage.includes("write")) {
-                            setHasError(true);
-                            setErrorMessage("Failed to write to device. Please check device compatibility.");
-                        } else if (errorMessage.includes("read")) {
-                            setHasError(true);
-                            setErrorMessage("Failed to read from device. Please try again.");
-                        } else {
-                            setHasError(true);
-                            setErrorMessage("Bluetooth operation failed. Please reconnect and try again.");
-                        }
-                        
+                        // Set error using helper function
+                        setHasError(true);
+                        setErrorMessage(getErrorMessageFromError(e));
                         setActionRequest(false);
                     }
                 } else {
